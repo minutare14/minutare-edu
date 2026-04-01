@@ -1,0 +1,260 @@
+/* ============================================================
+   edu.css — Componentes pedagógicos e visuais da plataforma
+   Minutare EDU — CTIA03 Bases Matemáticas
+   ============================================================ */
+
+/* ─── Topic Header ─────────────────────────────────────────── */
+.topic-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+}
+
+.topic-title {
+    font-size: 28px;
+    margin-bottom: 24px;
+    margin-top: 4px;
+    line-height: 1.2;
+}
+
+/* ─── Module Arrow ─────────────────────────────────────────── */
+.module-arrow {
+    color: var(--text-muted);
+    font-weight: 800;
+    font-size: 20px;
+    transition: transform 0.2s;
+}
+.btn--module:hover .module-arrow {
+    transform: translateX(4px);
+    color: var(--text-main) !important;
+}
+
+/* ─── Visual Card (SVG container) ──────────────────────────── */
+.visual-card {
+    background: var(--surface);
+    border: 1px solid #E5E7EB;
+    border-radius: var(--radius-box);
+    padding: var(--space-md);
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.visual-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 16px 0;
+    font-family: var(--font-title);
+}
+
+.svg-wrapper {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    display: block;
+}
+
+.svg-wrapper svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.visual-caption {
+    margin: 12px 0 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ─── AI Section ────────────────────────────────────────────── */
+.ai-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.ai-section h3 {
+    margin-bottom: 12px;
+    margin-top: 0;
+}
+
+/* ─── Formula Grid ──────────────────────────────────────────── */
+.formula-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.formula-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.formula-name {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.formula-eq {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font-title);
+    letter-spacing: 0.3px;
+}
+
+/* ─── Fact Table ─────────────────────────────────────────────── */
+.fact-table {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.fact-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.fact-row:last-child {
+    border-bottom: none;
+}
+
+.fact-row span {
+    padding: 8px 10px;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.fact-row span:last-child {
+    border-right: none;
+}
+
+.fact-header {
+    background: rgba(0, 0, 0, 0.05);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Review Grid ────────────────────────────────────────────── */
+.review-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.review-pill {
+    background: var(--blue-soft);
+    color: var(--blue-ink);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: transform 0.15s ease;
+}
+
+.review-pill:hover {
+    transform: translateY(-1px);
+}
+
+/* ─── App Footer ─────────────────────────────────────────────── */
+.app-footer {
+    padding: 20px var(--space-md);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid #F3F4F6;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dev-credit {
+    font-size: 11px;
+    color: #9CA3AF;
+}
+
+.dev-credit a {
+    color: var(--blue-ink);
+    text-decoration: none;
+}
+
+.dev-credit a:hover {
+    text-decoration: underline;
+}
+
+/* ─── Step — melhorado ──────────────────────────────────────── */
+.step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+}
+
+.step:last-child {
+    margin-bottom: 0;
+}
+
+.step > div:last-child {
+    font-size: 15px;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+/* ─── Details open animation ────────────────────────────────── */
+details[open] .details-content {
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (min-width: 480px) {
+    .formula-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .svg-wrapper {
+        max-width: 420px;
+    }
+}
+
+@media (max-width: 400px) {
+    .review-pill {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .formula-eq {
+        font-size: 13px;
+    }
+
+    .topic-title {
+        font-size: 24px;
+    }
+}

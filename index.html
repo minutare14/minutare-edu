@@ -14,854 +14,787 @@
     <link rel="stylesheet" href="/css/edu.css">
 </head>
 <body>
-    <header class="header">
-        <button id="btn-back" class="btn-back hidden">←</button>
-        <h1 class="header__title">CTIA03</h1>
-    </header>
 
-    <main class="app-container">
+<header class="header">
+    <button id="btn-back" class="btn-back hidden">←</button>
+    <h1 class="header__title">CTIA03</h1>
+</header>
 
-        <!-- ======================================================
-             TELA: HOME
-        ====================================================== -->
-        <section id="page-home" class="page active">
-            <h2>Bases Matemáticas</h2>
-            <p style="color:var(--text-muted);margin-bottom:24px;">Ciência, Tecnologia e Inovação</p>
+<main class="app-container">
 
-            <div class="card card--progress">
-                <h3 style="font-size:16px;margin-bottom:4px;">Seu Progresso</h3>
-                <p style="margin:0;font-size:14px;color:var(--text-muted);">Você revisou 0 de 5 tópicos</p>
-                <div class="progress-bar"><div class="progress-fill"></div></div>
+<!-- ═══════════════════════════════════════════════════════
+     HOME
+═══════════════════════════════════════════════════════ -->
+<section id="page-home" class="page active">
+    <h2>Bases Matemáticas</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;">Ciência, Tecnologia e Inovação</p>
+
+    <div class="card card--progress">
+        <h3 style="font-size:16px;margin-bottom:4px;">Seu Progresso</h3>
+        <p style="margin:0;font-size:14px;color:var(--text-muted);">Você revisou 0 de 5 tópicos</p>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+
+    <h3 style="margin-top:32px;font-size:18px;">Módulos de Estudo</h3>
+    <button class="btn--module" data-nav="page-modulo-1"><span>1. Conjuntos Numéricos</span><span class="module-arrow">→</span></button>
+    <button class="btn--module" data-nav="page-modulo-2"><span>2. Intervalos Reais</span><span class="module-arrow">→</span></button>
+    <button class="btn--module" data-nav="page-modulo-3"><span>3. Álgebra e Fatoração</span><span class="module-arrow">→</span></button>
+    <button class="btn--module" data-nav="page-modulo-4"><span>4. Relação de Ordem e Reta Real</span><span class="module-arrow">→</span></button>
+    <button class="btn--module" data-nav="page-modulo-5"><span>5. Potenciação e Radiciação</span><span class="module-arrow">→</span></button>
+
+    <h3 style="margin-top:32px;font-size:18px;">Ações Rápidas</h3>
+    <button class="btn btn--primary" onclick="generateSimulado()">✨ Simulado Completo (IA)</button>
+    <button class="btn btn--secondary" data-nav="page-revisao">📋 Revisão de Véspera</button>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO 1 — CONJUNTOS NUMÉRICOS
+═══════════════════════════════════════════════════════ -->
+<section id="page-modulo-1" class="page">
+    <span class="topic-label">Tópico 1</span>
+    <h2 class="topic-title">Conjuntos Numéricos</h2>
+
+    <details open>
+        <summary>Teoria Essencial</summary>
+        <div class="details-content">
+            <p>Os conjuntos numéricos agrupam números com características semelhantes. A hierarquia vai dos Naturais até os Reais.</p>
+            <ul style="padding-left:20px;margin-bottom:16px;">
+                <li><strong>Naturais (ℕ):</strong> {0, 1, 2, 3, …} — sem negativos nem frações</li>
+                <li><strong>Inteiros (ℤ):</strong> {…, −2, −1, 0, 1, 2, …} — inclui negativos</li>
+                <li><strong>Racionais (ℚ):</strong> p/q com q≠0. Frações e dízimas <em>periódicas</em>. Ex: 1/2, 0,333…</li>
+                <li><strong>Irracionais (𝕀):</strong> Dízimas <em>não</em> periódicas, sem fração. Ex: π, √2, e</li>
+                <li><strong>Reais (ℝ):</strong> União de todos: ℝ = ℚ ∪ 𝕀</li>
+            </ul>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Pertinência vs. Inclusão</h4>
+                <p style="margin:0;"><strong>Pertinência (∈):</strong> liga um <em>elemento</em> ao conjunto. Ex: 3 ∈ ℕ<br>
+                <strong>Inclusão (⊂):</strong> liga dois <em>conjuntos</em>. Ex: ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ</p>
             </div>
+        </div>
+    </details>
 
-            <h3 style="margin-top:32px;font-size:18px;">Módulos de Estudo</h3>
-            <button class="btn--module" data-nav="page-modulo-1">
-                <span>1. Conjuntos Numéricos</span>
-                <span class="module-arrow">→</span>
-            </button>
-            <button class="btn--module" data-nav="page-modulo-2">
-                <span>2. Intervalos Reais</span>
-                <span class="module-arrow">→</span>
-            </button>
-            <button class="btn--module" data-nav="page-modulo-3">
-                <span>3. Álgebra e Fatoração</span>
-                <span class="module-arrow">→</span>
-            </button>
-            <button class="btn--module" data-nav="page-modulo-4">
-                <span>4. Relação de Ordem e Reta Real</span>
-                <span class="module-arrow">→</span>
-            </button>
-            <button class="btn--module" data-nav="page-modulo-5">
-                <span>5. Potenciação e Radiciação</span>
-                <span class="module-arrow">→</span>
-            </button>
+    <!-- SVG — Diagrama Matrioska (conjuntos aninhados) -->
+    <div class="visual-card">
+        <h4 class="visual-card__title">🎨 Diagrama dos Conjuntos — Matrioska</h4>
+        <div class="svg-wrapper">
+            <svg viewBox="0 0 300 172" xmlns="http://www.w3.org/2000/svg" role="img"
+                 aria-label="Diagrama mostrando ℕ dentro de ℤ dentro de ℚ dentro de ℝ, com 𝕀 separado mas também dentro de ℝ">
+                <!-- ℝ — azul -->
+                <rect x="1" y="1" width="298" height="170" rx="11" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+                <text x="284" y="20" font-size="14" fill="#2563EB" font-weight="700" font-family="Manrope,sans-serif">ℝ</text>
 
-            <h3 style="margin-top:32px;font-size:18px;">Ações Rápidas</h3>
-            <button class="btn btn--primary" onclick="generateSimulado()">✨ Simulado Completo (IA)</button>
-            <button class="btn btn--secondary" data-nav="page-revisao">📋 Revisão de Véspera</button>
-        </section>
+                <!-- 𝕀 — cinza tracejado, lado direito, dentro de ℝ -->
+                <rect x="212" y="14" width="76" height="142" rx="8" fill="#F9FAFB" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5,3"/>
+                <text x="250" y="44" font-size="13" fill="#6B7280" font-weight="700" text-anchor="middle" font-family="Manrope,sans-serif">𝕀</text>
+                <text x="250" y="62" font-size="9"  fill="#9CA3AF" text-anchor="middle" font-family="Public Sans,sans-serif">π, √2</text>
+                <text x="250" y="75" font-size="9"  fill="#9CA3AF" text-anchor="middle" font-family="Public Sans,sans-serif">√3, e…</text>
+                <text x="250" y="130" font-size="8"  fill="#9CA3AF" text-anchor="middle" font-family="Public Sans,sans-serif" font-style="italic">irracionais</text>
 
+                <!-- ℚ — verde -->
+                <rect x="10" y="14" width="192" height="142" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+                <text x="188" y="30" font-size="13" fill="#059669" font-weight="700" text-anchor="end" font-family="Manrope,sans-serif">ℚ</text>
+                <text x="155" y="145" font-size="9"  fill="#059669" text-anchor="middle" font-family="Public Sans,sans-serif">½, ¾, 0,3̄…</text>
 
-        <!-- ======================================================
-             MÓDULO 1 — CONJUNTOS NUMÉRICOS
-        ====================================================== -->
-        <section id="page-modulo-1" class="page">
-            <span class="topic-label">Tópico 1</span>
-            <h2 class="topic-title">Conjuntos Numéricos</h2>
+                <!-- ℤ — âmbar -->
+                <rect x="20" y="28" width="150" height="112" rx="7" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
+                <text x="156" y="44" font-size="12" fill="#D97706" font-weight="700" text-anchor="end" font-family="Manrope,sans-serif">ℤ</text>
+                <text x="132" y="128" font-size="9"  fill="#D97706" text-anchor="middle" font-family="Public Sans,sans-serif">−3, −1…</text>
 
-            <details open>
-                <summary>Teoria Essencial</summary>
-                <div class="details-content">
-                    <p>Os conjuntos numéricos agrupam números com características semelhantes. A hierarquia vai dos Naturais (mais simples) até os Reais (mais completos).</p>
-                    <ul style="padding-left:20px;margin-bottom:16px;">
-                        <li><strong>Naturais (ℕ):</strong> {0, 1, 2, 3, ...} — não têm negativos nem frações</li>
-                        <li><strong>Inteiros (ℤ):</strong> {..., −2, −1, 0, 1, 2, ...} — incluem negativos</li>
-                        <li><strong>Racionais (ℚ):</strong> p/q com q≠0 — frações e dízimas <em>periódicas</em>. Ex: 1/2, 0,333…</li>
-                        <li><strong>Irracionais (𝕀):</strong> Dízimas <em>não</em> periódicas, não viram fração. Ex: π, √2, e</li>
-                        <li><strong>Reais (ℝ):</strong> Todos os anteriores: ℝ = ℚ ∪ 𝕀</li>
-                    </ul>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Pertinência vs. Inclusão</h4>
-                        <p style="margin:0;"><strong>Pertinência (∈):</strong> liga um <em>elemento</em> a um conjunto. Ex: 3 ∈ ℕ<br>
-                        <strong>Inclusão (⊂):</strong> liga dois <em>conjuntos</em>. Ex: ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ</p>
-                    </div>
-                </div>
-            </details>
+                <!-- ℕ — vermelho -->
+                <rect x="30" y="44" width="96" height="72" rx="6" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+                <text x="116" y="60" font-size="11" fill="#DC2626" font-weight="700" text-anchor="end" font-family="Manrope,sans-serif">ℕ</text>
+                <text x="78"  y="82" font-size="10" fill="#DC2626" font-weight="600" text-anchor="middle" font-family="Public Sans,sans-serif">0, 1, 2, 3…</text>
+                <text x="78"  y="96" font-size="8"  fill="#DC2626" text-anchor="middle" font-family="Public Sans,sans-serif" font-style="italic">naturais</text>
+            </svg>
+        </div>
+        <p class="visual-caption">ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ &nbsp;·&nbsp; 𝕀 ⊂ ℝ &nbsp;·&nbsp; ℚ ∩ 𝕀 = ∅ (sem elementos em comum)</p>
+    </div>
 
-            <!-- SVG: Diagrama dos Conjuntos Numéricos -->
-            <div class="visual-card">
-                <h4 class="visual-card__title">🎨 Diagrama dos Conjuntos (Matrioska)</h4>
-                <div class="svg-wrapper">
-                    <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" aria-label="Diagrama de inclusão dos conjuntos numéricos">
-                        <!-- ℝ (externo) -->
-                        <ellipse cx="155" cy="108" rx="148" ry="96" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
-                        <text x="286" y="34" font-size="15" fill="#2563EB" font-weight="bold" font-family="Manrope,sans-serif">ℝ</text>
-                        <!-- ℚ -->
-                        <ellipse cx="142" cy="114" rx="108" ry="72" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
-                        <text x="234" y="62" font-size="14" fill="#059669" font-weight="bold" font-family="Manrope,sans-serif">ℚ</text>
-                        <!-- ℤ -->
-                        <ellipse cx="130" cy="118" rx="72" ry="50" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
-                        <text x="186" y="88" font-size="13" fill="#D97706" font-weight="bold" font-family="Manrope,sans-serif">ℤ</text>
-                        <!-- ℕ -->
-                        <ellipse cx="118" cy="122" rx="42" ry="30" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
-                        <text x="104" y="126" font-size="12" fill="#DC2626" font-weight="bold" font-family="Manrope,sans-serif">ℕ</text>
-                        <!-- 𝕀 separado, dentro de ℝ -->
-                        <ellipse cx="278" cy="140" rx="34" ry="24" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="5,3"/>
-                        <text x="265" y="144" font-size="13" fill="#6B7280" font-weight="bold" font-family="Manrope,sans-serif">𝕀</text>
-                        <!-- Exemplos dentro de ℕ -->
-                        <text x="98" y="122" font-size="9" fill="#DC2626" font-family="Public Sans,sans-serif">0,1,2…</text>
-                        <!-- Exemplos em ℤ \ ℕ -->
-                        <text x="152" y="148" font-size="9" fill="#D97706" font-family="Public Sans,sans-serif">−3,−1…</text>
-                        <!-- Exemplos em ℚ \ ℤ -->
-                        <text x="196" y="132" font-size="9" fill="#059669" font-family="Public Sans,sans-serif">½, 0,3̄…</text>
-                        <!-- Exemplos em 𝕀 -->
-                        <text x="259" y="155" font-size="8" fill="#6B7280" font-family="Public Sans,sans-serif">π,√2…</text>
-                    </svg>
-                </div>
-                <p class="visual-caption">ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ &nbsp;|&nbsp; 𝕀 ⊂ ℝ &nbsp;|&nbsp; ℚ ∩ 𝕀 = ∅</p>
+    <details>
+        <summary>Exemplo Resolvido</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>Problema:</strong> Classifique nos conjuntos: −5, √3, 0,777…, 2/3.</p>
+                <div class="step"><div class="step__number">1</div><div><strong>−5:</strong> inteiro negativo → pertence a ℤ, ℚ e ℝ. (Não a ℕ.)</div></div>
+                <div class="step"><div class="step__number">2</div><div><strong>√3 ≈ 1,732…:</strong> dízima infinita não periódica → pertence a 𝕀 e ℝ apenas.</div></div>
+                <div class="step"><div class="step__number">3</div><div><strong>0,777… = 7/9:</strong> dízima <em>periódica</em>, tem fração equivalente → pertence a ℚ e ℝ.</div></div>
+                <div class="step"><div class="step__number">4</div><div><strong>2/3:</strong> fração com denominador inteiro → pertence a ℚ e ℝ.</div></div>
             </div>
+        </div>
+    </details>
 
-            <details>
-                <summary>Exemplo Resolvido</summary>
-                <div class="details-content">
-                    <div class="box box--example">
-                        <p><strong>Problema:</strong> Classifique cada número nos conjuntos a que pertence: −5, √3, 0,777…, 2/3.</p>
-                        <div class="step">
-                            <div class="step__number">1</div>
-                            <div><strong>−5:</strong> inteiro negativo → pertence a ℤ, ℚ e ℝ (mas não a ℕ).</div>
-                        </div>
-                        <div class="step">
-                            <div class="step__number">2</div>
-                            <div><strong>√3 ≈ 1,7320508…:</strong> dízima infinita não periódica → pertence a 𝕀 e ℝ apenas.</div>
-                        </div>
-                        <div class="step">
-                            <div class="step__number">3</div>
-                            <div><strong>0,777… = 7/9:</strong> dízima <em>periódica</em>, pode virar fração → pertence a ℚ e ℝ.</div>
-                        </div>
-                        <div class="step">
-                            <div class="step__number">4</div>
-                            <div><strong>2/3 = 0,666…:</strong> fração com denominador inteiro → pertence a ℚ e ℝ.</div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Atenção na Prova</summary>
-                <div class="details-content">
-                    <div class="box box--mistake">
-                        <h4 class="box__title">❌ Erro Comum</h4>
-                        <p style="margin:0;">Confundir dízimas <em>periódicas</em> (0,333…) com irracionais. Dízimas periódicas são <strong>racionais</strong> — têm fração equivalente. Só são irracionais as dízimas <em>sem</em> período que se repete.</p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Macete — Boneca Russa (Matrioska)</h4>
-                        <p style="margin:0;">ℕ fica dentro de ℤ, que fica dentro de ℚ. O 𝕀 fica <em>separado</em> de ℚ, mas ambos cabem dentro de ℝ. Se pertence a ℕ, automaticamente pertence a todos os maiores.</p>
-                    </div>
-                    <div class="fact-table">
-                        <div class="fact-row fact-header">
-                            <span>Número</span><span>ℕ</span><span>ℤ</span><span>ℚ</span><span>𝕀</span><span>ℝ</span>
-                        </div>
-                        <div class="fact-row"><span>5</span><span>✓</span><span>✓</span><span>✓</span><span>—</span><span>✓</span></div>
-                        <div class="fact-row"><span>−3</span><span>—</span><span>✓</span><span>✓</span><span>—</span><span>✓</span></div>
-                        <div class="fact-row"><span>1/4</span><span>—</span><span>—</span><span>✓</span><span>—</span><span>✓</span></div>
-                        <div class="fact-row"><span>√5</span><span>—</span><span>—</span><span>—</span><span>✓</span><span>✓</span></div>
-                        <div class="fact-row"><span>π</span><span>—</span><span>—</span><span>—</span><span>✓</span><span>✓</span></div>
-                    </div>
-                </div>
-            </details>
-
-            <div class="ai-section">
-                <h3 style="font-size:18px;">Assistente de IA</h3>
-                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Conjuntos Numéricos: Naturais, Inteiros, Racionais, Irracionais e Reais', this)">✨ Explicar de forma mais simples</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Conjuntos Numéricos')">✨ Gerar quiz (3 questões)</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Conjuntos Numéricos', this)">✨ Gerar exercícios adicionais</button>
-                <div class="ai-response-box hidden"></div>
+    <details>
+        <summary>Atenção na Prova</summary>
+        <div class="details-content">
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Erro Comum</h4>
+                <p style="margin:0;">Confundir dízimas <em>periódicas</em> (0,333…) com irracionais. Dízimas periódicas são <strong>racionais</strong> — têm fração equivalente. Só são irracionais as dízimas <em>sem</em> período que se repete.</p>
             </div>
-        </section>
-
-
-        <!-- ======================================================
-             MÓDULO 2 — INTERVALOS REAIS
-        ====================================================== -->
-        <section id="page-modulo-2" class="page">
-            <span class="topic-label">Tópico 2</span>
-            <h2 class="topic-title">Intervalos Reais</h2>
-
-            <details open>
-                <summary>Teoria Essencial</summary>
-                <div class="details-content">
-                    <p>Um <strong>intervalo</strong> é um subconjunto contínuo de ℝ — representa todos os reais entre dois extremos <em>a</em> e <em>b</em>.</p>
-
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Tipos de Intervalo</h4>
-                        <p style="margin:0;">
-                            <strong>Fechado [a, b]:</strong> inclui os extremos. a ≤ x ≤ b<br>
-                            <strong>Aberto ]a, b[ ou (a, b):</strong> exclui os extremos. a &lt; x &lt; b<br>
-                            <strong>Misto [a, b[:</strong> inclui <em>a</em>, exclui <em>b</em>. a ≤ x &lt; b<br>
-                            <strong>Misto ]a, b]:</strong> exclui <em>a</em>, inclui <em>b</em>. a &lt; x ≤ b<br>
-                            <strong>Semirretas:</strong> [a, +∞[ ou ]−∞, b] — só um extremo finito
-                        </p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Regra do Colchete</h4>
-                        <p style="margin:0;"><strong>[ ]</strong> = colchete <strong>fechado</strong> → <strong>inclui</strong> o extremo (ponto preenchido ●)<br>
-                        <strong>] [</strong> = colchete <strong>aberto</strong> → <strong>exclui</strong> o extremo (ponto vazio ○)</p>
-                    </div>
-                </div>
-            </details>
-
-            <!-- SVG: Visualização dos Intervalos na Reta Real -->
-            <div class="visual-card">
-                <h4 class="visual-card__title">🎨 Visualização dos Intervalos</h4>
-                <div class="svg-wrapper">
-                    <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" aria-label="Tipos de intervalos na reta real">
-                        <defs>
-                            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L8,3 z" fill="#9CA3AF"/>
-                            </marker>
-                        </defs>
-
-                        <!-- [a, b] Fechado -->
-                        <text x="10" y="22" font-size="11" fill="#374151" font-family="Public Sans,sans-serif" font-weight="700">[a, b] Fechado</text>
-                        <line x1="10" y1="38" x2="310" y2="38" stroke="#E5E7EB" stroke-width="1"/>
-                        <line x1="90" y1="33" x2="230" y2="33" stroke="#2563EB" stroke-width="3.5" stroke-linecap="round"/>
-                        <circle cx="90"  cy="33" r="5" fill="#2563EB"/>
-                        <circle cx="230" cy="33" r="5" fill="#2563EB"/>
-                        <text x="84"  y="52" font-size="10" fill="#2563EB" font-family="Public Sans,sans-serif">a</text>
-                        <text x="224" y="52" font-size="10" fill="#2563EB" font-family="Public Sans,sans-serif">b</text>
-
-                        <!-- ]a, b[ Aberto -->
-                        <text x="10" y="78" font-size="11" fill="#374151" font-family="Public Sans,sans-serif" font-weight="700">]a, b[ Aberto</text>
-                        <line x1="10" y1="94" x2="310" y2="94" stroke="#E5E7EB" stroke-width="1"/>
-                        <line x1="90" y1="89" x2="230" y2="89" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
-                        <circle cx="90"  cy="89" r="5" fill="white" stroke="#059669" stroke-width="2.5"/>
-                        <circle cx="230" cy="89" r="5" fill="white" stroke="#059669" stroke-width="2.5"/>
-                        <text x="84"  y="108" font-size="10" fill="#059669" font-family="Public Sans,sans-serif">a</text>
-                        <text x="224" y="108" font-size="10" fill="#059669" font-family="Public Sans,sans-serif">b</text>
-
-                        <!-- [a, b[ Misto -->
-                        <text x="10" y="134" font-size="11" fill="#374151" font-family="Public Sans,sans-serif" font-weight="700">[a, b[ Misto</text>
-                        <line x1="10" y1="150" x2="310" y2="150" stroke="#E5E7EB" stroke-width="1"/>
-                        <line x1="90" y1="145" x2="230" y2="145" stroke="#D97706" stroke-width="3.5" stroke-linecap="round"/>
-                        <circle cx="90"  cy="145" r="5" fill="#D97706"/>
-                        <circle cx="230" cy="145" r="5" fill="white" stroke="#D97706" stroke-width="2.5"/>
-                        <text x="84"  y="164" font-size="10" fill="#D97706" font-family="Public Sans,sans-serif">a</text>
-                        <text x="224" y="164" font-size="10" fill="#D97706" font-family="Public Sans,sans-serif">b</text>
-
-                        <!-- [a, +∞[ Semirreta -->
-                        <text x="10" y="190" font-size="11" fill="#374151" font-family="Public Sans,sans-serif" font-weight="700">[a, +∞[ Semirreta</text>
-                        <line x1="10" y1="206" x2="310" y2="206" stroke="#E5E7EB" stroke-width="1"/>
-                        <line x1="90" y1="201" x2="300" y2="201" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow)"/>
-                        <circle cx="90" cy="201" r="5" fill="#DC2626"/>
-                        <text x="84" y="218" font-size="10" fill="#DC2626" font-family="Public Sans,sans-serif">a</text>
-                        <text x="294" y="196" font-size="10" fill="#DC2626" font-family="Public Sans,sans-serif">+∞</text>
-
-                        <!-- Legenda -->
-                        <circle cx="12" cy="218" r="4" fill="#374151"/>
-                        <text x="20" y="222" font-size="9" fill="#374151" font-family="Public Sans,sans-serif">● = inclui</text>
-                        <circle cx="90" cy="218" r="4" fill="white" stroke="#374151" stroke-width="1.5"/>
-                        <text x="98" y="222" font-size="9" fill="#374151" font-family="Public Sans,sans-serif">○ = exclui</text>
-                    </svg>
-                </div>
-                <p class="visual-caption">Ponto preenchido (●) = inclui o extremo &nbsp;|&nbsp; Ponto vazio (○) = exclui o extremo</p>
-            </div>
-
-            <details>
-                <summary>Exemplos Resolvidos</summary>
-                <div class="details-content">
-                    <div class="box box--example">
-                        <p><strong>Ex 1:</strong> Represente o conjunto dos x tais que −1 ≤ x &lt; 4.</p>
-                        <div class="step"><div class="step__number">1</div><div>O sinal ≤ no extremo esquerdo significa <strong>inclui −1</strong> → colchete [</div></div>
-                        <div class="step"><div class="step__number">2</div><div>O sinal &lt; no extremo direito significa <strong>exclui 4</strong> → colchete [</div></div>
-                        <div class="step"><div class="step__number">3</div><div>Resposta: <strong>[−1, 4[</strong></div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 2:</strong> O intervalo ]2, 7] corresponde a qual desigualdade?</p>
-                        <div class="step"><div class="step__number">1</div><div>] no início → exclui 2 → sinal &lt;</div></div>
-                        <div class="step"><div class="step__number">2</div><div>] no final → inclui 7 → sinal ≤</div></div>
-                        <div class="step"><div class="step__number">3</div><div>Resposta: <strong>2 &lt; x ≤ 7</strong></div></div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Atenção na Prova</summary>
-                <div class="details-content">
-                    <div class="box box--mistake">
-                        <h4 class="box__title">❌ Erro Comum</h4>
-                        <p style="margin:0;">O infinito (+∞ ou −∞) <strong>nunca</strong> é incluído — sempre use colchete aberto ao lado do infinito. Escrever [a, +∞<strong>]</strong> está errado!</p>
-                    </div>
-                    <div class="box box--mistake" style="margin-top:12px;">
-                        <h4 class="box__title">❌ Outro Erro Frequente</h4>
-                        <p style="margin:0;">Confundir a notação americana (a, b) com intervalo aberto. Em provas brasileiras, use ]a, b[ para aberto e [a, b] para fechado.</p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Macete Rápido</h4>
-                        <p style="margin:0;">Leia o sinal de desigualdade e escolha o colchete:<br>
-                        ≤ ou ≥ → <strong>[</strong> (fechado, inclui)<br>
-                        &lt; ou &gt; → <strong>]</strong> (aberto, exclui)</p>
-                    </div>
-                </div>
-            </details>
-
-            <div class="ai-section">
-                <h3 style="font-size:18px;">Assistente de IA</h3>
-                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Intervalos Reais: abertos, fechados, mistos e semirretas na reta real', this)">✨ Explicar de forma mais simples</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Intervalos Reais')">✨ Gerar quiz (3 questões)</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Intervalos Reais e Reta Real', this)">✨ Gerar exercícios adicionais</button>
-                <div class="ai-response-box hidden"></div>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             MÓDULO 3 — ÁLGEBRA E FATORAÇÃO
-        ====================================================== -->
-        <section id="page-modulo-3" class="page">
-            <span class="topic-label">Tópico 3</span>
-            <h2 class="topic-title">Álgebra e Fatoração</h2>
-
-            <details open>
-                <summary>Produtos Notáveis</summary>
-                <div class="details-content">
-                    <p>Produtos notáveis são multiplicações algébricas tão comuns que vale a pena memorizar o resultado direto — economiza tempo na prova.</p>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Fórmulas Fundamentais</h4>
-                        <div class="formula-grid">
-                            <div class="formula-card">
-                                <span class="formula-name">Quadrado da Soma</span>
-                                <span class="formula-eq">(a + b)² = a² + 2ab + b²</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Quadrado da Diferença</span>
-                                <span class="formula-eq">(a − b)² = a² − 2ab + b²</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Produto da Soma pela Diferença</span>
-                                <span class="formula-eq">(a + b)(a − b) = a² − b²</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Cubo da Soma</span>
-                                <span class="formula-eq">(a + b)³ = a³ + 3a²b + 3ab² + b³</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Cubo da Diferença</span>
-                                <span class="formula-eq">(a − b)³ = a³ − 3a²b + 3ab² − b³</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-
-            <!-- SVG: Demonstração visual do quadrado da soma -->
-            <div class="visual-card">
-                <h4 class="visual-card__title">🎨 Por que (a+b)² = a² + 2ab + b²?</h4>
-                <div class="svg-wrapper">
-                    <svg viewBox="0 0 260 240" xmlns="http://www.w3.org/2000/svg" aria-label="Demonstração geométrica do quadrado da soma">
-                        <!-- Quadrado grande (a+b)² -->
-                        <rect x="20" y="20" width="220" height="220" fill="none" stroke="#374151" stroke-width="2"/>
-
-                        <!-- a² (canto superior esquerdo) -->
-                        <rect x="20" y="20" width="150" height="150" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
-                        <text x="85" y="100" font-size="20" fill="#2563EB" font-weight="bold" text-anchor="middle" font-family="Manrope,sans-serif">a²</text>
-
-                        <!-- b² (canto inferior direito) -->
-                        <rect x="170" y="170" width="70" height="70" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
-                        <text x="205" y="210" font-size="14" fill="#059669" font-weight="bold" text-anchor="middle" font-family="Manrope,sans-serif">b²</text>
-
-                        <!-- ab (canto superior direito) -->
-                        <rect x="170" y="20" width="70" height="150" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
-                        <text x="205" y="100" font-size="13" fill="#D97706" font-weight="bold" text-anchor="middle" font-family="Manrope,sans-serif">ab</text>
-
-                        <!-- ab (canto inferior esquerdo) -->
-                        <rect x="20" y="170" width="150" height="70" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
-                        <text x="95" y="210" font-size="13" fill="#D97706" font-weight="bold" text-anchor="middle" font-family="Manrope,sans-serif">ab</text>
-
-                        <!-- Labels de dimensão -->
-                        <text x="95" y="15" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
-                        <text x="205" y="15" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
-                        <text x="12" y="100" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
-                        <text x="12" y="208" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
-                    </svg>
-                </div>
-                <p class="visual-caption">(a+b)² = área do quadrado grande = <span style="color:#2563EB;">a²</span> + <span style="color:#D97706;">ab + ab</span> + <span style="color:#059669;">b²</span></p>
-            </div>
-
-            <details>
-                <summary>Técnicas de Fatoração</summary>
-                <div class="details-content">
-                    <p>Fatorar é o inverso: transformar uma expressão em um <strong>produto</strong> de fatores.</p>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Métodos de Fatoração (em ordem de tentativa)</h4>
-                        <p style="margin:0;">
-                            <strong>1. Fator comum em evidência:</strong> ax + ay = a(x + y)<br><br>
-                            <strong>2. Agrupamento:</strong> ab + ac + db + dc = a(b+c) + d(b+c) = (a+d)(b+c)<br><br>
-                            <strong>3. Diferença de quadrados:</strong> a² − b² = (a+b)(a−b)<br><br>
-                            <strong>4. Trinômio quadrado perfeito:</strong> a² ± 2ab + b² = (a ± b)²<br><br>
-                            <strong>5. Cubo perfeito:</strong> a³ ± 3a²b + 3ab² ± b³ = (a ± b)³
-                        </p>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Exemplos Resolvidos</summary>
-                <div class="details-content">
-                    <div class="box box--example">
-                        <p><strong>Ex 1 — Fator em Evidência:</strong> Fatore 6x² + 9x.</p>
-                        <div class="step"><div class="step__number">1</div><div>MDC(6, 9) = 3 e MDC(x², x) = x → fator comum = 3x</div></div>
-                        <div class="step"><div class="step__number">2</div><div>6x² + 9x = 3x(2x + 3) ✓</div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 2 — Diferença de Quadrados:</strong> Fatore 4x² − 25.</p>
-                        <div class="step"><div class="step__number">1</div><div>Identifique: 4x² = (2x)² e 25 = 5²</div></div>
-                        <div class="step"><div class="step__number">2</div><div>Use a² − b² = (a+b)(a−b)</div></div>
-                        <div class="step"><div class="step__number">3</div><div>4x² − 25 = (2x + 5)(2x − 5) ✓</div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 3 — Trinômio Quadrado Perfeito:</strong> Fatore x² + 6x + 9.</p>
-                        <div class="step"><div class="step__number">1</div><div>Verifique: √(x²) = x, √9 = 3, e 2·x·3 = 6x ✓</div></div>
-                        <div class="step"><div class="step__number">2</div><div>x² + 6x + 9 = (x + 3)² ✓</div></div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Atenção na Prova</summary>
-                <div class="details-content">
-                    <div class="box box--mistake">
-                        <h4 class="box__title">❌ Erro Clássico no Quadrado da Soma</h4>
-                        <p style="margin:0;">(a + b)² ≠ a² + b²  ← <strong>ERRADO!</strong><br>
-                        O termo do meio (2ab) não pode ser esquecido.<br>
-                        <strong>(a + b)² = a² + 2ab + b²</strong> ← certo</p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Macete — Diferença de Quadrados</h4>
-                        <p style="margin:0;">Viu subtração entre dois quadrados perfeitos? Fatore imediatamente:<br>
-                        x² − 16 = (x+4)(x−4)<br>
-                        9y² − 1 = (3y+1)(3y−1)</p>
-                    </div>
-                </div>
-            </details>
-
-            <div class="ai-section">
-                <h3 style="font-size:18px;">Assistente de IA</h3>
-                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Produtos Notáveis e Fatoração Algébrica', this)">✨ Explicar de forma mais simples</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Produtos Notáveis e Fatoração')">✨ Gerar quiz (3 questões)</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Produtos Notáveis e Fatoração Algébrica', this)">✨ Gerar exercícios adicionais</button>
-                <div class="ai-response-box hidden"></div>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             MÓDULO 4 — RELAÇÃO DE ORDEM E RETA REAL
-        ====================================================== -->
-        <section id="page-modulo-4" class="page">
-            <span class="topic-label">Tópico 4</span>
-            <h2 class="topic-title">Relação de Ordem e Reta Real</h2>
-
-            <details open>
-                <summary>Teoria Essencial</summary>
-                <div class="details-content">
-                    <p>A <strong>reta real</strong> é a representação geométrica de ℝ — cada ponto corresponde exatamente a um número real, e vice-versa.</p>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Relação de Ordem (Tricotomia)</h4>
-                        <p style="margin:0;">Para quaisquer a, b ∈ ℝ, <em>exatamente uma</em> das afirmações é verdadeira:<br>
-                        <strong>a &lt; b</strong> → a fica à <em>esquerda</em> de b na reta<br>
-                        <strong>a = b</strong> → mesmo ponto<br>
-                        <strong>a &gt; b</strong> → a fica à <em>direita</em> de b na reta</p>
-                    </div>
-                    <div class="box box--def" style="margin-top:12px;">
-                        <h4 class="box__title">📌 Propriedades da Ordem</h4>
-                        <p style="margin:0;">
-                            <strong>Transitividade:</strong> a &lt; b e b &lt; c → a &lt; c<br>
-                            <strong>Adição:</strong> a &lt; b → a + c &lt; b + c (para qualquer c)<br>
-                            <strong>Multiplicação:</strong> a &lt; b e c &gt; 0 → ac &lt; bc<br>
-                            <strong>Inversão:</strong> a &lt; b e c &lt; 0 → ac <strong>&gt;</strong> bc ← atenção!
-                        </p>
-                    </div>
-                </div>
-            </details>
-
-            <!-- SVG: Reta Real -->
-            <div class="visual-card">
-                <h4 class="visual-card__title">🎨 A Reta Real</h4>
-                <div class="svg-wrapper">
-                    <svg viewBox="0 0 320 90" xmlns="http://www.w3.org/2000/svg" aria-label="Reta real com números marcados">
-                        <defs>
-                            <marker id="arrowL" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
-                                <path d="M8,0 L0,3 L8,6 z" fill="#6B7280"/>
-                            </marker>
-                            <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                                <path d="M0,0 L8,3 L0,6 z" fill="#6B7280"/>
-                            </marker>
-                        </defs>
-                        <!-- Linha principal -->
-                        <line x1="20" y1="45" x2="300" y2="45" stroke="#374151" stroke-width="2"
-                              marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-                        <!-- Marcadores e labels -->
-                        <line x1="60"  y1="38" x2="60"  y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <line x1="100" y1="38" x2="100" y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <line x1="140" y1="38" x2="140" y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <line x1="180" y1="38" x2="180" y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <line x1="220" y1="38" x2="220" y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <line x1="260" y1="38" x2="260" y2="52" stroke="#374151" stroke-width="1.5"/>
-                        <!-- Labels dos números -->
-                        <text x="57"  y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">−2</text>
-                        <text x="97"  y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">−1</text>
-                        <text x="137" y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">0</text>
-                        <text x="177" y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">1</text>
-                        <text x="217" y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">2</text>
-                        <text x="257" y="66" font-size="12" fill="#374151" font-family="Public Sans,sans-serif" text-anchor="middle">3</text>
-                        <!-- Ponto especial: √2 ≈ 1,41 -->
-                        <circle cx="197" cy="45" r="4" fill="#DC2626"/>
-                        <text x="197" y="30" font-size="10" fill="#DC2626" font-family="Public Sans,sans-serif" text-anchor="middle">√2</text>
-                        <line x1="197" y1="34" x2="197" y2="41" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2"/>
-                        <!-- Ponto especial: −1/2 -->
-                        <circle cx="120" cy="45" r="4" fill="#D97706"/>
-                        <text x="120" y="30" font-size="10" fill="#D97706" font-family="Public Sans,sans-serif" text-anchor="middle">−½</text>
-                        <line x1="120" y1="34" x2="120" y2="41" stroke="#D97706" stroke-width="1" stroke-dasharray="3,2"/>
-                        <!-- Labels −∞ e +∞ -->
-                        <text x="22" y="42" font-size="10" fill="#9CA3AF" font-family="Public Sans,sans-serif">−∞</text>
-                        <text x="283" y="42" font-size="10" fill="#9CA3AF" font-family="Public Sans,sans-serif">+∞</text>
-                        <!-- Sentido de crescimento -->
-                        <text x="140" y="85" font-size="10" fill="#9CA3AF" font-family="Public Sans,sans-serif" text-anchor="middle">← menores | maiores →</text>
-                    </svg>
-                </div>
-                <p class="visual-caption">Quanto mais à <strong>direita</strong>, maior o número. Quanto mais à <strong>esquerda</strong>, menor.</p>
-            </div>
-
-            <details>
-                <summary>Exemplo Resolvido</summary>
-                <div class="details-content">
-                    <div class="box box--example">
-                        <p><strong>Problema:</strong> Ordene do menor para o maior: −2, 0, 1,5, −1/2, √2.</p>
-                        <div class="step"><div class="step__number">1</div><div>Converta tudo para decimal: −1/2 = −0,5 e √2 ≈ 1,41.</div></div>
-                        <div class="step"><div class="step__number">2</div><div>Compare: −2 &lt; −0,5 &lt; 0 &lt; 1,41 &lt; 1,5</div></div>
-                        <div class="step"><div class="step__number">3</div><div><strong>Resposta:</strong> −2 &lt; −1/2 &lt; 0 &lt; √2 &lt; 1,5</div></div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Atenção na Prova</summary>
-                <div class="details-content">
-                    <div class="box box--mistake">
-                        <h4 class="box__title">❌ Erro Gravíssimo — Multiplicar por Negativo</h4>
-                        <p style="margin:0;">Ao multiplicar ou dividir uma desigualdade por número <strong>negativo</strong>, o sinal <strong>inverte</strong>!<br>
-                        −2x &lt; 6 → x <strong>&gt;</strong> −3 (dividiu por −2, inverteu)</p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Dica para Comparar Números</h4>
-                        <p style="margin:0;">Ao comparar frações, raízes e decimais, converta tudo para decimal primeiro. Use calculadora mental para √2 ≈ 1,41, √3 ≈ 1,73, √5 ≈ 2,23.</p>
-                    </div>
-                </div>
-            </details>
-
-            <div class="ai-section">
-                <h3 style="font-size:18px;">Assistente de IA</h3>
-                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Relação de Ordem dos Reais e Reta Real', this)">✨ Explicar de forma mais simples</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Relação de Ordem e Reta Real')">✨ Gerar quiz (3 questões)</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Relação de Ordem dos Reais e Desigualdades', this)">✨ Gerar exercícios adicionais</button>
-                <div class="ai-response-box hidden"></div>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             MÓDULO 5 — POTENCIAÇÃO E RADICIAÇÃO
-        ====================================================== -->
-        <section id="page-modulo-5" class="page">
-            <span class="topic-label">Tópico 5</span>
-            <h2 class="topic-title">Potenciação e Radiciação</h2>
-
-            <details open>
-                <summary>Potenciação — Teoria e Propriedades</summary>
-                <div class="details-content">
-                    <p><strong>Potenciação:</strong> aⁿ = a × a × a … (n vezes). Chamamos <em>a</em> de base e <em>n</em> de expoente.</p>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Propriedades da Potenciação</h4>
-                        <div class="formula-grid">
-                            <div class="formula-card">
-                                <span class="formula-name">Produto de mesma base</span>
-                                <span class="formula-eq">aᵐ · aⁿ = aᵐ⁺ⁿ</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Quociente de mesma base</span>
-                                <span class="formula-eq">aᵐ ÷ aⁿ = aᵐ⁻ⁿ</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Potência de potência</span>
-                                <span class="formula-eq">(aᵐ)ⁿ = aᵐ·ⁿ</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Expoente zero</span>
-                                <span class="formula-eq">a⁰ = 1 (a ≠ 0)</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Expoente negativo</span>
-                                <span class="formula-eq">a⁻ⁿ = 1/aⁿ</span>
-                            </div>
-                            <div class="formula-card">
-                                <span class="formula-name">Expoente fracionário</span>
-                                <span class="formula-eq">aᵐ/ⁿ = ⁿ√(aᵐ)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Radiciação — Teoria e Propriedades</summary>
-                <div class="details-content">
-                    <p><strong>Radiciação</strong> é a operação inversa da potenciação: ⁿ√a = b se bⁿ = a.</p>
-                    <div class="box box--def">
-                        <h4 class="box__title">📌 Propriedades da Radiciação</h4>
-                        <p style="margin:0;">
-                            <strong>ⁿ√(a · b) = ⁿ√a · ⁿ√b</strong> (produto de radicandos)<br>
-                            <strong>ⁿ√(a / b) = ⁿ√a / ⁿ√b</strong> (quociente de radicandos)<br>
-                            <strong>ᵐ√(ⁿ√a) = ᵐ·ⁿ√a</strong> (raiz de raiz: multiplica índices)<br>
-                            <strong>√(a²) = |a|</strong> (resultado sempre positivo ou zero)<br>
-                            <strong>²√a só existe em ℝ se a ≥ 0</strong>
-                        </p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Simplificação de Raízes</h4>
-                        <p style="margin:0;">Para simplificar √72:<br>
-                        √72 = √(36 · 2) = √36 · √2 = 6√2<br>
-                        Procure sempre o maior quadrado perfeito que divide o radicando.</p>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Exemplos Resolvidos</summary>
-                <div class="details-content">
-                    <div class="box box--example">
-                        <p><strong>Ex 1 — Propriedades de Potência:</strong> Simplifique (2³)² ÷ 2⁴</p>
-                        <div class="step"><div class="step__number">1</div><div>(2³)² = 2^(3·2) = 2⁶ = 64</div></div>
-                        <div class="step"><div class="step__number">2</div><div>2⁶ ÷ 2⁴ = 2^(6−4) = 2² = 4 ✓</div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 2 — Expoente Negativo:</strong> Calcule 3⁻²</p>
-                        <div class="step"><div class="step__number">1</div><div>3⁻² = 1/3² = 1/9 ✓</div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 3 — Expoente Fracionário:</strong> Simplifique 8^(2/3)</p>
-                        <div class="step"><div class="step__number">1</div><div>8^(2/3) = ³√(8²) = ³√64 = 4 ✓</div></div>
-                        <div class="step"><div class="step__number">2</div><div>Ou: 8^(2/3) = (8^(1/3))² = (³√8)² = 2² = 4 ✓</div></div>
-                    </div>
-                    <div class="box box--example" style="margin-top:12px;">
-                        <p><strong>Ex 4 — Simplificar Raiz:</strong> Calcule √48</p>
-                        <div class="step"><div class="step__number">1</div><div>Fatore 48: 48 = 16 · 3 (16 é quadrado perfeito)</div></div>
-                        <div class="step"><div class="step__number">2</div><div>√48 = √(16 · 3) = √16 · √3 = 4√3 ✓</div></div>
-                    </div>
-                </div>
-            </details>
-
-            <details>
-                <summary>Atenção na Prova</summary>
-                <div class="details-content">
-                    <div class="box box--mistake">
-                        <h4 class="box__title">❌ Erro de Bases Diferentes</h4>
-                        <p style="margin:0;">2³ · 3² ≠ 6⁵ ← <strong>ERRADO!</strong><br>
-                        Só pode juntar potências com a <strong>mesma base</strong>.</p>
-                    </div>
-                    <div class="box box--mistake" style="margin-top:12px;">
-                        <h4 class="box__title">❌ Raiz Quadrada de Soma</h4>
-                        <p style="margin:0;">√(a² + b²) ≠ a + b ← <strong>ERRADO!</strong><br>
-                        A raiz distribui sobre <em>produto</em>, não sobre soma.<br>
-                        √(9 + 16) = √25 = 5 ≠ 3 + 4 = 7</p>
-                    </div>
-                    <div class="box box--tip">
-                        <h4 class="box__title">💡 Raízes Importantes para Memorizar</h4>
-                        <div class="fact-table">
-                            <div class="fact-row fact-header"><span>√n</span><span>Valor</span><span>√n</span><span>Valor</span></div>
-                            <div class="fact-row"><span>√2</span><span>≈ 1,41</span><span>√9</span><span>= 3</span></div>
-                            <div class="fact-row"><span>√3</span><span>≈ 1,73</span><span>√16</span><span>= 4</span></div>
-                            <div class="fact-row"><span>√4</span><span>= 2</span><span>√25</span><span>= 5</span></div>
-                            <div class="fact-row"><span>√5</span><span>≈ 2,24</span><span>√100</span><span>= 10</span></div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-
-            <div class="ai-section">
-                <h3 style="font-size:18px;">Assistente de IA</h3>
-                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Potenciação e Radiciação: propriedades e simplificação', this)">✨ Explicar de forma mais simples</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Potenciação e Radiciação')">✨ Gerar quiz (3 questões)</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Potenciação e Radiciação', this)">✨ Gerar exercícios adicionais</button>
-                <div class="ai-response-box hidden"></div>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             TELA: QUIZ
-        ====================================================== -->
-        <section id="page-quiz" class="page">
-            <div id="quiz-container">
-                <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;" id="quiz-progress">Questão 1 de 3</span>
-                <h2 style="font-size:24px;margin-top:8px;margin-bottom:24px;" id="question-text">Carregando...</h2>
-                <div id="options-container"></div>
-                <div id="explanation-box" class="explanation">
-                    <h4 class="box__title">Explicação</h4>
-                    <p style="margin:0;" id="explanation-text"></p>
-                </div>
-                <button id="btn-next-quiz" class="btn btn--primary" style="margin-top:24px;display:none;">Próxima Questão →</button>
-                <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(5)" style="margin-top:12px;">✨ Gerar mais 5 questões</button>
-            </div>
-            <div id="quiz-result" style="display:none;text-align:center;padding-top:40px;">
-                <h2 style="font-size:48px;color:var(--text-main);margin-bottom:8px;" id="score-number">3/3</h2>
-                <h3 style="font-size:20px;margin-bottom:8px;">Quiz Concluído!</h3>
-                <p style="color:var(--text-muted);margin-bottom:32px;" id="score-text">Excelente desempenho.</p>
-                <button class="btn btn--primary" data-nav="page-home">← Voltar para Home</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic(window.currentTopic)">✨ Novo Quiz sobre este tópico</button>
-                <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(10)">✨ Gerar mais 10 questões</button>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             TELA: SIMULADO
-        ====================================================== -->
-        <section id="page-simulado" class="page">
-            <div id="simulado-intro">
-                <h2>Simulado Completo</h2>
-                <p style="color:var(--text-muted);margin-bottom:24px;">Teste seus conhecimentos em todos os tópicos. Serão geradas 10 questões inéditas com níveis variados de dificuldade.</p>
-                <div class="box box--tip">
-                    <h4 class="box__title">💡 Dica antes de começar</h4>
-                    <p style="margin:0;">Responda sem pressa. Leia cada alternativa antes de marcar. O simulado mostrará explicações detalhadas ao final.</p>
-                </div>
-                <button class="btn btn--primary ai-btn" style="margin-top:24px;" onclick="startSimulado()">✨ Iniciar Simulado (10 Questões)</button>
-            </div>
-
-            <div id="simulado-container" style="display:none;">
-                <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;" id="simulado-progress">Questão 1 de 10</span>
-                <h2 style="font-size:24px;margin-top:8px;margin-bottom:24px;" id="simulado-question-text">Carregando...</h2>
-                <div id="simulado-options-container"></div>
-                <div id="simulado-explanation-box" class="explanation" style="display:none;">
-                    <h4 class="box__title">Explicação</h4>
-                    <p style="margin:0;" id="simulado-explanation-text"></p>
-                </div>
-                <button id="btn-next-simulado" class="btn btn--primary" style="margin-top:24px;display:none;">Próxima Questão →</button>
-            </div>
-
-            <div id="simulado-result" style="display:none;text-align:center;padding-top:40px;">
-                <h2 style="font-size:48px;color:var(--text-main);margin-bottom:8px;" id="simulado-score-number">10/10</h2>
-                <h3 style="font-size:20px;margin-bottom:8px;">Simulado Concluído!</h3>
-                <p style="color:var(--text-muted);margin-bottom:32px;" id="simulado-score-text">Excelente desempenho.</p>
-                <div id="simulado-feedback" style="text-align:left;margin-bottom:32px;"></div>
-                <button class="btn btn--primary" data-nav="page-home">← Voltar para Home</button>
-                <button class="btn btn--secondary ai-btn" onclick="generateSimulado()">✨ Refazer Simulado</button>
-            </div>
-        </section>
-
-
-        <!-- ======================================================
-             TELA: REVISÃO DE VÉSPERA
-        ====================================================== -->
-        <section id="page-revisao" class="page">
-            <h2>Revisão de Véspera</h2>
-            <p style="color:var(--text-muted);margin-bottom:24px;">Resumo estratégico para os momentos finais.</p>
-
             <div class="box box--tip">
-                <h4 class="box__title">⏱ Se você só tem 10 minutos</h4>
-                <p style="margin:0;font-weight:500;">Foque em: <strong>Produtos Notáveis</strong> (não esquecer o 2ab) e <strong>Tipos de Intervalos</strong> (colchete aberto vs fechado). São os temas que mais aparecem.</p>
+                <h4 class="box__title">💡 Macete — Boneca Russa</h4>
+                <p style="margin:0;">ℕ cabe dentro de ℤ, que cabe dentro de ℚ. O 𝕀 fica separado de ℚ, mas ambos cabem dentro de ℝ. Se pertence a ℕ, automaticamente pertence a todos os maiores.</p>
             </div>
-
-            <h3 style="margin-top:24px;font-size:16px;">Resumo dos 5 Tópicos</h3>
-
-            <div class="review-grid">
-                <div class="review-pill"><strong>ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ</strong></div>
-                <div class="review-pill"><strong>𝕀 ⊂ ℝ, 𝕀 ∩ ℚ = ∅</strong></div>
-                <div class="review-pill"><strong>[a,b] inclui extremos</strong></div>
-                <div class="review-pill"><strong>]a,b[ exclui extremos</strong></div>
-                <div class="review-pill"><strong>(a+b)² = a²+2ab+b²</strong></div>
-                <div class="review-pill"><strong>a²−b² = (a+b)(a−b)</strong></div>
-                <div class="review-pill"><strong>aᵐ·aⁿ = aᵐ⁺ⁿ</strong></div>
-                <div class="review-pill"><strong>a⁻ⁿ = 1/aⁿ</strong></div>
-                <div class="review-pill"><strong>× negativo → inverte sinal</strong></div>
-                <div class="review-pill"><strong>√(a·b) = √a · √b</strong></div>
+            <div class="fact-table">
+                <div class="fact-row fact-header"><span>Número</span><span>ℕ</span><span>ℤ</span><span>ℚ</span><span>𝕀</span><span>ℝ</span></div>
+                <div class="fact-row"><span>5</span><span>✓</span><span>✓</span><span>✓</span><span>—</span><span>✓</span></div>
+                <div class="fact-row"><span>−3</span><span>—</span><span>✓</span><span>✓</span><span>—</span><span>✓</span></div>
+                <div class="fact-row"><span>1/4</span><span>—</span><span>—</span><span>✓</span><span>—</span><span>✓</span></div>
+                <div class="fact-row"><span>√5</span><span>—</span><span>—</span><span>—</span><span>✓</span><span>✓</span></div>
+                <div class="fact-row"><span>π</span><span>—</span><span>—</span><span>—</span><span>✓</span><span>✓</span></div>
             </div>
+        </div>
+    </details>
 
-            <div style="margin-top:28px;padding-top:24px;border-top:1px solid #E5E7EB;">
-                <h3 style="font-size:18px;">Revisão com IA</h3>
-                <div class="ai-section">
-                    <button class="btn btn--secondary ai-btn" onclick="generateReview('Matemática Básica: Conjuntos, Intervalos, Álgebra, Potenciação, Radiciação e Reta Real', this)">
-                        ✨ Gerar Revisão Completa com Gemini
-                    </button>
-                    <div class="ai-response-box hidden"></div>
+    <div class="ai-section">
+        <h3>Assistente de IA</h3>
+        <button class="btn btn--secondary ai-btn" onclick="explainTopic('Conjuntos Numéricos: Naturais, Inteiros, Racionais, Irracionais e Reais', this)">✨ Explicar de forma mais simples</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Conjuntos Numéricos')">✨ Gerar quiz (3 questões)</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateExercises('Conjuntos Numéricos', this)">✨ Gerar exercícios adicionais</button>
+        <div class="ai-response-box hidden"></div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO 2 — INTERVALOS REAIS
+═══════════════════════════════════════════════════════ -->
+<section id="page-modulo-2" class="page">
+    <span class="topic-label">Tópico 2</span>
+    <h2 class="topic-title">Intervalos Reais</h2>
+
+    <details open>
+        <summary>Teoria Essencial</summary>
+        <div class="details-content">
+            <p>Um <strong>intervalo</strong> é um subconjunto contínuo de ℝ — representa todos os reais entre dois extremos <em>a</em> e <em>b</em>.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Tipos de Intervalo</h4>
+                <p style="margin:0;">
+                    <strong>Fechado [a, b]:</strong> inclui ambos os extremos. &nbsp;a ≤ x ≤ b<br>
+                    <strong>Aberto ]a, b[:</strong> exclui ambos os extremos. &nbsp;a &lt; x &lt; b<br>
+                    <strong>Misto [a, b[:</strong> inclui <em>a</em>, exclui <em>b</em>. &nbsp;a ≤ x &lt; b<br>
+                    <strong>Misto ]a, b]:</strong> exclui <em>a</em>, inclui <em>b</em>. &nbsp;a &lt; x ≤ b<br>
+                    <strong>Semirretas:</strong> [a, +∞[ ou ]−∞, b] — um extremo finito
+                </p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Regra do Colchete</h4>
+                <p style="margin:0;"><strong>[ ]</strong> = fechado → <strong>inclui</strong> o extremo (ponto ●)<br>
+                <strong>] [</strong> = aberto → <strong>exclui</strong> o extremo (ponto ○)</p>
+            </div>
+        </div>
+    </details>
+
+    <!-- SVG — Visualização dos 4 tipos de intervalo -->
+    <div class="visual-card">
+        <h4 class="visual-card__title">🎨 Visualização dos Intervalos na Reta Real</h4>
+        <div class="svg-wrapper">
+            <svg viewBox="0 0 300 195" xmlns="http://www.w3.org/2000/svg" role="img"
+                 aria-label="Quatro tipos de intervalo representados na reta real">
+
+                <!-- ── ROW 1: Fechado [a, b] ── -->
+                <text x="4" y="16" font-size="10" fill="#1E3A5F" font-weight="700" font-family="Manrope,sans-serif">[a, b] — Fechado</text>
+                <text x="4" y="28" font-size="8"  fill="#6B7280" font-family="Public Sans,sans-serif">a ≤ x ≤ b</text>
+                <!-- reta base -->
+                <line x1="90" y1="22" x2="295" y2="22" stroke="#E5E7EB" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- intervalo -->
+                <line x1="118" y1="22" x2="255" y2="22" stroke="#2563EB" stroke-width="4.5" stroke-linecap="round"/>
+                <!-- pontos preenchidos -->
+                <circle cx="118" cy="22" r="6" fill="#2563EB"/>
+                <circle cx="255" cy="22" r="6" fill="#2563EB"/>
+                <!-- labels -->
+                <text x="118" y="38" font-size="9" fill="#2563EB" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="255" y="38" font-size="9" fill="#2563EB" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
+
+                <!-- ── ROW 2: Aberto ]a, b[ ── -->
+                <text x="4" y="63" font-size="10" fill="#1E3A5F" font-weight="700" font-family="Manrope,sans-serif">]a, b[ — Aberto</text>
+                <text x="4" y="75" font-size="8"  fill="#6B7280" font-family="Public Sans,sans-serif">a &lt; x &lt; b</text>
+                <line x1="90" y1="69" x2="295" y2="69" stroke="#E5E7EB" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="118" y1="69" x2="255" y2="69" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+                <!-- pontos vazios (anel) -->
+                <circle cx="118" cy="69" r="6" fill="white" stroke="#059669" stroke-width="2.5"/>
+                <circle cx="255" cy="69" r="6" fill="white" stroke="#059669" stroke-width="2.5"/>
+                <text x="118" y="85" font-size="9" fill="#059669" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="255" y="85" font-size="9" fill="#059669" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
+
+                <!-- ── ROW 3: Misto [a, b[ ── -->
+                <text x="4" y="110" font-size="10" fill="#1E3A5F" font-weight="700" font-family="Manrope,sans-serif">[a, b[ — Misto</text>
+                <text x="4" y="122" font-size="8"  fill="#6B7280" font-family="Public Sans,sans-serif">a ≤ x &lt; b</text>
+                <line x1="90" y1="116" x2="295" y2="116" stroke="#E5E7EB" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="118" y1="116" x2="255" y2="116" stroke="#D97706" stroke-width="4.5" stroke-linecap="round"/>
+                <circle cx="118" cy="116" r="6" fill="#D97706"/>
+                <circle cx="255" cy="116" r="6" fill="white" stroke="#D97706" stroke-width="2.5"/>
+                <text x="118" y="132" font-size="9" fill="#D97706" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="255" y="132" font-size="9" fill="#D97706" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
+
+                <!-- ── ROW 4: Semirreta [a, +∞[ ── -->
+                <text x="4" y="157" font-size="10" fill="#1E3A5F" font-weight="700" font-family="Manrope,sans-serif">[a, +∞[ — Semirreta</text>
+                <text x="4" y="169" font-size="8"  fill="#6B7280" font-family="Public Sans,sans-serif">x ≥ a</text>
+                <line x1="90" y1="163" x2="280" y2="163" stroke="#E5E7EB" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="118" y1="163" x2="268" y2="163" stroke="#DC2626" stroke-width="4.5" stroke-linecap="round"/>
+                <!-- seta manual (sem marker) -->
+                <polygon points="263,157 277,163 263,169" fill="#DC2626"/>
+                <circle cx="118" cy="163" r="6" fill="#DC2626"/>
+                <text x="118" y="179" font-size="9" fill="#DC2626" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="273" y="155" font-size="9" fill="#DC2626" font-family="Public Sans,sans-serif">+∞</text>
+
+                <!-- ── Legenda ── -->
+                <circle cx="10"  cy="193" r="5"  fill="#374151"/>
+                <text x="20" y="197" font-size="8.5" fill="#374151" font-family="Public Sans,sans-serif">● = inclui o extremo</text>
+                <circle cx="130" cy="193" r="5"  fill="white" stroke="#374151" stroke-width="1.8"/>
+                <text x="140" y="197" font-size="8.5" fill="#374151" font-family="Public Sans,sans-serif">○ = exclui o extremo</text>
+            </svg>
+        </div>
+        <p class="visual-caption">O colchete indica se o extremo está incluído ou excluído do conjunto</p>
+    </div>
+
+    <details>
+        <summary>Exemplos Resolvidos</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>Ex 1:</strong> Represente {x ∈ ℝ | −1 ≤ x &lt; 4}.</p>
+                <div class="step"><div class="step__number">1</div><div>≤ no extremo esquerdo → <strong>inclui −1</strong> → colchete [</div></div>
+                <div class="step"><div class="step__number">2</div><div>&lt; no extremo direito → <strong>exclui 4</strong> → colchete [</div></div>
+                <div class="step"><div class="step__number">3</div><div>Resposta: <strong>[−1, 4[</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 2:</strong> O intervalo ]2, 7] corresponde a qual desigualdade?</p>
+                <div class="step"><div class="step__number">1</div><div>] no início → exclui 2 → sinal &lt;</div></div>
+                <div class="step"><div class="step__number">2</div><div>] no final → inclui 7 → sinal ≤</div></div>
+                <div class="step"><div class="step__number">3</div><div>Resposta: <strong>2 &lt; x ≤ 7</strong></div></div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Atenção na Prova</summary>
+        <div class="details-content">
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Infinito nunca é fechado</h4>
+                <p style="margin:0;">O ∞ <strong>nunca</strong> usa colchete fechado. [a, +∞<strong>]</strong> está errado — o correto é sempre [a, +∞<strong>[</strong>.</p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Macete rápido</h4>
+                <p style="margin:0;">≤ ou ≥ → <strong>[</strong> (fecha, inclui) &nbsp;|&nbsp; &lt; ou &gt; → <strong>]</strong> (abre, exclui)</p>
+            </div>
+        </div>
+    </details>
+
+    <div class="ai-section">
+        <h3>Assistente de IA</h3>
+        <button class="btn btn--secondary ai-btn" onclick="explainTopic('Intervalos Reais: abertos, fechados, mistos e semirretas', this)">✨ Explicar de forma mais simples</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Intervalos Reais')">✨ Gerar quiz (3 questões)</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateExercises('Intervalos Reais e Reta Real', this)">✨ Gerar exercícios adicionais</button>
+        <div class="ai-response-box hidden"></div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO 3 — ÁLGEBRA E FATORAÇÃO
+═══════════════════════════════════════════════════════ -->
+<section id="page-modulo-3" class="page">
+    <span class="topic-label">Tópico 3</span>
+    <h2 class="topic-title">Álgebra e Fatoração</h2>
+
+    <details open>
+        <summary>Produtos Notáveis</summary>
+        <div class="details-content">
+            <p>Produtos notáveis são multiplicações algébricas tão frequentes que vale memorizar o resultado — economiza tempo na prova.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Fórmulas Fundamentais</h4>
+                <div class="formula-grid">
+                    <div class="formula-card"><span class="formula-name">Quadrado da Soma</span><span class="formula-eq">(a + b)² = a² + 2ab + b²</span></div>
+                    <div class="formula-card"><span class="formula-name">Quadrado da Diferença</span><span class="formula-eq">(a − b)² = a² − 2ab + b²</span></div>
+                    <div class="formula-card"><span class="formula-name">Produto da Soma pela Diferença</span><span class="formula-eq">(a+b)(a−b) = a² − b²</span></div>
+                    <div class="formula-card"><span class="formula-name">Cubo da Soma</span><span class="formula-eq">(a+b)³ = a³ + 3a²b + 3ab² + b³</span></div>
+                    <div class="formula-card"><span class="formula-name">Cubo da Diferença</span><span class="formula-eq">(a−b)³ = a³ − 3a²b + 3ab² − b³</span></div>
                 </div>
             </div>
+        </div>
+    </details>
 
-            <h3 style="margin-top:28px;font-size:18px;">Checklist da Prova</h3>
-            <div class="checklist">
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Documento com foto (RG ou CNH)</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Caneta esferográfica preta</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Garrafa de água transparente</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Revisei Conjuntos Numéricos</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Revisei Intervalos Reais</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Revisei Produtos Notáveis e Fatoração</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Revisei Potenciação e Radiciação</span>
-                </label>
-                <label class="checklist-item">
-                    <input type="checkbox"><span>Fiz pelo menos um simulado completo</span>
-                </label>
+    <!-- SVG — Prova geométrica do (a+b)² -->
+    <div class="visual-card">
+        <h4 class="visual-card__title">🎨 Por que (a+b)² = a² + 2ab + b²?</h4>
+        <div class="svg-wrapper" style="max-width:260px;">
+            <svg viewBox="0 0 240 245" xmlns="http://www.w3.org/2000/svg" role="img"
+                 aria-label="Demonstração geométrica: quadrado de lado a+b dividido em 4 partes">
+                <!-- contorno total (a+b)² -->
+                <rect x="20" y="20" width="200" height="200" fill="none" stroke="#374151" stroke-width="2" rx="2"/>
+
+                <!-- a² — canto superior esquerdo — azul -->
+                <rect x="20" y="20" width="140" height="140" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+                <text x="90"  y="96"  font-size="22" fill="#2563EB" font-weight="700" text-anchor="middle" font-family="Manrope,sans-serif">a²</text>
+
+                <!-- ab — canto superior direito — âmbar -->
+                <rect x="160" y="20" width="60" height="140" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+                <text x="190" y="96"  font-size="14" fill="#D97706" font-weight="700" text-anchor="middle" font-family="Manrope,sans-serif">ab</text>
+
+                <!-- ab — canto inferior esquerdo — âmbar -->
+                <rect x="20" y="160" width="140" height="60" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+                <text x="90"  y="196" font-size="14" fill="#D97706" font-weight="700" text-anchor="middle" font-family="Manrope,sans-serif">ab</text>
+
+                <!-- b² — canto inferior direito — verde -->
+                <rect x="160" y="160" width="60" height="60" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+                <text x="190" y="196" font-size="13" fill="#059669" font-weight="700" text-anchor="middle" font-family="Manrope,sans-serif">b²</text>
+
+                <!-- labels dimensionais — top -->
+                <text x="90"  y="14" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="190" y="14" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
+                <!-- labels dimensionais — left -->
+                <text x="12" y="93"  font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">a</text>
+                <text x="12" y="193" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">b</text>
+
+                <!-- equação abaixo -->
+                <text x="120" y="235" font-size="10" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">
+                    = <tspan fill="#2563EB">a²</tspan> + <tspan fill="#D97706">2ab</tspan> + <tspan fill="#059669">b²</tspan>
+                </text>
+            </svg>
+        </div>
+        <p class="visual-caption">O quadrado de lado (a+b) tem área = <span style="color:#2563EB;">a²</span> + <span style="color:#D97706;">ab + ab</span> + <span style="color:#059669;">b²</span></p>
+    </div>
+
+    <details>
+        <summary>Técnicas de Fatoração</summary>
+        <div class="details-content">
+            <p>Fatorar é o inverso: transformar uma expressão em um <strong>produto</strong> de fatores.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 5 Métodos (em ordem de tentativa)</h4>
+                <p style="margin:0;">
+                    <strong>1. Fator em evidência:</strong> ax + ay = a(x + y)<br><br>
+                    <strong>2. Agrupamento:</strong> ab + ac + db + dc = (a+d)(b+c)<br><br>
+                    <strong>3. Diferença de quadrados:</strong> a² − b² = (a+b)(a−b)<br><br>
+                    <strong>4. Trinômio quadrado perfeito:</strong> a² ± 2ab + b² = (a ± b)²<br><br>
+                    <strong>5. Cubo perfeito:</strong> a³ ± 3a²b + 3ab² ± b³ = (a ± b)³
+                </p>
             </div>
-        </section>
+        </div>
+    </details>
 
-    </main>
+    <details>
+        <summary>Exemplos Resolvidos</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>Ex 1 — Fator em Evidência:</strong> Fatore 6x² + 9x.</p>
+                <div class="step"><div class="step__number">1</div><div>MDC(6,9)=3 e MDC(x²,x)=x → fator = 3x</div></div>
+                <div class="step"><div class="step__number">2</div><div><strong>6x² + 9x = 3x(2x + 3) ✓</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 2 — Diferença de Quadrados:</strong> Fatore 4x² − 25.</p>
+                <div class="step"><div class="step__number">1</div><div>4x² = (2x)² e 25 = 5²</div></div>
+                <div class="step"><div class="step__number">2</div><div><strong>4x² − 25 = (2x+5)(2x−5) ✓</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 3 — Trinômio Quadrado Perfeito:</strong> Fatore x² + 6x + 9.</p>
+                <div class="step"><div class="step__number">1</div><div>√x²=x, √9=3, e 2·x·3=6x ✓ → é TQP</div></div>
+                <div class="step"><div class="step__number">2</div><div><strong>x² + 6x + 9 = (x+3)² ✓</strong></div></div>
+            </div>
+        </div>
+    </details>
 
-    <!-- ======================================================
-         Chat Widget — Tutor de Matemática
-    ====================================================== -->
-    <div id="chat-widget" class="chat-widget">
-        <button id="chat-toggle" class="chat-toggle">💬 Tutor IA</button>
-        <div id="chat-window" class="chat-window hidden">
-            <div class="chat-header">
-                <h3 style="margin:0;font-size:16px;">🧮 Tutor de Matemática</h3>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <select id="chat-model" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 6px;font-size:12px;outline:none;cursor:pointer;">
-                        <option value="flash">⚡ Flash (Rápido)</option>
-                        <option value="pro">🧠 Pro (Detalhado)</option>
-                        <option value="lite">🪶 Lite (Mais leve)</option>
-                    </select>
-                    <button id="chat-close" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+    <details>
+        <summary>Atenção na Prova</summary>
+        <div class="details-content">
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ O erro clássico do quadrado da soma</h4>
+                <p style="margin:0;">(a+b)² ≠ a² + b² ← <strong>ERRADO!</strong><br>
+                O termo 2ab não pode ser esquecido.<br>
+                <strong>(a+b)² = a² + 2ab + b²</strong> ← correto</p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Macete — Diferença de Quadrados</h4>
+                <p style="margin:0;">Viu subtração entre dois quadrados perfeitos? Fatore imediatamente:<br>
+                x² − 16 = (x+4)(x−4) &nbsp;|&nbsp; 9y² − 1 = (3y+1)(3y−1)</p>
+            </div>
+        </div>
+    </details>
+
+    <div class="ai-section">
+        <h3>Assistente de IA</h3>
+        <button class="btn btn--secondary ai-btn" onclick="explainTopic('Produtos Notáveis e Fatoração Algébrica', this)">✨ Explicar de forma mais simples</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Produtos Notáveis e Fatoração')">✨ Gerar quiz (3 questões)</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateExercises('Produtos Notáveis e Fatoração Algébrica', this)">✨ Gerar exercícios adicionais</button>
+        <div class="ai-response-box hidden"></div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO 4 — RELAÇÃO DE ORDEM E RETA REAL
+═══════════════════════════════════════════════════════ -->
+<section id="page-modulo-4" class="page">
+    <span class="topic-label">Tópico 4</span>
+    <h2 class="topic-title">Relação de Ordem e Reta Real</h2>
+
+    <details open>
+        <summary>Teoria Essencial</summary>
+        <div class="details-content">
+            <p>A <strong>reta real</strong> é a representação geométrica de ℝ — cada ponto corresponde a exatamente um número real.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Tricotomia (Relação de Ordem)</h4>
+                <p style="margin:0;">Para quaisquer a, b ∈ ℝ, <em>exatamente uma</em> das situações é verdadeira:<br>
+                <strong>a &lt; b</strong> → a fica à <em>esquerda</em> de b na reta<br>
+                <strong>a = b</strong> → mesmo ponto<br>
+                <strong>a &gt; b</strong> → a fica à <em>direita</em> de b na reta</p>
+            </div>
+            <div class="box box--def" style="margin-top:12px;">
+                <h4 class="box__title">📌 Propriedades da Ordem</h4>
+                <p style="margin:0;">
+                    <strong>Transitividade:</strong> a &lt; b e b &lt; c → a &lt; c<br>
+                    <strong>Adição:</strong> a &lt; b → a+c &lt; b+c (para qualquer c)<br>
+                    <strong>× positivo:</strong> a &lt; b e c &gt; 0 → ac &lt; bc<br>
+                    <strong>× negativo:</strong> a &lt; b e c &lt; 0 → ac <strong>&gt;</strong> bc ← inverte o sinal!
+                </p>
+            </div>
+        </div>
+    </details>
+
+    <!-- SVG — Reta Real com pontos marcados -->
+    <div class="visual-card">
+        <h4 class="visual-card__title">🎨 A Reta Real</h4>
+        <div class="svg-wrapper">
+            <svg viewBox="0 0 300 82" xmlns="http://www.w3.org/2000/svg" role="img"
+                 aria-label="Reta real mostrando números inteiros, √2 e −½ marcados">
+                <!-- Reta principal -->
+                <line x1="14" y1="38" x2="286" y2="38" stroke="#374151" stroke-width="2" stroke-linecap="round"/>
+                <!-- Pontas da seta (sem markers — desenhadas manualmente) -->
+                <polygon points="14,33 4,38 14,43"   fill="#374151"/>
+                <polygon points="286,33 296,38 286,43" fill="#374151"/>
+
+                <!-- Marcadores de inteiros: −2, −1, 0, 1, 2, 3 -->
+                <!-- x positions: 0→148, intervalo=40 -->
+                <line x1="68"  y1="32" x2="68"  y2="44" stroke="#374151" stroke-width="1.5"/>
+                <line x1="108" y1="32" x2="108" y2="44" stroke="#374151" stroke-width="1.5"/>
+                <line x1="148" y1="32" x2="148" y2="44" stroke="#374151" stroke-width="1.5"/>
+                <line x1="188" y1="32" x2="188" y2="44" stroke="#374151" stroke-width="1.5"/>
+                <line x1="228" y1="32" x2="228" y2="44" stroke="#374151" stroke-width="1.5"/>
+
+                <text x="68"  y="58" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">−2</text>
+                <text x="108" y="58" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">−1</text>
+                <text x="148" y="58" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">0</text>
+                <text x="188" y="58" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">1</text>
+                <text x="228" y="58" font-size="11" fill="#374151" text-anchor="middle" font-family="Public Sans,sans-serif">2</text>
+
+                <!-- √2 ≈ 1.414 → x=148+1.414×40=204.6 ≈ 205 -->
+                <line x1="205" y1="28" x2="205" y2="44" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="3,2"/>
+                <circle cx="205" cy="38" r="4.5" fill="#DC2626"/>
+                <text x="205" y="22" font-size="10" fill="#DC2626" text-anchor="middle" font-family="Public Sans,sans-serif">√2</text>
+
+                <!-- −½ → x=148−0.5×40=128 -->
+                <line x1="128" y1="28" x2="128" y2="44" stroke="#D97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+                <circle cx="128" cy="38" r="4.5" fill="#D97706"/>
+                <text x="128" y="22" font-size="10" fill="#D97706" text-anchor="middle" font-family="Public Sans,sans-serif">−½</text>
+
+                <!-- Labels −∞ / +∞ -->
+                <text x="4"   y="28" font-size="9" fill="#9CA3AF" font-family="Public Sans,sans-serif">−∞</text>
+                <text x="274" y="28" font-size="9" fill="#9CA3AF" font-family="Public Sans,sans-serif">+∞</text>
+
+                <!-- sentido de crescimento -->
+                <text x="148" y="76" font-size="9" fill="#9CA3AF" text-anchor="middle" font-family="Public Sans,sans-serif">← menores &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; maiores →</text>
+            </svg>
+        </div>
+        <p class="visual-caption">Quanto mais à <strong>direita</strong>, maior o número &nbsp;|&nbsp; quanto mais à <strong>esquerda</strong>, menor</p>
+    </div>
+
+    <details>
+        <summary>Exemplo Resolvido</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>Problema:</strong> Ordene do menor para o maior: −2, 0, 1,5, −1/2, √2.</p>
+                <div class="step"><div class="step__number">1</div><div>Converta para decimal: −1/2 = −0,5 e √2 ≈ 1,41.</div></div>
+                <div class="step"><div class="step__number">2</div><div>Compare: −2 &lt; −0,5 &lt; 0 &lt; 1,41 &lt; 1,5</div></div>
+                <div class="step"><div class="step__number">3</div><div><strong>Resposta: −2 &lt; −1/2 &lt; 0 &lt; √2 &lt; 1,5 ✓</strong></div></div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Atenção na Prova</summary>
+        <div class="details-content">
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Multiplicar por número negativo</h4>
+                <p style="margin:0;">Ao multiplicar ou dividir uma desigualdade por número <strong>negativo</strong>, o sinal <strong>inverte</strong>!<br>
+                −2x &lt; 6 → divide por −2 → x <strong>&gt;</strong> −3</p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Raízes úteis para comparar</h4>
+                <p style="margin:0;">√2 ≈ 1,41 &nbsp;|&nbsp; √3 ≈ 1,73 &nbsp;|&nbsp; √5 ≈ 2,24 &nbsp;|&nbsp; √10 ≈ 3,16</p>
+            </div>
+        </div>
+    </details>
+
+    <div class="ai-section">
+        <h3>Assistente de IA</h3>
+        <button class="btn btn--secondary ai-btn" onclick="explainTopic('Relação de Ordem dos Reais e Reta Real', this)">✨ Explicar de forma mais simples</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Relação de Ordem e Reta Real')">✨ Gerar quiz (3 questões)</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateExercises('Relação de Ordem dos Reais e Desigualdades', this)">✨ Gerar exercícios adicionais</button>
+        <div class="ai-response-box hidden"></div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO 5 — POTENCIAÇÃO E RADICIAÇÃO
+═══════════════════════════════════════════════════════ -->
+<section id="page-modulo-5" class="page">
+    <span class="topic-label">Tópico 5</span>
+    <h2 class="topic-title">Potenciação e Radiciação</h2>
+
+    <details open>
+        <summary>Potenciação — Propriedades</summary>
+        <div class="details-content">
+            <p><strong>aⁿ</strong> = a × a × … × a (n vezes). <em>a</em> = base, <em>n</em> = expoente.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Propriedades</h4>
+                <div class="formula-grid">
+                    <div class="formula-card"><span class="formula-name">Mesma base — produto</span><span class="formula-eq">aᵐ · aⁿ = aᵐ⁺ⁿ</span></div>
+                    <div class="formula-card"><span class="formula-name">Mesma base — quociente</span><span class="formula-eq">aᵐ ÷ aⁿ = aᵐ⁻ⁿ</span></div>
+                    <div class="formula-card"><span class="formula-name">Potência de potência</span><span class="formula-eq">(aᵐ)ⁿ = aᵐ·ⁿ</span></div>
+                    <div class="formula-card"><span class="formula-name">Expoente zero</span><span class="formula-eq">a⁰ = 1 &nbsp;(a ≠ 0)</span></div>
+                    <div class="formula-card"><span class="formula-name">Expoente negativo</span><span class="formula-eq">a⁻ⁿ = 1/aⁿ</span></div>
+                    <div class="formula-card"><span class="formula-name">Expoente fracionário</span><span class="formula-eq">aᵐ/ⁿ = ⁿ√(aᵐ)</span></div>
                 </div>
             </div>
-            <div id="chat-messages" class="chat-messages"></div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Pergunta sobre matemática..." />
-                <button id="chat-send">Enviar</button>
+        </div>
+    </details>
+
+    <details>
+        <summary>Radiciação — Propriedades</summary>
+        <div class="details-content">
+            <p><strong>Radiciação</strong> é a inversa da potenciação: ⁿ√a = b ⟺ bⁿ = a.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Propriedades da Radiciação</h4>
+                <p style="margin:0;">
+                    <strong>ⁿ√(a·b) = ⁿ√a · ⁿ√b</strong> — produto de radicandos<br>
+                    <strong>ⁿ√(a/b) = ⁿ√a / ⁿ√b</strong> — quociente de radicandos<br>
+                    <strong>ᵐ√(ⁿ√a) = ᵐ·ⁿ√a</strong> — raiz de raiz: multiplica índices<br>
+                    <strong>²√(a²) = |a|</strong> — resultado sempre ≥ 0<br>
+                    <strong>²√a só existe em ℝ se a ≥ 0</strong>
+                </p>
             </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Simplificação de Raízes</h4>
+                <p style="margin:0;">Para simplificar √72:<br>
+                √72 = √(36·2) = √36·√2 = <strong>6√2</strong><br>
+                Encontre sempre o maior quadrado perfeito que divide o radicando.</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exemplos Resolvidos</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>Ex 1:</strong> Simplifique (2³)² ÷ 2⁴</p>
+                <div class="step"><div class="step__number">1</div><div>(2³)² = 2^(3·2) = 2⁶ = 64</div></div>
+                <div class="step"><div class="step__number">2</div><div>2⁶ ÷ 2⁴ = 2^(6−4) = <strong>2² = 4 ✓</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 2:</strong> Calcule 3⁻²</p>
+                <div class="step"><div class="step__number">1</div><div>3⁻² = 1/3² = <strong>1/9 ✓</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 3:</strong> Simplifique 8^(2/3)</p>
+                <div class="step"><div class="step__number">1</div><div>8^(2/3) = (³√8)² = 2² = <strong>4 ✓</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex 4:</strong> Simplifique √48</p>
+                <div class="step"><div class="step__number">1</div><div>48 = 16 · 3 (16 é quadrado perfeito)</div></div>
+                <div class="step"><div class="step__number">2</div><div>√48 = √16 · √3 = <strong>4√3 ✓</strong></div></div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Atenção na Prova</summary>
+        <div class="details-content">
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Bases diferentes não se unem</h4>
+                <p style="margin:0;">2³ · 3² ≠ 6⁵ ← <strong>ERRADO!</strong><br>
+                Só pode juntar potências com a <strong>mesma base</strong>.</p>
+            </div>
+            <div class="box box--mistake" style="margin-top:12px;">
+                <h4 class="box__title">❌ Raiz de soma ≠ soma de raízes</h4>
+                <p style="margin:0;">√(a² + b²) ≠ a + b ← <strong>ERRADO!</strong><br>
+                A raiz distribui sobre <em>produto</em>, não sobre soma.<br>
+                √(9+16) = √25 = 5 ≠ 3+4 = 7</p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Raízes para memorizar</h4>
+                <div class="fact-table">
+                    <div class="fact-row fact-header"><span>Raiz</span><span>Valor</span><span>Raiz</span><span>Valor</span></div>
+                    <div class="fact-row"><span>√2</span><span>≈ 1,41</span><span>√9</span><span>= 3</span></div>
+                    <div class="fact-row"><span>√3</span><span>≈ 1,73</span><span>√16</span><span>= 4</span></div>
+                    <div class="fact-row"><span>√4</span><span>= 2</span><span>√25</span><span>= 5</span></div>
+                    <div class="fact-row"><span>√5</span><span>≈ 2,24</span><span>√100</span><span>= 10</span></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <div class="ai-section">
+        <h3>Assistente de IA</h3>
+        <button class="btn btn--secondary ai-btn" onclick="explainTopic('Potenciação e Radiciação: propriedades e simplificação', this)">✨ Explicar de forma mais simples</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Potenciação e Radiciação')">✨ Gerar quiz (3 questões)</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateExercises('Potenciação e Radiciação', this)">✨ Gerar exercícios adicionais</button>
+        <div class="ai-response-box hidden"></div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     QUIZ
+═══════════════════════════════════════════════════════ -->
+<section id="page-quiz" class="page">
+    <div id="quiz-container">
+        <span class="topic-label" id="quiz-progress">Questão 1 de 3</span>
+        <h2 style="font-size:22px;margin-top:8px;margin-bottom:24px;" id="question-text">Carregando…</h2>
+        <div id="options-container"></div>
+        <div id="explanation-box" class="explanation">
+            <h4 class="box__title">Explicação</h4>
+            <p style="margin:0;" id="explanation-text"></p>
+        </div>
+        <button id="btn-next-quiz" class="btn btn--primary" style="margin-top:24px;display:none;">Próxima →</button>
+        <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(5)" style="margin-top:12px;">✨ Gerar mais 5 questões</button>
+    </div>
+    <div id="quiz-result" style="display:none;text-align:center;padding-top:40px;">
+        <h2 style="font-size:52px;color:var(--text-main);margin-bottom:8px;" id="score-number">—</h2>
+        <h3 style="font-size:20px;margin-bottom:8px;">Quiz Concluído!</h3>
+        <p style="color:var(--text-muted);margin-bottom:32px;" id="score-text"></p>
+        <button class="btn btn--primary" data-nav="page-home">← Voltar para Home</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic(window.currentTopic)">✨ Novo Quiz</button>
+        <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(10)">✨ +10 questões</button>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SIMULADO
+═══════════════════════════════════════════════════════ -->
+<section id="page-simulado" class="page">
+    <div id="simulado-intro">
+        <h2>Simulado Completo</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">10 questões geradas por IA cobrindo todos os tópicos, com dificuldades variadas.</p>
+        <div class="box box--tip">
+            <h4 class="box__title">💡 Dica</h4>
+            <p style="margin:0;">Leia cada alternativa antes de marcar. O simulado mostra explicações detalhadas ao final.</p>
+        </div>
+        <button class="btn btn--primary ai-btn" style="margin-top:24px;" onclick="startSimulado()">✨ Iniciar Simulado</button>
+    </div>
+
+    <div id="simulado-container" style="display:none;">
+        <span class="topic-label" id="simulado-progress">Questão 1 de 10</span>
+        <h2 style="font-size:22px;margin-top:8px;margin-bottom:24px;" id="simulado-question-text">Carregando…</h2>
+        <div id="simulado-options-container"></div>
+        <div id="simulado-explanation-box" class="explanation" style="display:none;">
+            <h4 class="box__title">Explicação</h4>
+            <p style="margin:0;" id="simulado-explanation-text"></p>
+        </div>
+        <button id="btn-next-simulado" class="btn btn--primary" style="margin-top:24px;display:none;">Próxima →</button>
+    </div>
+
+    <div id="simulado-result" style="display:none;text-align:center;padding-top:40px;">
+        <h2 style="font-size:52px;color:var(--text-main);margin-bottom:8px;" id="simulado-score-number">—</h2>
+        <h3 style="font-size:20px;margin-bottom:8px;">Simulado Concluído!</h3>
+        <p style="color:var(--text-muted);margin-bottom:32px;" id="simulado-score-text"></p>
+        <div id="simulado-feedback" style="text-align:left;margin-bottom:32px;"></div>
+        <button class="btn btn--primary" data-nav="page-home">← Voltar para Home</button>
+        <button class="btn btn--secondary ai-btn" onclick="generateSimulado()">✨ Refazer Simulado</button>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     REVISÃO DE VÉSPERA
+═══════════════════════════════════════════════════════ -->
+<section id="page-revisao" class="page">
+    <h2>Revisão de Véspera</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;">Resumo estratégico para os momentos finais antes da prova.</p>
+
+    <div class="box box--tip">
+        <h4 class="box__title">⏱ Se você tem só 10 minutos</h4>
+        <p style="margin:0;font-weight:500;">Foque em <strong>Produtos Notáveis</strong> (não esqueça o 2ab) e <strong>Tipos de Intervalos</strong> (colchete aberto vs fechado). São os temas mais cobrados.</p>
+    </div>
+
+    <h3 style="margin-top:24px;margin-bottom:12px;font-size:16px;">Fórmulas Rápidas</h3>
+    <div class="review-grid">
+        <div class="review-pill"><strong>ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ</strong></div>
+        <div class="review-pill"><strong>𝕀 ⊂ ℝ, ℚ ∩ 𝕀 = ∅</strong></div>
+        <div class="review-pill"><strong>[a,b] inclui extremos</strong></div>
+        <div class="review-pill"><strong>]a,b[ exclui extremos</strong></div>
+        <div class="review-pill"><strong>(a+b)² = a²+2ab+b²</strong></div>
+        <div class="review-pill"><strong>a²−b² = (a+b)(a−b)</strong></div>
+        <div class="review-pill"><strong>aᵐ·aⁿ = aᵐ⁺ⁿ</strong></div>
+        <div class="review-pill"><strong>a⁻ⁿ = 1/aⁿ</strong></div>
+        <div class="review-pill"><strong>× negativo → inverte ≤</strong></div>
+        <div class="review-pill"><strong>√(a·b) = √a·√b</strong></div>
+    </div>
+
+    <div style="margin-top:28px;padding-top:24px;border-top:1px solid #E5E7EB;">
+        <h3 style="font-size:18px;">Revisão com IA</h3>
+        <div class="ai-section">
+            <button class="btn btn--secondary ai-btn" onclick="generateReview('Matemática Básica: Conjuntos, Intervalos, Álgebra, Potenciação, Radiciação e Reta Real', this)">
+                ✨ Gerar Revisão Completa com Gemini
+            </button>
+            <div class="ai-response-box hidden"></div>
         </div>
     </div>
 
-    <!-- ======================================================
-         Rodapé
-    ====================================================== -->
-    <footer class="app-footer">
-        <span>CTIA03 — Bases Matemáticas</span>
-        <span class="dev-credit">Desenvolvido por <strong>Minutare</strong> — <a href="mailto:emanoelmcedo@gmail.com">emanoelmcedo@gmail.com</a></span>
-    </footer>
+    <h3 style="margin-top:28px;font-size:18px;">Checklist da Prova</h3>
+    <div class="checklist">
+        <label class="checklist-item"><input type="checkbox"><span>Documento com foto (RG ou CNH)</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Caneta esferográfica preta</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Garrafa de água transparente</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Revisei Conjuntos Numéricos</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Revisei Intervalos Reais</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Revisei Produtos Notáveis e Fatoração</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Revisei Potenciação e Radiciação</span></label>
+        <label class="checklist-item"><input type="checkbox"><span>Fiz pelo menos um simulado completo</span></label>
+    </div>
+</section>
 
-    <script src="/js/store.js"></script>
-    <script src="/js/quiz.js"></script>
-    <script src="/js/app.js"></script>
+</main><!-- end .app-container -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     CHAT WIDGET
+═══════════════════════════════════════════════════════ -->
+<div id="chat-widget" class="chat-widget">
+    <button id="chat-toggle" class="chat-toggle">💬 Tutor IA</button>
+    <div id="chat-window" class="chat-window hidden">
+        <div class="chat-header">
+            <h3 style="margin:0;font-size:16px;">🧮 Tutor de Matemática</h3>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <select id="chat-model" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 6px;font-size:12px;outline:none;cursor:pointer;">
+                    <option value="flash">⚡ Flash</option>
+                    <option value="pro">🧠 Pro</option>
+                    <option value="lite">🪶 Lite</option>
+                </select>
+                <button id="chat-close" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+            </div>
+        </div>
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Pergunta sobre matemática…" />
+            <button id="chat-send">Enviar</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     RODAPÉ
+═══════════════════════════════════════════════════════ -->
+<footer class="app-footer">
+    <span>CTIA03 — Bases Matemáticas</span>
+    <span class="dev-credit">Desenvolvido por <strong>Minutare</strong> — <a href="mailto:emanoelmcedo@gmail.com">emanoelmcedo@gmail.com</a></span>
+</footer>
+
+
+<script src="/js/store.js"></script>
+<script src="/js/modules-data.js"></script>
+<script src="/js/quiz.js"></script>
+<script src="/js/app.js"></script>
 </body>
 </html>

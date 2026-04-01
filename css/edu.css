@@ -84,6 +84,81 @@
     margin-top: 0;
 }
 
+/* ─── AI Response States ────────────────────────────────────── */
+.ai-loading-state {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.ai-error-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #B91C1C;
+    flex-wrap: wrap;
+}
+
+.ai-result-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--blue-ink);
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+/* ─── Retry Button ───────────────────────────────────────────── */
+.btn-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-ink);
+    background: white;
+    border: 1.5px solid var(--blue-ink);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.btn-retry:hover {
+    background: var(--blue-ink);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-retry:active {
+    transform: translateY(0);
+}
+
+/* ─── Quiz Error Box ─────────────────────────────────────────── */
+.quiz-error-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #B91C1C;
+    flex-wrap: wrap;
+}
+
 /* ─── Formula Grid ──────────────────────────────────────────── */
 .formula-grid {
     display: grid;

@@ -1,91 +1,164 @@
+// ─────────────────────────────────────────────────────────────
+// quiz.js — Lógica de Quiz e Simulado
+// ─────────────────────────────────────────────────────────────
+
 window.currentQuizQuestions = [];
-window.currentQ = 0;
-window.score = 0;
-window.currentTopic = '';
-window.isSimulado = false;
-window.simuladoResults = [];
+window.currentQ             = 0;
+window.score                = 0;
+window.currentTopic         = '';
+window.simuladoResults      = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Apenas inicializa eventos
-});
+// ── Helpers de UI ────────────────────────────────────────────
 
-window.generateQuizForTopic = async function(topic) {
+function showInlineError(containerId, message, retryFn) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = `
+        <div class="quiz-error-box">
+            <span>⚠️ ${message}</span>
+            ${retryFn
+                ? `<button class="btn-retry" onclick="(${retryFn.toString()})()">↻ Tentar novamente</button>`
+                : ''}
+        </div>`;
+}
+
+function showQuizLoading(questionTextId, progressId, message) {
+    const q = document.getElementById(questionTextId);
+    const p = document.getElementById(progressId);
+    if (q) q.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:15px;">
+            <div class="loader"></div>${message}
+        </div>`;
+    if (p) p.textContent = 'Aguarde…';
+}
+
+// ── Fallback: questões estáticas se API falhar ────────────────
+
+function getStaticQuestions(topic, count) {
+    if (typeof window.MODULES_DATA === 'undefined') return null;
+
+    // Encontra o módulo cujo quizTopic bate com o tópico pedido
+    const mod = Object.values(window.MODULES_DATA).find(
+        m => m.quizTopic === topic || m.title === topic
+    );
+    if (!mod || !mod.fallbackQuiz || mod.fallbackQuiz.length === 0) return null;
+
+    // Embaralha e retorna até 'count' questões
+    const shuffled = [...mod.fallbackQuiz].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count || 3, shuffled.length));
+}
+
+// ── Score feedback text ───────────────────────────────────────
+
+function getScoreText(score, total) {
+    const pct = (score / total) * 100;
+    if (pct === 100) return '🎉 Perfeito! Você acertou tudo!';
+    if (pct >= 80)  return '✅ Excelente! Você está muito bem preparado.';
+    if (pct >= 60)  return '👍 Bom trabalho! Ainda há espaço para melhorar.';
+    if (pct >= 40)  return '📖 Revise os módulos e tente novamente.';
+    return '🔄 Recomendamos rever o conteúdo antes de continuar.';
+}
+
+// ─────────────────────────────────────────────────────────────
+// QUIZ por tópico
+// ─────────────────────────────────────────────────────────────
+
+window.generateQuizForTopic = async function (topic, count) {
     window.currentTopic = topic;
-    window.isSimulado = false;
-    window.navigateTo('page-quiz');
-    
-    const quizContainer = document.getElementById('quiz-container');
-    const quizResult = document.getElementById('quiz-result');
-    const questionText = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
-    const explanationBox = document.getElementById('explanation-box');
-    const btnNextQuiz = document.getElementById('btn-next-quiz');
-    const quizProgress = document.getElementById('quiz-progress');
+    const num = count || 3;
 
-    quizResult.style.display = 'none';
+    window.navigateTo('page-quiz');
+
+    const quizContainer = document.getElementById('quiz-container');
+    const quizResult    = document.getElementById('quiz-result');
+
+    quizResult.style.display    = 'none';
     quizContainer.style.display = 'block';
-    
-    questionText.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><div class="loader"></div> Gerando questões com Gemini...</div>';
-    optionsContainer.innerHTML = '';
-    explanationBox.style.display = 'none';
-    btnNextQuiz.style.display = 'none';
-    quizProgress.textContent = `Preparando quiz sobre ${topic}...`;
+
+    document.getElementById('options-container').innerHTML  = '';
+    document.getElementById('explanation-box').style.display = 'none';
+    document.getElementById('btn-next-quiz').style.display   = 'none';
+
+    showQuizLoading('question-text', 'quiz-progress', `Gerando questões sobre "${topic}"…`);
 
     try {
-        const res = await fetch('/api/generate-quiz', {
+        const res  = await fetch('/api/generate-quiz', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic, count: 3 })
+            body: JSON.stringify({ topic, count: num })
         });
         const data = await res.json();
-        
-        if(data.error) throw new Error(data.error);
+        if (data.error) throw new Error(data.error);
 
         window.currentQuizQuestions = data;
         window.currentQ = 0;
-        window.score = 0;
-        
+        window.score    = 0;
         loadDynamicQuestion();
+
     } catch (e) {
-        questionText.innerHTML = '<p style="color:var(--red-ink);">Erro ao gerar quiz. Tente novamente.</p>';
-        quizProgress.textContent = 'Erro';
+        // Tenta fallback estático
+        const fb = getStaticQuestions(topic, num);
+        if (fb) {
+            window.currentQuizQuestions = fb;
+            window.currentQ = 0;
+            window.score    = 0;
+
+            // Aviso sutil de fallback
+            const qt = document.getElementById('question-text');
+            if (qt) qt.dataset.fallback = 'true';
+
+            loadDynamicQuestion();
+        } else {
+            showInlineError(
+                'question-text',
+                'Não foi possível gerar o quiz. Verifique sua conexão.',
+                () => generateQuizForTopic(topic, num)
+            );
+            document.getElementById('quiz-progress').textContent = 'Erro';
+        }
     }
 };
 
 function loadDynamicQuestion() {
     const q = window.currentQuizQuestions[window.currentQ];
-    document.getElementById('quiz-progress').textContent = `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
+    if (!q) return;
+
+    document.getElementById('quiz-progress').textContent =
+        `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
     document.getElementById('question-text').textContent = q.question;
-    
+
     const optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = '';
-    document.getElementById('explanation-box').style.display = 'none';
-    document.getElementById('btn-next-quiz').style.display = 'none';
+    document.getElementById('explanation-box').style.display  = 'none';
+    document.getElementById('btn-next-quiz').style.display    = 'none';
 
-    q.options.forEach((opt, index) => {
+    q.options.forEach((opt, idx) => {
         const div = document.createElement('div');
         div.className = 'quiz-option';
         div.textContent = opt;
-        div.onclick = () => selectDynamicOption(div, index, q.correctAnswer, q.explanation);
+        div.onclick = () => selectDynamicOption(div, idx, q.correctAnswer, q.explanation);
         optionsContainer.appendChild(div);
     });
 }
 
 function selectDynamicOption(selectedDiv, selectedIndex, correctIndex, explanation) {
-    const options = document.getElementById('options-container').querySelectorAll('.quiz-option');
-    options.forEach(opt => opt.classList.add('disabled'));
+    document.getElementById('options-container')
+        .querySelectorAll('.quiz-option')
+        .forEach(opt => opt.classList.add('disabled'));
 
     if (selectedIndex === correctIndex) {
         selectedDiv.classList.add('correct');
         window.score++;
     } else {
         selectedDiv.classList.add('wrong');
-        options[correctIndex].classList.add('correct');
+        document.getElementById('options-container')
+            .querySelectorAll('.quiz-option')[correctIndex]
+            ?.classList.add('correct');
     }
 
     document.getElementById('explanation-text').textContent = explanation;
     document.getElementById('explanation-box').style.display = 'block';
-    
+
     const btnNext = document.getElementById('btn-next-quiz');
     btnNext.style.display = 'block';
     btnNext.onclick = () => {
@@ -102,96 +175,179 @@ function showDynamicResult() {
     document.getElementById('quiz-container').style.display = 'none';
     const result = document.getElementById('quiz-result');
     result.style.display = 'block';
-    document.getElementById('score-number').textContent = `${window.score}/${window.currentQuizQuestions.length}`;
-    
-    // Save progress
-    let completedQuizzes = Store.load('completedQuizzes') || [];
-    if (!completedQuizzes.includes(window.currentTopic)) {
-        completedQuizzes.push(window.currentTopic);
-        Store.save('completedQuizzes', completedQuizzes);
+
+    const total = window.currentQuizQuestions.length;
+    document.getElementById('score-number').textContent = `${window.score}/${total}`;
+    document.getElementById('score-text').textContent   = getScoreText(window.score, total);
+
+    // Salva progresso
+    let completed = Store.load('completedQuizzes') || [];
+    if (!completed.includes(window.currentTopic)) {
+        completed.push(window.currentTopic);
+        Store.save('completedQuizzes', completed);
         if (window.updateProgress) window.updateProgress();
     }
 }
 
-// Lógica do Simulado
-window.startSimulado = async function() {
-    window.isSimulado = true;
-    
-    const intro = document.getElementById('simulado-intro');
-    const container = document.getElementById('simulado-container');
-    const result = document.getElementById('simulado-result');
-    const questionText = document.getElementById('simulado-question-text');
-    const optionsContainer = document.getElementById('simulado-options-container');
-    const explanationBox = document.getElementById('simulado-explanation-box');
-    const btnNext = document.getElementById('btn-next-simulado');
-    const progress = document.getElementById('simulado-progress');
+// ─────────────────────────────────────────────────────────────
+// GERAR MAIS QUESTÕES
+// ─────────────────────────────────────────────────────────────
 
-    intro.style.display = 'none';
-    result.style.display = 'none';
-    container.style.display = 'block';
-    
-    questionText.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><div class="loader"></div> Gerando simulado completo com Gemini...</div>';
-    optionsContainer.innerHTML = '';
-    explanationBox.style.display = 'none';
-    btnNext.style.display = 'none';
-    progress.textContent = `Preparando simulado...`;
+window.generateMoreQuestions = async function (count) {
+    const btns = document.querySelectorAll('.btn-more-questions');
+    const originals = [];
+    btns.forEach((btn, i) => {
+        originals[i] = btn.innerHTML;
+        btn.innerHTML = '<div class="loader" style="margin:0 auto;"></div>';
+        btn.disabled  = true;
+    });
 
     try {
-        const res = await fetch('/api/generate-quiz', {
+        const res  = await fetch('/api/generate-quiz', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: 'Matemática Básica: Conjuntos, Intervalos, Álgebra, Potenciação, Radiciação, Reta Real', count: 10, difficulty: 'variado' })
+            body: JSON.stringify({ topic: window.currentTopic, count, difficulty: 'variado' })
         });
         const data = await res.json();
-        
-        if(data.error) throw new Error(data.error);
+        if (data.error) throw new Error(data.error);
 
-        window.currentQuizQuestions = data;
-        window.currentQ = 0;
-        window.score = 0;
-        window.simuladoResults = [];
-        
-        loadSimuladoQuestion();
+        window.currentQuizQuestions = window.currentQuizQuestions.concat(data);
+
+        const resultScreen = document.getElementById('quiz-result');
+        if (resultScreen && resultScreen.style.display === 'block') {
+            resultScreen.style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            loadDynamicQuestion();
+        } else {
+            const p = document.getElementById('quiz-progress');
+            if (p) p.textContent = `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
+        }
     } catch (e) {
-        questionText.innerHTML = '<p style="color:var(--red-ink);">Erro ao gerar simulado. Tente novamente.</p>';
-        progress.textContent = 'Erro';
-        intro.style.display = 'block';
-        container.style.display = 'none';
+        // Sem alert nativo — feedback inline no primeiro botão
+        const firstBtn = btns[0];
+        if (firstBtn) {
+            firstBtn.innerHTML = '⚠️ Erro — tente novamente';
+            firstBtn.style.color = 'var(--red-ink)';
+            setTimeout(() => {
+                firstBtn.innerHTML = originals[0];
+                firstBtn.style.color = '';
+            }, 3000);
+        }
+    } finally {
+        btns.forEach((btn, i) => {
+            if (btn.disabled) {
+                btn.innerHTML = originals[i];
+                btn.disabled  = false;
+            }
+        });
     }
 };
 
+// ─────────────────────────────────────────────────────────────
+// SIMULADO
+// ─────────────────────────────────────────────────────────────
+
+window.startSimulado = async function () {
+    const intro     = document.getElementById('simulado-intro');
+    const container = document.getElementById('simulado-container');
+    const result    = document.getElementById('simulado-result');
+    const progress  = document.getElementById('simulado-progress');
+
+    intro.style.display     = 'none';
+    result.style.display    = 'none';
+    container.style.display = 'block';
+
+    document.getElementById('simulado-options-container').innerHTML   = '';
+    document.getElementById('simulado-explanation-box').style.display = 'none';
+    document.getElementById('btn-next-simulado').style.display        = 'none';
+
+    showQuizLoading('simulado-question-text', 'simulado-progress', 'Gerando simulado completo…');
+
+    const topic = 'Matemática Básica: Conjuntos, Intervalos, Álgebra, Potenciação, Radiciação, Reta Real';
+
+    try {
+        const res  = await fetch('/api/generate-quiz', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, count: 10, difficulty: 'variado' })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        window.currentQuizQuestions = data;
+        window.currentQ     = 0;
+        window.score        = 0;
+        window.simuladoResults = [];
+        loadSimuladoQuestion();
+
+    } catch (e) {
+        // Fallback: junta questões de todos os módulos
+        const fallback = buildSimuladoFallback(10);
+        if (fallback.length > 0) {
+            window.currentQuizQuestions = fallback;
+            window.currentQ     = 0;
+            window.score        = 0;
+            window.simuladoResults = [];
+            progress.textContent = '⚠️ Usando questões do banco local';
+            loadSimuladoQuestion();
+        } else {
+            showInlineError(
+                'simulado-question-text',
+                'Não foi possível gerar o simulado. Verifique sua conexão.',
+                () => startSimulado()
+            );
+            progress.textContent = 'Erro';
+            intro.style.display = 'block';
+            container.style.display = 'none';
+        }
+    }
+};
+
+function buildSimuladoFallback(total) {
+    if (typeof window.MODULES_DATA === 'undefined') return [];
+    const all = [];
+    Object.values(window.MODULES_DATA).forEach(mod => {
+        if (mod.fallbackQuiz) all.push(...mod.fallbackQuiz);
+    });
+    return all.sort(() => Math.random() - 0.5).slice(0, total);
+}
+
 function loadSimuladoQuestion() {
     const q = window.currentQuizQuestions[window.currentQ];
-    document.getElementById('simulado-progress').textContent = `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
+    if (!q) return;
+
+    document.getElementById('simulado-progress').textContent =
+        `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
     document.getElementById('simulado-question-text').textContent = q.question;
-    
+
     const optionsContainer = document.getElementById('simulado-options-container');
     optionsContainer.innerHTML = '';
     document.getElementById('simulado-explanation-box').style.display = 'none';
-    document.getElementById('btn-next-simulado').style.display = 'none';
+    document.getElementById('btn-next-simulado').style.display        = 'none';
 
-    q.options.forEach((opt, index) => {
+    q.options.forEach((opt, idx) => {
         const div = document.createElement('div');
         div.className = 'quiz-option';
         div.textContent = opt;
-        div.onclick = () => selectSimuladoOption(div, index, q.correctAnswer, q.explanation, q.difficulty);
+        div.onclick = () => selectSimuladoOption(div, idx, q.correctAnswer, q.explanation, q.difficulty);
         optionsContainer.appendChild(div);
     });
 }
 
 function selectSimuladoOption(selectedDiv, selectedIndex, correctIndex, explanation, difficulty) {
-    const options = document.getElementById('simulado-options-container').querySelectorAll('.quiz-option');
-    options.forEach(opt => opt.classList.add('disabled'));
+    document.getElementById('simulado-options-container')
+        .querySelectorAll('.quiz-option')
+        .forEach(opt => opt.classList.add('disabled'));
 
     const isCorrect = selectedIndex === correctIndex;
-    
+
     window.simuladoResults.push({
-        question: window.currentQuizQuestions[window.currentQ].question,
-        isCorrect: isCorrect,
-        difficulty: difficulty,
+        question:      window.currentQuizQuestions[window.currentQ].question,
+        isCorrect,
+        difficulty,
         selectedOption: window.currentQuizQuestions[window.currentQ].options[selectedIndex],
-        correctOption: window.currentQuizQuestions[window.currentQ].options[correctIndex],
-        explanation: explanation
+        correctOption:  window.currentQuizQuestions[window.currentQ].options[correctIndex],
+        explanation
     });
 
     if (isCorrect) {
@@ -199,12 +355,14 @@ function selectSimuladoOption(selectedDiv, selectedIndex, correctIndex, explanat
         window.score++;
     } else {
         selectedDiv.classList.add('wrong');
-        options[correctIndex].classList.add('correct');
+        document.getElementById('simulado-options-container')
+            .querySelectorAll('.quiz-option')[correctIndex]
+            ?.classList.add('correct');
     }
 
     document.getElementById('simulado-explanation-text').textContent = explanation;
     document.getElementById('simulado-explanation-box').style.display = 'block';
-    
+
     const btnNext = document.getElementById('btn-next-simulado');
     btnNext.style.display = 'block';
     btnNext.onclick = () => {
@@ -221,96 +379,33 @@ function showSimuladoResult() {
     document.getElementById('simulado-container').style.display = 'none';
     const result = document.getElementById('simulado-result');
     result.style.display = 'block';
-    
+
     const total = window.currentQuizQuestions.length;
     document.getElementById('simulado-score-number').textContent = `${window.score}/${total}`;
-    
-    const percentage = (window.score / total) * 100;
-    let scoreText = '';
-    if (percentage >= 80) scoreText = 'Excelente! Você está muito bem preparado.';
-    else if (percentage >= 50) scoreText = 'Bom trabalho, mas ainda há espaço para melhorar.';
-    else scoreText = 'Recomendamos revisar os módulos principais antes da prova.';
-    
-    document.getElementById('simulado-score-text').textContent = scoreText;
+    document.getElementById('simulado-score-text').textContent   = getScoreText(window.score, total);
 
     const feedbackContainer = document.getElementById('simulado-feedback');
-    feedbackContainer.innerHTML = '<h4 style="margin-bottom: 16px;">Análise de Desempenho:</h4>';
-    
-    const ul = document.createElement('ul');
-    ul.style.paddingLeft = '20px';
-    
-    const errors = window.simuladoResults.filter(r => !r.isCorrect);
-    if (errors.length === 0) {
-        ul.innerHTML = '<li>Perfeito! Nenhum erro detectado.</li>';
-    } else {
-        ul.innerHTML = `<li>Você errou ${errors.length} questões. Foque em revisar os tópicos dessas questões.</li>`;
-        // Poderíamos agrupar por dificuldade ou extrair o tópico da questão, mas como o Gemini não retorna o tópico exato por questão no schema atual, damos um feedback geral.
-    }
-    
-    feedbackContainer.appendChild(ul);
-    
-    const breakdownContainer = document.createElement('div');
-    breakdownContainer.style.marginTop = '32px';
-    breakdownContainer.innerHTML = '<h4 style="margin-bottom: 16px;">Revisão das Questões:</h4>';
-    
-    window.simuladoResults.forEach((res, index) => {
+    feedbackContainer.innerHTML = '<h4 style="margin-bottom:16px;">Revisão das Questões:</h4>';
+
+    window.simuladoResults.forEach((res, idx) => {
         const qDiv = document.createElement('div');
         qDiv.className = 'box ' + (res.isCorrect ? 'box--tip' : 'box--mistake');
-        qDiv.style.marginBottom = '16px';
-        qDiv.style.textAlign = 'left';
-        
+        qDiv.style.cssText = 'margin-bottom:14px;text-align:left;';
         qDiv.innerHTML = `
-            <h5 style="margin-top: 0; margin-bottom: 8px;">Questão ${index + 1} ${res.isCorrect ? '✅' : '❌'}</h5>
-            <p style="margin-bottom: 8px; font-weight: 600;">${res.question}</p>
-            <p style="margin-bottom: 4px; font-size: 14px;"><strong>Sua resposta:</strong> ${res.selectedOption}</p>
-            ${!res.isCorrect ? `<p style="margin-bottom: 8px; font-size: 14px; color: var(--green-ink);"><strong>Resposta correta:</strong> ${res.correctOption}</p>` : ''}
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
-                <p style="margin: 0; font-size: 14px;"><strong>Explicação:</strong> ${res.explanation}</p>
-            </div>
-        `;
-        breakdownContainer.appendChild(qDiv);
+            <h5 style="margin:0 0 8px;font-size:13px;">
+                Questão ${idx + 1} ${res.isCorrect ? '✅' : '❌'}
+                <span style="opacity:.6;font-weight:400;margin-left:6px;">${res.difficulty || ''}</span>
+            </h5>
+            <p style="margin:0 0 8px;font-size:14px;font-weight:600;">${res.question}</p>
+            <p style="margin:0 0 4px;font-size:13px;"><b>Sua resposta:</b> ${res.selectedOption}</p>
+            ${!res.isCorrect
+                ? `<p style="margin:0 0 8px;font-size:13px;color:var(--green-ink);"><b>Correta:</b> ${res.correctOption}</p>`
+                : ''}
+            <p style="margin:8px 0 0;font-size:13px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08);">
+                <b>Explicação:</b> ${res.explanation}
+            </p>`;
+        feedbackContainer.appendChild(qDiv);
     });
-    
-    feedbackContainer.appendChild(breakdownContainer);
-    
-    // Save progress
-    Store.save('lastSimuladoScore', { score: window.score, total: total, date: new Date().toISOString() });
+
+    Store.save('lastSimuladoScore', { score: window.score, total, date: new Date().toISOString() });
 }
-
-window.generateMoreQuestions = async function(count) {
-    const btns = document.querySelectorAll('.btn-more-questions');
-    btns.forEach(btn => {
-        btn.dataset.originalText = btn.innerHTML;
-        btn.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; gap:8px;"><div class="loader"></div> Gerando...</div>';
-        btn.disabled = true;
-    });
-
-    try {
-        const res = await fetch('/api/generate-quiz', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: window.currentTopic, count: count, difficulty: 'médio' })
-        });
-        const data = await res.json();
-        
-        if(data.error) throw new Error(data.error);
-
-        window.currentQuizQuestions = window.currentQuizQuestions.concat(data);
-        
-        const resultScreen = document.getElementById('quiz-result');
-        if (resultScreen.style.display === 'block') {
-            resultScreen.style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
-            loadDynamicQuestion();
-        } else {
-            document.getElementById('quiz-progress').textContent = `Questão ${window.currentQ + 1} de ${window.currentQuizQuestions.length}`;
-        }
-    } catch (e) {
-        alert('Erro ao gerar mais questões.');
-    } finally {
-        btns.forEach(btn => {
-            btn.innerHTML = btn.dataset.originalText;
-            btn.disabled = false;
-        });
-    }
-};

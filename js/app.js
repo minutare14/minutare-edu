@@ -1,61 +1,51 @@
+// ─────────────────────────────────────────────────────────────
+// app.js — Navegação, Chat e Funções de IA Globais
+// ─────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-    const pages = document.querySelectorAll('.page');
+
+    const pages  = document.querySelectorAll('.page');
     const btnBack = document.getElementById('btn-back');
 
-    window.updateProgress = function() {
-        const completedQuizzes = Store.load('completedQuizzes') || [];
+    // ── Progresso ──────────────────────────────────────────
+    window.updateProgress = function () {
+        const completed   = Store.load('completedQuizzes') || [];
         const totalTopics = 5;
-        const progressCount = Math.min(completedQuizzes.length, totalTopics);
+        const count       = Math.min(completed.length, totalTopics);
 
         const progressText = document.querySelector('.card--progress p');
         const progressFill = document.querySelector('.progress-fill');
-
-        if (progressText && progressFill) {
-            progressText.textContent = `Você revisou ${progressCount} de ${totalTopics} tópicos`;
-            progressFill.style.width = `${(progressCount / totalTopics) * 100}%`;
-        }
+        if (progressText) progressText.textContent = `Você revisou ${count} de ${totalTopics} tópicos`;
+        if (progressFill) progressFill.style.width  = `${(count / totalTopics) * 100}%`;
     };
 
     window.updateProgress();
 
-    window.navigateTo = function(pageId) {
+    // ── Navegação ──────────────────────────────────────────
+    window.navigateTo = function (pageId) {
         pages.forEach(p => p.classList.remove('active'));
         const target = document.getElementById(pageId);
         if (target) target.classList.add('active');
-
-        if (pageId === 'page-home') {
-            btnBack.classList.add('hidden');
-        } else {
-            btnBack.classList.remove('hidden');
-        }
+        btnBack.classList.toggle('hidden', pageId === 'page-home');
         window.scrollTo(0, 0);
     };
 
     btnBack.addEventListener('click', () => navigateTo('page-home'));
 
     document.querySelectorAll('[data-nav]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            navigateTo(e.currentTarget.dataset.nav);
-        });
+        btn.addEventListener('click', e => navigateTo(e.currentTarget.dataset.nav));
     });
 
+    // ── Checklist ──────────────────────────────────────────
     document.querySelectorAll('.checklist-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            const checkbox = item.querySelector('input');
-            if (e.target !== checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
-            if (checkbox.checked) {
-                item.classList.add('checked');
-            } else {
-                item.classList.remove('checked');
-            }
+        item.addEventListener('click', e => {
+            const cb = item.querySelector('input');
+            if (e.target !== cb) cb.checked = !cb.checked;
+            item.classList.toggle('checked', cb.checked);
         });
     });
 
-    // -------------------------------------------------------
-    // Chat Widget
-    // -------------------------------------------------------
+    // ── Chat Widget ────────────────────────────────────────
     const chatToggle   = document.getElementById('chat-toggle');
     const chatWindow   = document.getElementById('chat-window');
     const chatClose    = document.getElementById('chat-close');
@@ -69,69 +59,61 @@ document.addEventListener('DOMContentLoaded', () => {
     chatToggle.addEventListener('click', () => {
         chatWindow.classList.toggle('hidden');
         if (!chatWindow.classList.contains('hidden') && chatHistory.length === 0) {
-            appendMessage('model', 'Olá! 👋 Sou seu tutor de matemática. Pode me perguntar qualquer coisa sobre os tópicos do curso — vou explicar passo a passo!');
+            appendMessage('model',
+                'Olá! 👋 Sou seu tutor de matemática. Pode me perguntar qualquer coisa sobre os tópicos do curso — respondo passo a passo!'
+            );
         }
     });
 
-    chatClose.addEventListener('click', () => {
-        chatWindow.classList.add('hidden');
-    });
+    chatClose.addEventListener('click', () => chatWindow.classList.add('hidden'));
 
-    chatSend.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    chatSend.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
 
-    async function sendMessage() {
+    async function sendChatMessage() {
         const text = chatInput.value.trim();
         if (!text) return;
 
         appendMessage('user', text);
-        chatInput.value = '';
+        chatInput.value  = '';
         chatSend.disabled = true;
 
-        const loadingId = 'loading-' + Date.now();
-        appendMessage('model', '<div class="loader" style="border-top-color: var(--blue-ink);"></div>', loadingId);
+        const loadingId = 'chat-loading-' + Date.now();
+        appendMessage('model', '<div class="loader" style="border-top-color:var(--blue-ink);"></div>', loadingId);
 
         try {
-            const res = await fetch('/api/chat', {
+            const res  = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    history: chatHistory,
-                    message: text,
-                    model: chatModel.value
-                })
+                body: JSON.stringify({ history: chatHistory, message: text, model: chatModel.value })
             });
             const data = await res.json();
 
-            const loaderEl = document.getElementById(loadingId);
-            if (loaderEl) loaderEl.remove();
-
+            document.getElementById(loadingId)?.remove();
             if (data.error) throw new Error(data.error);
 
             appendMessage('model', data.text);
             chatHistory.push({ role: 'user',  parts: [{ text }] });
             chatHistory.push({ role: 'model', parts: [{ text: data.text }] });
-        } catch (e) {
-            const loaderEl = document.getElementById(loadingId);
-            if (loaderEl) loaderEl.remove();
-            appendMessage('model', '⚠️ Desculpe, ocorreu um erro. Verifique sua conexão e tente novamente.');
+
+        } catch (err) {
+            document.getElementById(loadingId)?.remove();
+            appendMessage('model', '⚠️ Não consegui processar sua mensagem. Tente novamente.');
         } finally {
             chatSend.disabled = false;
+            chatInput.focus();
         }
     }
 
-    function appendMessage(role, text, id = null) {
+    function appendMessage(role, html, id = null) {
         const div = document.createElement('div');
         div.className = `chat-message ${role}`;
         if (id) div.id = id;
 
-        // Markdown básico → HTML
-        let formatted = text
+        const formatted = html
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/g, '<br>');
+            .replace(/\*(.*?)\*/g,     '<em>$1</em>')
+            .replace(/\n/g,            '<br>');
 
         div.innerHTML = formatted;
         chatMessages.appendChild(div);
@@ -139,12 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// -------------------------------------------------------
-// Wrapper: botão "Simulado Completo" na home
-// -------------------------------------------------------
-window.generateSimulado = function() {
+// ─────────────────────────────────────────────────────────────
+// Simulado — wrapper para o botão da home
+// ─────────────────────────────────────────────────────────────
+
+window.generateSimulado = function () {
     window.navigateTo('page-simulado');
-    // Reseta a tela do simulado para o estado inicial (intro)
     const intro     = document.getElementById('simulado-intro');
     const container = document.getElementById('simulado-container');
     const result    = document.getElementById('simulado-result');
@@ -153,13 +135,47 @@ window.generateSimulado = function() {
     if (result)    result.style.display    = 'none';
 };
 
-// -------------------------------------------------------
-// Integração com Gemini — Explicar tópico
-// -------------------------------------------------------
-window.explainTopic = async function(topic, btnElement) {
-    const container = btnElement.closest('.ai-section').querySelector('.ai-response-box');
+// ─────────────────────────────────────────────────────────────
+// Helpers de IA — UI compartilhada
+// ─────────────────────────────────────────────────────────────
+
+function getAIContainer(btnElement) {
+    return btnElement.closest('.ai-section')?.querySelector('.ai-response-box') || null;
+}
+
+function setAILoading(container, msg) {
+    if (!container) return;
     container.classList.remove('hidden');
-    container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div class="loader"></div><span style="color:var(--text-muted);">Gerando explicação com Gemini...</span></div>';
+    container.innerHTML = `
+        <div class="ai-loading-state">
+            <div class="loader"></div>
+            <span>${msg}</span>
+        </div>`;
+}
+
+function setAIError(container, msg, retryFn) {
+    if (!container) return;
+    container.innerHTML = `
+        <div class="ai-error-state">
+            <span>⚠️ ${msg}</span>
+            <button class="btn-retry" onclick="(${retryFn.toString()})()">↻ Tentar novamente</button>
+        </div>`;
+}
+
+function setAIResult(container, title, html) {
+    if (!container) return;
+    container.innerHTML = `<h4 class="ai-result-title">${title}</h4>${html}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// explainTopic
+// ─────────────────────────────────────────────────────────────
+
+window.explainTopic = async function (topic, btnElement) {
+    const container = getAIContainer(btnElement);
+    if (!container) return;
+
+    setAILoading(container, 'Gerando explicação com Gemini…');
 
     try {
         const res  = await fetch('/api/explain-topic', {
@@ -169,19 +185,21 @@ window.explainTopic = async function(topic, btnElement) {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        container.innerHTML = `<h4 style="margin-top:0;color:var(--blue-ink);">✨ Explicação do Gemini</h4>${data.explanation}`;
+        setAIResult(container, '✨ Explicação do Gemini', data.explanation);
     } catch (e) {
-        container.innerHTML = '<p style="color:var(--red-ink);">⚠️ Erro ao gerar explicação. Verifique sua conexão.</p>';
+        setAIError(container, 'Falha ao gerar explicação.', () => explainTopic(topic, btnElement));
     }
 };
 
-// -------------------------------------------------------
-// Integração com Gemini — Revisão rápida
-// -------------------------------------------------------
-window.generateReview = async function(topic, btnElement) {
-    const container = btnElement.closest('.ai-section').querySelector('.ai-response-box');
-    container.classList.remove('hidden');
-    container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div class="loader"></div><span style="color:var(--text-muted);">Gerando revisão com Gemini...</span></div>';
+// ─────────────────────────────────────────────────────────────
+// generateReview
+// ─────────────────────────────────────────────────────────────
+
+window.generateReview = async function (topic, btnElement) {
+    const container = getAIContainer(btnElement);
+    if (!container) return;
+
+    setAILoading(container, 'Gerando revisão com Gemini…');
 
     try {
         const res  = await fetch('/api/generate-review', {
@@ -191,19 +209,21 @@ window.generateReview = async function(topic, btnElement) {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        container.innerHTML = `<h4 style="margin-top:0;color:var(--blue-ink);">✨ Revisão Rápida</h4>${data.review}`;
+        setAIResult(container, '✨ Revisão Rápida', data.review);
     } catch (e) {
-        container.innerHTML = '<p style="color:var(--red-ink);">⚠️ Erro ao gerar revisão. Verifique sua conexão.</p>';
+        setAIError(container, 'Falha ao gerar revisão.', () => generateReview(topic, btnElement));
     }
 };
 
-// -------------------------------------------------------
-// Integração com Gemini — Exercícios adicionais
-// -------------------------------------------------------
-window.generateExercises = async function(topic, btnElement) {
-    const container = btnElement.closest('.ai-section').querySelector('.ai-response-box');
-    container.classList.remove('hidden');
-    container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div class="loader"></div><span style="color:var(--text-muted);">Gerando exercícios com Gemini...</span></div>';
+// ─────────────────────────────────────────────────────────────
+// generateExercises
+// ─────────────────────────────────────────────────────────────
+
+window.generateExercises = async function (topic, btnElement) {
+    const container = getAIContainer(btnElement);
+    if (!container) return;
+
+    setAILoading(container, 'Gerando exercícios com Gemini…');
 
     try {
         const res  = await fetch('/api/generate-exercises', {
@@ -213,8 +233,8 @@ window.generateExercises = async function(topic, btnElement) {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        container.innerHTML = `<h4 style="margin-top:0;color:var(--blue-ink);">✨ Exercícios Adicionais</h4>${data.exercises}`;
+        setAIResult(container, '✨ Exercícios Adicionais', data.exercises);
     } catch (e) {
-        container.innerHTML = '<p style="color:var(--red-ink);">⚠️ Erro ao gerar exercícios. Verifique sua conexão.</p>';
+        setAIError(container, 'Falha ao gerar exercícios.', () => generateExercises(topic, btnElement));
     }
 };

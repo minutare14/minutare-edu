@@ -146,6 +146,109 @@
         </div>
     </details>
 
+    <details>
+        <summary>Noção de Conjunto</summary>
+        <div class="details-content">
+            <p>Um conjunto é uma <strong>coleção de objetos</strong> (números, letras, ideias) com alguma característica em comum. Usamos letras maiúsculas (A, B, C) e chaves { }.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Símbolos fundamentais</h4>
+                <p style="margin:0;">
+                    <strong>∈ (pertence):</strong> liga um <em>elemento</em> ao conjunto. Ex: 2 ∈ {1, 2, 3}<br>
+                    <strong>∉ (não pertence):</strong> Ex: 5 ∉ {1, 2, 3}<br>
+                    <strong>Por extensão:</strong> A = {0, 2, 4, 6} — lista os elementos<br>
+                    <strong>Por propriedade:</strong> A = {x | x é par e x &lt; 8} — descreve a regra
+                </p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Macete</h4>
+                <p style="margin:0;">A letra <strong>∈</strong> lembra um <strong>E</strong> arredondado — o elemento <strong>E</strong>stá dentro do conjunto. O "|" lê-se como "tal que".</p>
+            </div>
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Erro clássico</h4>
+                <p style="margin:0;">Elementos <strong>repetidos não contam duas vezes</strong>. O conjunto das letras de "MATEMATICA" é {M, A, T, E, I, C} — apenas 6 elementos únicos.</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Subconjuntos e Propriedades</summary>
+        <div class="details-content">
+            <p>Quando todos os elementos de A também estão em B, dizemos que A <strong>está contido</strong> em B.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Relação de Inclusão</h4>
+                <p style="margin:0;">
+                    <strong>⊂ (está contido):</strong> A ⊂ B — todo elemento de A pertence a B<br>
+                    <strong>⊃ (contém):</strong> B ⊃ A — B engloba A<br>
+                    <strong>Conjunto vazio ∅:</strong> sem elementos. <em>Regra de ouro:</em> ∅ ⊂ a todo conjunto<br>
+                    <strong>Igualdade A = B:</strong> quando A ⊂ B e B ⊂ A simultaneamente
+                </p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 A boca do símbolo aponta para o maior</h4>
+                <p style="margin:0;">A ⊂ B → a boca de ⊂ abre para B (o maior). Igual ao sinal de menor/maior: A &lt; B.</p>
+            </div>
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Não confunda os símbolos!</h4>
+                <p style="margin:0;"><strong>∈ é para elemento ↔ conjunto</strong> (3 ∈ ℕ)<br>
+                <strong>⊂ é para conjunto ↔ conjunto</strong> (ℕ ⊂ ℤ)<br>
+                Escrever ℕ ∈ ℤ está <strong>errado</strong>. ℕ ⊂ ℤ está correto.</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Operações entre Conjuntos</summary>
+        <div class="details-content">
+            <div class="box box--def">
+                <h4 class="box__title">📌 As 4 operações</h4>
+                <p style="margin:0;">
+                    <strong>União (A ∪ B):</strong> tudo que está em A <em>ou</em> em B (junta sem repetir)<br>
+                    <strong>Interseção (A ∩ B):</strong> apenas o que está em A <em>e</em> em B ao mesmo tempo<br>
+                    <strong>Diferença (A − B):</strong> elementos de A que <em>não</em> estão em B<br>
+                    <strong>Complementar (Aᶜ):</strong> o que falta para A completar o Universo U
+                </p>
+            </div>
+            <div class="box box--example">
+                <p><strong>Exemplo:</strong> A = {1, 2, 3, 4} e B = {3, 4, 5, 6}</p>
+                <div class="step"><div class="step__number">∪</div><div>A ∪ B = {1, 2, 3, 4, 5, 6} — junta tudo, sem repetir o 3 e 4</div></div>
+                <div class="step"><div class="step__number">∩</div><div>A ∩ B = {3, 4} — só o que está nos dois</div></div>
+                <div class="step"><div class="step__number">−</div><div>A − B = {1, 2} — tira de A o que está em B</div></div>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Problemas de texto: diagrama de Venn</h4>
+                <p style="margin:0;">Sempre preencha <strong>de dentro para fora</strong>, começando pela interseção central. Se 20 estudam inglês, 15 espanhol e são 30 no total, a interseção é 20+15−30 = <strong>5 alunos</strong>.</p>
+            </div>
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ A − B ≠ B − A</h4>
+                <p style="margin:0;">A diferença NÃO é comutativa! A−B = {1,2} mas B−A = {5,6} — resultados completamente diferentes.</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercícios do Conteúdo</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>1.</strong> Classifique (V) ou (F): a) Todo inteiro é racional. b) π é racional. c) 2,454545… é irracional.</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">a) <strong>V</strong> — qualquer inteiro n = n/1 é fração. &nbsp; b) <strong>F</strong> — π é o clássico irracional. &nbsp; c) <strong>F</strong> — "45" repete, é dízima periódica → racional.</p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>2.</strong> Sendo X = {0, 2, 4} e Y = {1, 2, 3}, calcule (X ∪ Y) − (X ∩ Y).</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">X ∪ Y = {0,1,2,3,4} · X ∩ Y = {2} · Diferença = <strong>{0, 1, 3, 4}</strong></p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>3. (Desafio)</strong> Em uma sala de 30 alunos, 20 estudam inglês e 15 espanhol. Todos estudam pelo menos um idioma. Quantos estudam os dois?</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">20 + 15 − 30 = <strong>5 alunos</strong> estudam os dois idiomas.</p>
+                </details>
+            </div>
+        </div>
+    </details>
+
     <div class="ai-section">
         <h3>Assistente de IA</h3>
         <button class="btn btn--secondary ai-btn" onclick="explainTopic('Conjuntos Numéricos: Naturais, Inteiros, Racionais, Irracionais e Reais', this)">✨ Explicar de forma mais simples</button>
@@ -274,8 +377,53 @@
                 <p style="margin:0;">O ∞ <strong>nunca</strong> usa colchete fechado. [a, +∞<strong>]</strong> está errado — o correto é sempre [a, +∞<strong>[</strong>.</p>
             </div>
             <div class="box box--tip">
-                <h4 class="box__title">💡 Macete rápido</h4>
-                <p style="margin:0;">≤ ou ≥ → <strong>[</strong> (fecha, inclui) &nbsp;|&nbsp; &lt; ou &gt; → <strong>]</strong> (abre, exclui)</p>
+                <h4 class="box__title">💡 Macetes do colchete</h4>
+                <p style="margin:0;">≤ ou ≥ → <strong>[</strong> (fecha, inclui, bolinha <strong>pintada</strong>) &nbsp;|&nbsp; &lt; ou &gt; → <strong>]</strong> (abre, exclui, bolinha <strong>vazia</strong>)<br><br>
+                <strong>Colchete "de boa" [a, b]</strong>: os colchetes abraçam os números → intervalo fechado<br>
+                <strong>Colchete "de mal" ]a, b[</strong>: os colchetes viram de costas → intervalo aberto</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Interseção e União de Intervalos</summary>
+        <div class="details-content">
+            <p>Para operar intervalos, <strong>desenhe as retas uma embaixo da outra</strong> — a resposta fica visual e sem erro.</p>
+            <div class="box box--example">
+                <p><strong>Ex:</strong> Calcule [1, 4] ∩ [3, 6]</p>
+                <div class="step"><div class="step__number">1</div><div>Reta 1: pinte do 1 ao 4</div></div>
+                <div class="step"><div class="step__number">2</div><div>Reta 2: pinte do 3 ao 6</div></div>
+                <div class="step"><div class="step__number">3</div><div>A parte pintada nas duas → <strong>[3, 4]</strong></div></div>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>Ex:</strong> Calcule ]−1, 5] ∪ [2, 8]</p>
+                <div class="step"><div class="step__number">1</div><div>União junta tudo: do limite menor ao maior</div></div>
+                <div class="step"><div class="step__number">2</div><div>O menor limite é −1 (aberto) e o maior é 8 (fechado)</div></div>
+                <div class="step"><div class="step__number">3</div><div>Resposta: <strong>]−1, 8]</strong></div></div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercícios do Conteúdo</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>1.</strong> Represente em intervalo: {x ∈ ℝ | x > 10}</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;"><strong>]10, +∞[</strong> — exclui o 10 (sinal &gt; estrito) e infinito é sempre aberto.</p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>2.</strong> Quantos inteiros existem no intervalo ]1, 5]?</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">]1, 5] exclui 1 e inclui 5. Os inteiros são: 2, 3, 4, 5 → <strong>4 inteiros</strong>.</p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>3.</strong> Qual dos números NÃO pertence a [−3, 2[? a) −3 &nbsp; b) 0 &nbsp; c) 1,99 &nbsp; d) 2</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">Letra <strong>d)</strong>. O intervalo termina em 2 aberto — o 2 não está incluído.</p>
+                </details>
             </div>
         </div>
     </details>
@@ -410,6 +558,57 @@
         </div>
     </details>
 
+    <details>
+        <summary>Propriedades Básicas da Álgebra</summary>
+        <div class="details-content">
+            <p>As propriedades algébricas são as <strong>"regras do jogo"</strong> que garantem que você pode reorganizar expressões sem quebrar a matemática.</p>
+            <div class="box box--def">
+                <h4 class="box__title">📌 As 3 propriedades fundamentais</h4>
+                <p style="margin:0;">
+                    <strong>Comutativa (troca de lugar):</strong> a + b = b + a &nbsp;·&nbsp; a · b = b · a<br>
+                    <em style="font-size:12px;color:var(--text-muted);">Atenção: subtração e divisão NÃO são comutativas.</em><br><br>
+                    <strong>Associativa (troca os parênteses):</strong> (a+b)+c = a+(b+c)<br>
+                    <em style="font-size:12px;color:var(--text-muted);">Exemplo prático: (13+87)+45 = 100+45 = 145 — muito mais fácil!</em><br><br>
+                    <strong>Distributiva (chuveirinho):</strong> a · (b + c) = ab + ac<br>
+                    <em style="font-size:12px;color:var(--text-muted);">O número de fora visita todos os termos de dentro.</em>
+                </p>
+            </div>
+            <div class="box box--tip">
+                <h4 class="box__title">💡 Macete — O Carteiro</h4>
+                <p style="margin:0;">Na distributiva, o número de fora é o <strong>carteiro</strong>: ele entrega a carta para <em>todos</em> os moradores de dentro do parênteses. Se pular um, a conta fica errada.</p>
+            </div>
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ Erros clássicos na distributiva</h4>
+                <p style="margin:0;">2(x + 5) = 2x + 5 ← <strong>ERRADO!</strong> O 5 também é multiplicado. Correto: 2x + <strong>10</strong><br><br>
+                −3(x − 2) = −3x − 6 ← <strong>ERRADO!</strong> Jogo de sinais: (−3)·(−2) = +6. Correto: −3x <strong>+ 6</strong></p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercícios do Conteúdo</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>1.</strong> Fatore usando fator comum em evidência: 15y⁴ − 5y²</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">MDC(15,5)=5, MDC(y⁴,y²)=y². Fator = 5y². Resultado: <strong>5y²(3y² − 1)</strong></p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>2.</strong> Simplifique: (x² − 9) ÷ (x + 3)</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">x² − 9 = (x+3)(x−3). Cancela (x+3). Resultado: <strong>x − 3</strong></p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>3.</strong> Qual produto notável originou y² + 14y + 49?</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">√y²=y, √49=7, e 2·y·7=14y ✓. Originou de <strong>(y + 7)²</strong></p>
+                </details>
+            </div>
+        </div>
+    </details>
+
     <div class="ai-section">
         <h3>Assistente de IA</h3>
         <button class="btn btn--secondary ai-btn" onclick="explainTopic('Produtos Notáveis e Fatoração Algébrica', this)">✨ Explicar de forma mais simples</button>
@@ -520,6 +719,51 @@
             <div class="box box--tip">
                 <h4 class="box__title">💡 Raízes úteis para comparar</h4>
                 <p style="margin:0;">√2 ≈ 1,41 &nbsp;|&nbsp; √3 ≈ 1,73 &nbsp;|&nbsp; √5 ≈ 2,24 &nbsp;|&nbsp; √10 ≈ 3,16</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Comparando Negativos e Frações</summary>
+        <div class="details-content">
+            <div class="box box--tip">
+                <h4 class="box__title">💡 O jacaré e o termômetro</h4>
+                <p style="margin:0;"><strong>O símbolo &gt; ou &lt; é como a boca de um jacaré</strong>: ele sempre abre para comer o número <em>maior</em>. Ex: 5 &gt; 2 (boca aberta pro 5).<br><br>
+                <strong>Nos negativos, imagine um termômetro:</strong> −5°C é mais frio (menor) que −1°C. Quanto "mais negativo", menor o número. −8 &lt; −2.</p>
+            </div>
+            <div class="box box--def">
+                <h4 class="box__title">📌 Comparando frações — multiplicação cruzada</h4>
+                <p style="margin:0;">Para comparar 3/4 e 5/7: multiplique cruzado de baixo para cima.<br>
+                7 × 3 = 21 &nbsp;·&nbsp; 4 × 5 = 20<br>
+                Como 21 &gt; 20, a fração da esquerda é maior: <strong>3/4 &gt; 5/7</strong></p>
+            </div>
+            <div class="box box--mistake">
+                <h4 class="box__title">❌ O erro mais comum com negativos</h4>
+                <p style="margin:0;">Dizer que −8 &gt; −2 porque "8 é maior que 2". Lembre do dinheiro: <strong>dever 8 reais é pior do que dever 2</strong>. −8 &lt; −2.</p>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>Exercícios do Conteúdo</summary>
+        <div class="details-content">
+            <div class="box box--example">
+                <p><strong>1.</strong> Insira o símbolo correto (&lt; ou &gt;): a) −15 __ −20 &nbsp; b) π __ 3,14 &nbsp; c) 0,33 __ 1/3</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">a) −15 <strong>&gt;</strong> −20 (mais perto do zero) &nbsp;·&nbsp; b) π <strong>&gt;</strong> 3,14 (π = 3,14159…) &nbsp;·&nbsp; c) 0,33 <strong>&lt;</strong> 1/3 (1/3 = 0,333…)</p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>2.</strong> Se x &gt; y e multiplicamos ambos por −2, qual é a nova relação entre −2x e −2y?</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">Multiplicou por <strong>negativo</strong> → sinal inverte. Resultado: <strong>−2x &lt; −2y</strong></p>
+                </details>
+            </div>
+            <div class="box box--example" style="margin-top:12px;">
+                <p><strong>3.</strong> Ordene decrescentemente: 1, −1, √2, 0</p>
+                <details style="margin-top:10px;"><summary style="font-size:13px;cursor:pointer;color:var(--blue-ink);">Ver gabarito</summary>
+                <p style="margin-top:8px;font-size:14px;">√2 ≈ 1,41. Ordem: <strong>√2 &gt; 1 &gt; 0 &gt; −1</strong></p>
+                </details>
             </div>
         </div>
     </details>

@@ -1,0 +1,37 @@
+* { 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
+}
+
+body { 
+  margin: 0; 
+  padding: 0; 
+  font-family: var(--font-body); 
+  background-color: var(--bg-paper); 
+  color: var(--text-main); 
+  line-height: 1.6; 
+  font-size: 16px; 
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5 { 
+  font-family: var(--font-title); 
+  margin: 0 0 12px 0; 
+  color: var(--text-main); 
+  font-weight: 800; 
+  letter-spacing: -0.02em;
+}
+
+p { 
+  margin: 0 0 16px 0; 
+  color: var(--text-muted);
+}
+
+button { 
+  font-family: inherit; 
+  cursor: pointer; 
+  border: none; 
+  background: none; 
+  padding: 0; 
+  outline: none; 
+}

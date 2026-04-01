@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTIA03 - Revisão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+    <header class="header">
+        <button id="btn-back" class="btn-back hidden">←</button>
+        <h1 class="header__title">CTIA03</h1>
+    </header>
+
+    <main class="app-container">
+        <!-- TELA: HOME -->
+        <section id="page-home" class="page active">
+            <h2>Bases Matemáticas</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Ciência, Tecnologia e Inovação</p>
+
+            <div class="card card--progress">
+                <h3 style="font-size: 16px; margin-bottom: 4px;">Seu Progresso</h3>
+                <p style="margin: 0; font-size: 14px; color: var(--text-muted);">Você revisou 4 de 12 tópicos</p>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+            </div>
+
+            <h3 style="margin-top: 32px; font-size: 18px;">Módulos de Estudo</h3>
+            <button class="btn--module" data-nav="page-modulo-1">
+                <span>1. Conjuntos Numéricos</span>
+                <span style="color: var(--text-muted); font-weight: 800; font-size: 20px; transition: transform 0.2s;">→</span>
+            </button>
+            <button class="btn--module" data-nav="page-modulo-2">
+                <span>2. Intervalos Reais</span>
+                <span style="color: var(--text-muted); font-weight: 800; font-size: 20px; transition: transform 0.2s;">→</span>
+            </button>
+            <button class="btn--module" data-nav="page-modulo-3">
+                <span>3. Álgebra e Fatoração</span>
+                <span style="color: var(--text-muted); font-weight: 800; font-size: 20px; transition: transform 0.2s;">→</span>
+            </button>
+            <button class="btn--module" data-nav="page-modulo-4">
+                <span>4. Relação de Ordem e Reta Real</span>
+                <span style="color: var(--text-muted); font-weight: 800; font-size: 20px; transition: transform 0.2s;">→</span>
+            </button>
+            <button class="btn--module" data-nav="page-modulo-5">
+                <span>5. Potenciação e Radiciação</span>
+                <span style="color: var(--text-muted); font-weight: 800; font-size: 20px; transition: transform 0.2s;">→</span>
+            </button>
+
+            <h3 style="margin-top: 32px; font-size: 18px;">Ações Rápidas</h3>
+            <button class="btn btn--primary" onclick="generateSimulado()">✨ Simulado Completo</button>
+            <button class="btn btn--secondary" data-nav="page-revisao">Revisão de Véspera</button>
+        </section>
+
+        <!-- TELA: MÓDULO 1 -->
+        <section id="page-modulo-1" class="page">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tópico 1</span>
+            <h2 style="font-size: 28px; margin-bottom: 24px;">Conjuntos Numéricos</h2>
+
+            <details open>
+                <summary>Teoria Essencial</summary>
+                <div class="details-content">
+                    <p>Os conjuntos numéricos agrupam números com características semelhantes. A base de tudo começa com os Naturais e se expande até os Reais.</p>
+                    <ul style="padding-left: 20px; margin-bottom: 16px;">
+                        <li><strong>Naturais (N):</strong> {0, 1, 2, 3, ...}</li>
+                        <li><strong>Inteiros (Z):</strong> {..., -2, -1, 0, 1, 2, ...}</li>
+                        <li><strong>Racionais (Q):</strong> Frações e dízimas periódicas. Ex: 1/2, 0.333...</li>
+                        <li><strong>Irracionais (I):</strong> Dízimas não periódicas. Ex: π, √2</li>
+                        <li><strong>Reais (R):</strong> A união de todos os anteriores (Q ∪ I).</li>
+                    </ul>
+                    <div class="box box--def">
+                        <h4 class="box__title">Definição</h4>
+                        <p style="margin: 0;">Um conjunto é uma coleção de elementos bem definidos. A relação de pertinência (∈) liga um elemento a um conjunto. A relação de inclusão (⊂) liga dois conjuntos.</p>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>Exemplo Resolvido</summary>
+                <div class="details-content">
+                    <div class="box box--example">
+                        <p><strong>Problema:</strong> Identifique a qual conjunto pertence o número -5 e o número √3.</p>
+                        <div class="step">
+                            <div class="step__number">1</div>
+                            <p style="margin: 0; font-size: 15px;">-5 é um número negativo sem parte decimal. Logo, pertence aos <strong>Inteiros (Z)</strong> e também aos Racionais (Q) e Reais (R).</p>
+                        </div>
+                        <div class="step">
+                            <div class="step__number">2</div>
+                            <p style="margin: 0; font-size: 15px;">√3 não possui raiz exata, resultando em uma dízima infinita e não periódica (1.73205...). Logo, pertence aos <strong>Irracionais (I)</strong> e Reais (R).</p>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>Atenção na Prova</summary>
+                <div class="details-content">
+                    <div class="box box--mistake">
+                        <h4 class="box__title">Erro Comum</h4>
+                        <p style="margin: 0;">Confundir dízimas periódicas (ex: 0,333...) com números Irracionais. Dízimas periódicas podem ser escritas como fração (1/3), portanto são <strong>Racionais (Q)</strong>.</p>
+                    </div>
+                    <div class="box box--tip">
+                        <h4 class="box__title">Macete</h4>
+                        <p style="margin: 0;">Lembre da boneca russa (Matrioska): N está dentro de Z, que está dentro de Q. O I fica separado. Juntando Q e I, temos a boneca maior: R.</p>
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Conjuntos Numéricos', this)">
+                    ✨ Explicar de forma mais simples
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Conjuntos Numéricos')">
+                    ✨ Gerar 3 questões inéditas
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Conjuntos Numéricos', this)">
+                    ✨ Gerar exercícios adicionais
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+        </section>
+
+        <!-- TELA: MÓDULO 2 -->
+        <section id="page-modulo-2" class="page">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tópico 2</span>
+            <h2 style="font-size: 28px; margin-bottom: 24px;">Intervalos Reais</h2>
+
+            <details open>
+                <summary>Teoria Essencial</summary>
+                <div class="details-content">
+                    <p>Intervalos são subconjuntos dos números Reais (R) que representam todos os números entre dois extremos.</p>
+                    <div class="box box--def">
+                        <h4 class="box__title">Representações</h4>
+                        <p style="margin: 0;">
+                            <strong>Aberto:</strong> ]a, b[ ou (a, b) -> Não inclui os extremos.<br>
+                            <strong>Fechado:</strong> [a, b] -> Inclui os extremos.<br>
+                            <strong>Misto:</strong> [a, b[ -> Inclui 'a', mas não 'b'.
+                        </p>
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Intervalos Reais e Reta Real', this)">
+                    ✨ Explicar de forma mais simples
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Intervalos Reais')">
+                    ✨ Gerar 3 questões inéditas
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Intervalos Reais', this)">
+                    ✨ Gerar exercícios adicionais
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+        </section>
+
+        <!-- TELA: MÓDULO 3 -->
+        <section id="page-modulo-3" class="page">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tópico 3</span>
+            <h2 style="font-size: 28px; margin-bottom: 24px;">Álgebra e Fatoração</h2>
+
+            <details open>
+                <summary>Teoria Essencial</summary>
+                <div class="details-content">
+                    <p>Fatorar é transformar uma soma ou subtração em um produto. Produtos notáveis são multiplicações frequentes que possuem regras fixas.</p>
+                    <div class="box box--def">
+                        <h4 class="box__title">Produtos Notáveis</h4>
+                        <p style="margin: 0;">
+                            <strong>Quadrado da soma:</strong> (a+b)² = a² + 2ab + b²<br>
+                            <strong>Quadrado da diferença:</strong> (a-b)² = a² - 2ab + b²<br>
+                            <strong>Produto da soma pela diferença:</strong> (a+b)(a-b) = a² - b²
+                        </p>
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Produtos Notáveis e Fatoração', this)">
+                    ✨ Explicar de forma mais simples
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Produtos Notáveis e Fatoração')">
+                    ✨ Gerar 3 questões inéditas
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Produtos Notáveis e Fatoração', this)">
+                    ✨ Gerar exercícios adicionais
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+        </section>
+
+        <!-- TELA: MÓDULO 4 -->
+        <section id="page-modulo-4" class="page">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tópico 4</span>
+            <h2 style="font-size: 28px; margin-bottom: 24px;">Relação de Ordem e Reta Real</h2>
+
+            <details open>
+                <summary>Teoria Essencial</summary>
+                <div class="details-content">
+                    <p>A reta real é uma representação geométrica do conjunto dos números reais (R). Cada ponto na reta corresponde a um único número real, e cada número real corresponde a um único ponto.</p>
+                    <div class="box box--def">
+                        <h4 class="box__title">Relação de Ordem</h4>
+                        <p style="margin: 0;">
+                            Dados dois números reais <strong>a</strong> e <strong>b</strong>, apenas uma das afirmações é verdadeira:<br>
+                            <strong>a &lt; b</strong> (a é menor que b, fica à esquerda na reta)<br>
+                            <strong>a = b</strong> (a é igual a b, mesmo ponto)<br>
+                            <strong>a &gt; b</strong> (a é maior que b, fica à direita na reta)
+                        </p>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>Exemplo Resolvido</summary>
+                <div class="details-content">
+                    <div class="box box--example">
+                        <p><strong>Problema:</strong> Ordene os números: -2, 0, 1.5, -1/2, √2.</p>
+                        <div class="step">
+                            <div class="step__number">1</div>
+                            <p style="margin: 0; font-size: 15px;">Converta todos para decimal para facilitar a comparação: -1/2 = -0.5 e √2 ≈ 1.41.</p>
+                        </div>
+                        <div class="step">
+                            <div class="step__number">2</div>
+                            <p style="margin: 0; font-size: 15px;">Ordene do menor (mais à esquerda) para o maior (mais à direita): -2 &lt; -0.5 &lt; 0 &lt; 1.41 &lt; 1.5.</p>
+                        </div>
+                        <div class="step">
+                            <div class="step__number">3</div>
+                            <p style="margin: 0; font-size: 15px;">Resposta final: -2 &lt; -1/2 &lt; 0 &lt; √2 &lt; 1.5.</p>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Relação de Ordem e Reta Real', this)">
+                    ✨ Explicar de forma mais simples
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Relação de Ordem e Reta Real')">
+                    ✨ Gerar 3 questões inéditas
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Relação de Ordem e Reta Real', this)">
+                    ✨ Gerar exercícios adicionais
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+        </section>
+
+        <!-- TELA: MÓDULO 5 -->
+        <section id="page-modulo-5" class="page">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tópico 5</span>
+            <h2 style="font-size: 28px; margin-bottom: 24px;">Potenciação e Radiciação</h2>
+
+            <details open>
+                <summary>Teoria Essencial</summary>
+                <div class="details-content">
+                    <p>Potenciação é uma multiplicação de fatores iguais. Radiciação é a operação inversa da potenciação.</p>
+                    <div class="box box--def">
+                        <h4 class="box__title">Propriedades da Potenciação</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 0;">
+                            <li><strong>a<sup>m</sup> · a<sup>n</sup> = a<sup>m+n</sup></strong> (Multiplicação de mesma base)</li>
+                            <li><strong>a<sup>m</sup> / a<sup>n</sup> = a<sup>m-n</sup></strong> (Divisão de mesma base)</li>
+                            <li><strong>(a<sup>m</sup>)<sup>n</sup> = a<sup>m·n</sup></strong> (Potência de potência)</li>
+                            <li><strong>a<sup>-n</sup> = 1 / a<sup>n</sup></strong> (Expoente negativo inverte a base)</li>
+                            <li><strong>a<sup>m/n</sup> = <sup>n</sup>√a<sup>m</sup></strong> (Expoente fracionário vira raiz)</li>
+                        </ul>
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="explainTopic('Potenciação e Radiciação', this)">
+                    ✨ Explicar de forma mais simples
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic('Potenciação e Radiciação')">
+                    ✨ Gerar 3 questões inéditas
+                </button>
+                <button class="btn btn--secondary ai-btn" onclick="generateExercises('Potenciação e Radiciação', this)">
+                    ✨ Gerar exercícios adicionais
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+        </section>
+
+        <!-- TELA: QUIZ -->
+        <section id="page-quiz" class="page">
+            <div id="quiz-container">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;" id="quiz-progress">Questão 1 de 3</span>
+                <h2 style="font-size: 24px; margin-top: 8px; margin-bottom: 24px;" id="question-text">Carregando...</h2>
+
+                <div id="options-container"></div>
+
+                <div id="explanation-box" class="explanation">
+                    <h4 class="box__title">Explicação</h4>
+                    <p style="margin: 0;" id="explanation-text"></p>
+                </div>
+
+                <button id="btn-next-quiz" class="btn btn--primary" style="margin-top: 24px; display: none;">Próxima Questão</button>
+                <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(15)" style="margin-top: 12px;">✨ Gerar mais 15 questões</button>
+            </div>
+
+            <div id="quiz-result" style="display: none; text-align: center; padding-top: 40px;">
+                <h2 style="font-size: 48px; color: var(--text-main); margin-bottom: 8px;" id="score-number">3/3</h2>
+                <h3 style="font-size: 20px; margin-bottom: 8px;">Quiz Concluído!</h3>
+                <p style="color: var(--text-muted); margin-bottom: 32px;" id="score-text">Excelente desempenho.</p>
+                <button class="btn btn--primary" data-nav="page-home">Voltar para Home</button>
+                <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic(window.currentTopic)">✨ Gerar Novo Quiz</button>
+                <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(15)">✨ Gerar mais 15 questões</button>
+            </div>
+        </section>
+
+        <!-- TELA: SIMULADO -->
+        <section id="page-simulado" class="page">
+            <div id="simulado-intro">
+                <h2>Simulado Completo</h2>
+                <p style="color: var(--text-muted); margin-bottom: 24px;">Teste seus conhecimentos em todos os tópicos da disciplina. Serão geradas 10 questões inéditas.</p>
+                <button class="btn btn--primary ai-btn" onclick="startSimulado()">✨ Iniciar Simulado (10 Questões)</button>
+            </div>
+
+            <div id="simulado-container" style="display: none;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;" id="simulado-progress">Questão 1 de 10</span>
+                <h2 style="font-size: 24px; margin-top: 8px; margin-bottom: 24px;" id="simulado-question-text">Carregando...</h2>
+
+                <div id="simulado-options-container"></div>
+
+                <div id="simulado-explanation-box" class="explanation" style="display: none;">
+                    <h4 class="box__title">Explicação</h4>
+                    <p style="margin: 0;" id="simulado-explanation-text"></p>
+                </div>
+
+                <button id="btn-next-simulado" class="btn btn--primary" style="margin-top: 24px; display: none;">Próxima Questão</button>
+            </div>
+
+            <div id="simulado-result" style="display: none; text-align: center; padding-top: 40px;">
+                <h2 style="font-size: 48px; color: var(--text-main); margin-bottom: 8px;" id="simulado-score-number">10/10</h2>
+                <h3 style="font-size: 20px; margin-bottom: 8px;">Simulado Concluído!</h3>
+                <p style="color: var(--text-muted); margin-bottom: 32px;" id="simulado-score-text">Excelente desempenho.</p>
+                
+                <div id="simulado-feedback" style="text-align: left; margin-bottom: 32px;">
+                    <!-- Feedback detalhado por tópico será inserido aqui -->
+                </div>
+
+                <button class="btn btn--primary" data-nav="page-home">Voltar para Home</button>
+            </div>
+        </section>
+
+        <!-- TELA: REVISÃO FINAL -->
+        <section id="page-revisao" class="page">
+            <h2>Revisão de Véspera</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Resumo estratégico para os momentos finais.</p>
+
+            <div class="box box--tip">
+                <h4 class="box__title">Se você só tem 10 minutos</h4>
+                <p style="margin: 0; font-weight: 500;">Foque em revisar as propriedades de Conjuntos e Produtos Notáveis. São os temas com maior peso.</p>
+            </div>
+
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+                <h3 style="font-size: 18px;">Assistente de IA</h3>
+                <button class="btn btn--secondary ai-btn" onclick="generateReview('Matemática Básica: Conjuntos, Intervalos e Álgebra', this)">
+                    ✨ Gerar Revisão Completa Dinâmica
+                </button>
+                <div class="ai-response-box hidden"></div>
+            </div>
+
+            <h3 style="margin-top: 32px; font-size: 18px;">Checklist da Prova</h3>
+            <div class="checklist">
+                <label class="checklist-item">
+                    <input type="checkbox">
+                    <span>Documento com foto (RG/CNH)</span>
+                </label>
+                <label class="checklist-item">
+                    <input type="checkbox">
+                    <span>Caneta esferográfica preta</span>
+                </label>
+                <label class="checklist-item">
+                    <input type="checkbox">
+                    <span>Garrafa de água transparente</span>
+                </label>
+            </div>
+        </section>
+    </main>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="chat-widget">
+        <button id="chat-toggle" class="chat-toggle">💬 Tutor IA</button>
+        <div id="chat-window" class="chat-window hidden">
+            <div class="chat-header">
+                <h3 style="margin: 0; font-size: 16px;">Tutor de Matemática</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <select id="chat-model" style="background: white; color: var(--text-main); border: none; border-radius: 4px; padding: 2px 4px; font-size: 12px; outline: none;">
+                        <option value="gemini-3-flash-preview">Geral (Flash)</option>
+                        <option value="gemini-3.1-pro-preview">Complexo (Pro)</option>
+                        <option value="gemini-3.1-flash-lite-preview">Rápido (Lite)</option>
+                    </select>
+                    <button id="chat-close" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+                </div>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Faça uma pergunta..." />
+                <button id="chat-send">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/store.js"></script>
+    <script src="/js/quiz.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

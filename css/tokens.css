@@ -1,0 +1,29 @@
+:root {
+  --bg-paper: #F3F4F6;
+  --surface: #FFFFFF;
+  --text-main: #111827;
+  --text-muted: #6B7280;
+  
+  --blue-soft: #EFF6FF;
+  --blue-ink: #2563EB;
+  --blue-hover: #1D4ED8;
+  
+  --green-soft: #ECFDF5;
+  --green-ink: #059669;
+  
+  --amber-soft: #FEF3C7;
+  --amber-ink: #D97706;
+  
+  --red-soft: #FEF2F2;
+  --red-ink: #DC2626;
+
+  --font-title: 'Manrope', sans-serif;
+  --font-body: 'Public Sans', sans-serif;
+  
+  --space-sm: 12px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  
+  --radius-box: 16px;
+  --radius-btn: 12px;
+}

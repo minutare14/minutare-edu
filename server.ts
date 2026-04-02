@@ -54,10 +54,45 @@ const MODELS = {
 
 type ModelKey = keyof typeof MODELS;
 
+function isValidHttpUrl(value: string): boolean {
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+function getRuntimeEnvStatus() {
+    const missing: string[] = [];
+    const invalid: string[] = [];
+    const warnings: string[] = [];
+
+    const appUrl = process.env.APP_URL?.trim() || '';
+
+    if (!appUrl) {
+        missing.push('APP_URL');
+    } else if (!isValidHttpUrl(appUrl)) {
+        invalid.push('APP_URL');
+    }
+
+    if (!(process.env.GEMINI_API_KEY || process.env.API_KEY || '').trim()) {
+        warnings.push('GEMINI_API_KEY');
+    }
+
+    return {
+        ready: missing.length === 0 && invalid.length === 0,
+        missing,
+        invalid,
+        warnings,
+    };
+}
+
 function getPrivateAppConfigStatus() {
     const authStatus = getAuthConfigStatus();
     const databaseStatus = getDatabaseStatus();
     const sessionStatus = getSessionSecretStatus();
+    const runtimeStatus = getRuntimeEnvStatus();
 
     const missing = [...authStatus.missing];
     if (!databaseStatus.configured && !missing.includes(databaseStatus.envVar)) {
@@ -66,11 +101,17 @@ function getPrivateAppConfigStatus() {
     if (!sessionStatus.configured && !missing.includes(sessionStatus.envVar)) {
         missing.push(sessionStatus.envVar);
     }
+    runtimeStatus.missing.forEach((item) => {
+        if (!missing.includes(item)) {
+            missing.push(item);
+        }
+    });
 
     return {
-        ready: authStatus.ready && databaseStatus.configured && sessionStatus.configured,
+        ready: authStatus.ready && databaseStatus.configured && sessionStatus.configured && runtimeStatus.ready,
         missing,
-        invalid: authStatus.invalid,
+        invalid: [...authStatus.invalid, ...runtimeStatus.invalid],
+        warnings: runtimeStatus.warnings,
     };
 }
 
@@ -1368,6 +1409,18 @@ async function shutdown(signal: string) {
 async function bootstrap() {
     const privateConfig = getPrivateAppConfigStatus();
     const databaseStatus = getDatabaseStatus();
+
+    if (!privateConfig.ready) {
+        console.error('[config] missing or invalid critical environment variables', privateConfig);
+        throw new Error(
+            `Missing or invalid critical environment variables: ${[...privateConfig.missing, ...privateConfig.invalid].join(', ')}`,
+        );
+    }
+
+    if (privateConfig.warnings.length) {
+        console.warn(`[config] optional environment variables missing: ${privateConfig.warnings.join(', ')}`);
+        console.warn('[config] AI features will stay in fallback mode until the provider key is configured.');
+    }
 
     if (databaseStatus.configured) {
         await ensureDatabaseReady();

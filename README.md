@@ -6,7 +6,7 @@ Plataforma privada de estudos com autenticação restrita, conteúdo em Markdown
 
 - `app`: Node.js + Express servindo frontend e backend na mesma aplicação
 - `db`: PostgreSQL 16 com volume persistente
-- `docker-compose.yml`: publica apenas a aplicação no host
+- `docker-compose.yml`: publica apenas a aplicação no host e usa a rede externa `dokploy-network`
 
 ## Porta escolhida para deploy
 
@@ -30,7 +30,6 @@ Obrigatórias:
 - `APP_PORT`
 - `PORT`
 - `APP_URL`
-- `GEMINI_API_KEY`
 - `APP_OWNER_EMAIL`
 - `APP_OWNER_PASSWORD`
 - `APP_MEMBER_EMAIL`
@@ -41,6 +40,34 @@ Obrigatórias:
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
 - `DATABASE_URL`
+
+Opcional:
+
+- `GEMINI_API_KEY`
+  Sem ela a aplicação sobe, mas os recursos de IA ficam em fallback/local.
+
+## Dokploy
+
+No Dokploy, preencha manualmente estas variáveis antes do deploy:
+
+- `APP_PORT`
+- `PORT`
+- `APP_URL`
+- `APP_OWNER_EMAIL`
+- `APP_OWNER_PASSWORD`
+- `APP_MEMBER_EMAIL`
+- `APP_MEMBER_PASSWORD`
+- `SESSION_SECRET`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `DATABASE_SSL`
+- `DATABASE_URL`
+- `GEMINI_API_KEY`
+
+O `docker-compose.yml` agora falha cedo quando faltar env crítica, então o erro aparece já no bootstrap do Compose em vez de deixar o Postgres subir quebrado.
+
+Os serviços `app` e `db` estão ligados explicitamente à rede externa `dokploy-network`.
 
 ## Subir localmente com Docker Compose
 

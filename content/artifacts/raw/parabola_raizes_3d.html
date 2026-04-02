@@ -1,0 +1,162 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#pb3d{width:100%;height:400px;display:block;cursor:grab}
+#pb3d:active{cursor:grabbing}
+.pc{display:flex;gap:10px;flex-wrap:wrap;padding:.6rem 0;align-items:center}
+.ps{font-size:13px;color:var(--color-text-secondary);min-width:28px}
+.pv{font-size:13px;font-weight:500;min-width:32px;text-align:right}
+.pinfo{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .9rem;font-size:13px;color:var(--color-text-primary);margin-top:4px;font-family:var(--font-mono);min-height:36px}
+.pbtn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer}
+.pbtn:hover{background:var(--color-background-secondary)}
+</style>
+<div id="pb3d"></div>
+<div class="pc">
+  <span class="ps">a</span>
+  <input type="range" id="pa" min="-3" max="3" value="1" step="0.5" style="flex:1;max-width:160px" oninput="upd()">
+  <span class="pv" id="pav">1</span>
+  <span class="ps" style="margin-left:8px">b</span>
+  <input type="range" id="pbb" min="-6" max="6" value="-1" step="0.5" style="flex:1;max-width:160px" oninput="upd()">
+  <span class="pv" id="pbv">-1</span>
+  <span class="ps" style="margin-left:8px">c</span>
+  <input type="range" id="pc2" min="-6" max="6" value="-6" step="0.5" style="flex:1;max-width:160px" oninput="upd()">
+  <span class="pv" id="pcv">-6</span>
+  <button class="pbtn" onclick="sendPrompt('Me explique o discriminante da equação de 2º grau e o que cada caso significa.')" style="margin-left:auto">Explicar Δ ↗</button>
+</div>
+<div class="pinfo" id="pinfo"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const cont=document.getElementById('pb3d');
+const W=cont.clientWidth,H=400;
+const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});
+ren.setSize(W,H);ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setClearColor(0,0);
+cont.appendChild(ren.domElement);
+const sc=new THREE.Scene(),cm=new THREE.PerspectiveCamera(42,W/H,.1,200);
+cm.position.set(0,5,14);cm.lookAt(0,0,0);
+sc.add(new THREE.AmbientLight(0xffffff,.55));
+const d1=new THREE.DirectionalLight(0xffffff,.9);d1.position.set(6,10,6);sc.add(d1);
+const d2=new THREE.DirectionalLight(0x4466ff,.35);d2.position.set(-6,-4,-6);sc.add(d2);
+const g=new THREE.Group();sc.add(g);
+
+function axis(dir,col,len=5){
+  const cg=new THREE.CylinderGeometry(.035,.035,len*2,10);
+  const m=new THREE.Mesh(cg,new THREE.MeshPhongMaterial({color:col,transparent:true,opacity:.5}));
+  if(dir==='x')m.rotation.z=Math.PI/2;
+  if(dir==='z')m.rotation.x=Math.PI/2;
+  g.add(m);
+  const cng=new THREE.ConeGeometry(.1,.35,10);
+  const cn=new THREE.Mesh(cng,new THREE.MeshPhongMaterial({color:col}));
+  if(dir==='x'){cn.rotation.z=-Math.PI/2;cn.position.set(len,0,0);}
+  else if(dir==='y')cn.position.set(0,len,0);
+  else{cn.rotation.x=Math.PI/2;cn.position.set(0,0,-len);}
+  g.add(cn);
+}
+axis('x',0xE24B4A);axis('y',0x1D9E75);axis('z',0x888888,4);
+
+function lbl(txt,col,pos){
+  const cv=document.createElement('canvas');cv.width=96;cv.height=56;
+  const cx=cv.getContext('2d');cx.clearRect(0,0,96,56);
+  cx.fillStyle='#'+col.toString(16).padStart(6,'0');
+  cx.font='bold 28px sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(txt,48,28);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));
+  sp.position.set(...pos);sp.scale.set(.7,.4,1);g.add(sp);
+}
+lbl('x',0xE24B4A,[5.8,0,0]);lbl('y',0x1D9E75,[0,5.8,0]);
+
+let curve=null,rootSpheres=[],vertSphere=null,groundPlane=null,gridLines=[];
+
+function clearDyn(){
+  [curve,...rootSpheres,vertSphere,groundPlane,...gridLines].forEach(m=>{if(m)g.remove(m);});
+  rootSpheres=[];gridLines=[];
+}
+
+function upd(){
+  const a=parseFloat(document.getElementById('pa').value)||1;
+  const b=parseFloat(document.getElementById('pbb').value);
+  const c=parseFloat(document.getElementById('pc2').value);
+  document.getElementById('pav').textContent=a.toFixed(1);
+  document.getElementById('pbv').textContent=b.toFixed(1);
+  document.getElementById('pcv').textContent=c.toFixed(1);
+  clearDyn();
+
+  const N=120,R=5;
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const x=(i/N*2-1)*R;
+    const y=a*x*x+b*x+c;
+    pts.push(new THREE.Vector3(x,Math.max(-6,Math.min(8,y)),0));
+  }
+  const cg=new THREE.CatmullRomCurve3(pts);
+  const tpts=cg.getPoints(200);
+  const geo=new THREE.BufferGeometry().setFromPoints(tpts);
+  curve=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x378ADD,linewidth:2}));
+  g.add(curve);
+
+  const tube=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),200,.06,8,false);
+  const tubeMesh=new THREE.Mesh(tube,new THREE.MeshPhongMaterial({color:0x378ADD,transparent:true,opacity:.85}));
+  curve=tubeMesh;g.add(tubeMesh);
+
+  const gplane=new THREE.PlaneGeometry(10,8);
+  groundPlane=new THREE.Mesh(gplane,new THREE.MeshPhongMaterial({color:0x888888,transparent:true,opacity:.07,side:THREE.DoubleSide}));
+  groundPlane.rotation.x=Math.PI/2;
+  g.add(groundPlane);
+
+  const vx=-b/(2*a), vy=a*vx*vx+b*vx+c;
+  const vg=new THREE.SphereGeometry(.18,20,20);
+  vertSphere=new THREE.Mesh(vg,new THREE.MeshPhongMaterial({color:0x1D9E75,emissive:0x1D9E75,emissiveIntensity:.3}));
+  vertSphere.position.set(vx,Math.max(-6,Math.min(8,vy)),0);
+  g.add(vertSphere);
+
+  const disc=b*b-4*a*c;
+  let infoText='';
+
+  if(Math.abs(a)<0.01){
+    infoText='a=0 → não é equação de 2º grau';
+  } else if(disc>0.001){
+    const r1=(-b+Math.sqrt(disc))/(2*a);
+    const r2=(-b-Math.sqrt(disc))/(2*a);
+    [r1,r2].forEach((rx,i)=>{
+      const sg=new THREE.SphereGeometry(.22,20,20);
+      const sm=new THREE.Mesh(sg,new THREE.MeshPhongMaterial({color:0xE24B4A,emissive:0xE24B4A,emissiveIntensity:.3}));
+      sm.position.set(rx,0,0);
+      g.add(sm);rootSpheres.push(sm);
+      const lg=new THREE.CylinderGeometry(.025,.025,Math.abs(vy>0?vy:0)+.3,8);
+      const line=new THREE.Mesh(lg,new THREE.MeshPhongMaterial({color:0xE24B4A,transparent:true,opacity:.4}));
+      line.position.set(rx,0,0);g.add(line);rootSpheres.push(line);
+    });
+    infoText=`Δ = ${disc.toFixed(2)} > 0  →  2 raízes reais:  x₁ = ${r1.toFixed(2)},  x₂ = ${r2.toFixed(2)}  |  vértice (${vx.toFixed(2)}, ${vy.toFixed(2)})`;
+  } else if(Math.abs(disc)<0.001){
+    const r=(-b)/(2*a);
+    const sg=new THREE.SphereGeometry(.25,20,20);
+    const sm=new THREE.Mesh(sg,new THREE.MeshPhongMaterial({color:0xEF9F27,emissive:0xEF9F27,emissiveIntensity:.4}));
+    sm.position.set(r,0,0);g.add(sm);rootSpheres.push(sm);
+    infoText=`Δ = 0  →  raiz dupla:  x = ${r.toFixed(2)}  |  parábola tangente ao eixo x`;
+  } else {
+    infoText=`Δ = ${disc.toFixed(2)} < 0  →  sem raízes reais (raízes complexas)  |  vértice (${vx.toFixed(2)}, ${vy.toFixed(2)})`;
+  }
+  document.getElementById('pinfo').textContent=infoText;
+}
+
+let rx=.25,ry=.1,drag=false,mx=0,my=0;
+const el=ren.domElement;
+el.addEventListener('mousedown',e=>{drag=true;mx=e.clientX;my=e.clientY;});
+window.addEventListener('mouseup',()=>drag=false);
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  ry+=(e.clientX-mx)*.008;rx+=(e.clientY-my)*.006;
+  rx=Math.max(-1.2,Math.min(1.2,rx));mx=e.clientX;my=e.clientY;
+});
+el.addEventListener('wheel',e=>{cm.position.z=Math.max(5,Math.min(24,cm.position.z+e.deltaY*.015));e.preventDefault();},{passive:false});
+el.addEventListener('touchstart',e=>{drag=true;mx=e.touches[0].clientX;my=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend',()=>drag=false);
+window.addEventListener('touchmove',e=>{
+  if(!drag||!e.touches.length)return;
+  ry+=(e.touches[0].clientX-mx)*.008;rx+=(e.touches[0].clientY-my)*.006;
+  rx=Math.max(-1.2,Math.min(1.2,rx));mx=e.touches[0].clientX;my=e.touches[0].clientY;
+},{passive:true});
+
+let auto=true;el.addEventListener('mousedown',()=>auto=false);
+function anim(){requestAnimationFrame(anim);if(auto)ry+=.004;g.rotation.y=ry;g.rotation.x=rx;ren.render(sc,cm);}
+anim();upd();
+window.addEventListener('resize',()=>{const nw=cont.clientWidth;ren.setSize(nw,H);cm.aspect=nw/H;cm.updateProjectionMatrix();});
+</script>

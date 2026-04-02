@@ -1,0 +1,162 @@
+
+<style>
+*{box-sizing:border-box}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.pill{font-size:13px;padding:5px 14px;border-radius:999px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:none;color:var(--color-text-primary);transition:.15s}
+.pill.act,.pill:hover{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.inp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:.75rem 0}
+.inp input{width:72px;text-align:center}
+.inp .op-label{font-size:18px;font-family:var(--font-mono);color:var(--color-text-secondary)}
+.expand-btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 20px;font-size:14px;cursor:pointer;background:none;color:var(--color-text-primary)}
+.expand-btn:hover{background:var(--color-background-secondary)}
+.step-block{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem;margin:.4rem 0;font-size:14px;font-family:var(--font-mono);color:var(--color-text-primary);opacity:0;transform:translateY(6px);transition:opacity .35s,transform .35s}
+.step-block.vis{opacity:1;transform:none}
+.step-comment{font-size:12px;font-family:var(--font-sans);color:var(--color-text-secondary);margin-top:4px}
+.result-big{font-size:18px;font-weight:500;font-family:var(--font-mono);color:var(--color-text-primary);padding:.75rem 1rem;background:var(--color-background-info);color:var(--color-text-info);border-radius:var(--border-radius-md);margin-top:.5rem;opacity:0;transform:translateY(6px);transition:opacity .4s .1s,transform .4s .1s}
+.result-big.vis{opacity:1;transform:none}
+.visual-area{margin:1rem 0}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.6rem">Escolha o produto notável</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" id="type-pills">
+    <button class="pill act" onclick="setPN('sq_sum')" id="pn-sq_sum">(a+b)²</button>
+    <button class="pill" onclick="setPN('sq_diff')" id="pn-sq_diff">(a−b)²</button>
+    <button class="pill" onclick="setPN('conj')" id="pn-conj">(a+b)(a−b)</button>
+    <button class="pill" onclick="setPN('cu_sum')" id="pn-cu_sum">(a+b)³</button>
+    <button class="pill" onclick="setPN('cu_diff')" id="pn-cu_diff">(a−b)³</button>
+  </div>
+  <div id="formula-preview" style="font-size:13px;color:var(--color-text-secondary);margin-top:.5rem;font-family:var(--font-mono)"></div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.4rem">Insira valores para a e b</div>
+  <div class="inp">
+    <span class="op-label" id="open-p">(</span>
+    <input type="text" id="inp-a" value="x" placeholder="a">
+    <span class="op-label" id="op-sign">+</span>
+    <input type="text" id="inp-b" value="3" placeholder="b">
+    <span class="op-label" id="close-p">)²</span>
+  </div>
+  <button class="expand-btn" onclick="expand()">Expandir passo a passo →</button>
+</div>
+
+<div id="steps-area"></div>
+
+</div>
+
+<script>
+const PNS={
+  sq_sum:{label:'(a+b)²',sign:'+',power:'²',formula:'(a+b)² = a² + 2ab + b²'},
+  sq_diff:{label:'(a−b)²',sign:'−',power:'²',formula:'(a−b)² = a² − 2ab + b²'},
+  conj:{label:'(a+b)(a−b)',sign:'+',power:'·(a−b)',formula:'(a+b)(a−b) = a² − b²'},
+  cu_sum:{label:'(a+b)³',sign:'+',power:'³',formula:'(a+b)³ = a³ + 3a²b + 3ab² + b³'},
+  cu_diff:{label:'(a−b)³',sign:'−',power:'³',formula:'(a−b)³ = a³ − 3a²b + 3ab² − b³'},
+};
+let curPN='sq_sum';
+function setPN(k){
+  curPN=k;
+  Object.keys(PNS).forEach(p=>document.getElementById('pn-'+p).classList.toggle('act',p===k));
+  const pn=PNS[k];
+  document.getElementById('formula-preview').textContent='Fórmula: '+pn.formula;
+  document.getElementById('op-sign').textContent=pn.sign;
+  document.getElementById('close-p').textContent=pn.power;
+  document.getElementById('steps-area').innerHTML='';
+}
+
+function fmt(v){
+  if(/^-?\d+\.?\d*$/.test(v)){const n=parseFloat(v);return n<0?'('+v+')':v;}
+  if(/^[a-zA-Z]$/.test(v))return v;
+  return '('+v+')';
+}
+function sq(v){const f=fmt(v);return f+'²';}
+function cu(v){const f=fmt(v);return f+'³';}
+function mul(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)){const r=na*nb;return r<0?'('+r+')':''+r;}
+  return fmt(a)+'·'+fmt(b);
+}
+function add2(a,b,sign){
+  if(sign==='-'){const nb=parseFloat(b);if(!isNaN(nb)){const r=-nb;return a+(r>=0?' + '+r:' − '+Math.abs(r));}}
+  return a+' + '+b;
+}
+
+function getSteps(){
+  const a=document.getElementById('inp-a').value.trim()||'a';
+  const b=document.getElementById('inp-b').value.trim()||'b';
+  const fa=fmt(a),fb=fmt(b);
+  const sg=PNS[curPN].sign;
+  switch(curPN){
+    case'sq_sum':return [
+      {expr:`(${fa} + ${fb})²`,comment:'Identificamos: (a + b)²'},
+      {expr:`${fa}² + 2·${fa}·${fb} + ${fb}²`,comment:'Aplicamos: a² + 2ab + b²'},
+      {expr:evalSqSum(a,b),comment:'Resultado simplificado'},
+    ];
+    case'sq_diff':return [
+      {expr:`(${fa} − ${fb})²`,comment:'Identificamos: (a − b)²'},
+      {expr:`${fa}² − 2·${fa}·${fb} + ${fb}²`,comment:'Aplicamos: a² − 2ab + b²'},
+      {expr:evalSqDiff(a,b),comment:'Resultado simplificado'},
+    ];
+    case'conj':return [
+      {expr:`(${fa} + ${fb})·(${fa} − ${fb})`,comment:'Produto da soma pela diferença'},
+      {expr:`${fa}² − ${fb}²`,comment:'Aplicamos: a² − b²'},
+      {expr:evalConj(a,b),comment:'Resultado simplificado'},
+    ];
+    case'cu_sum':return [
+      {expr:`(${fa} + ${fb})³`,comment:'Cubo da soma'},
+      {expr:`${fa}³ + 3·${fa}²·${fb} + 3·${fa}·${fb}² + ${fb}³`,comment:'Aplicamos: a³ + 3a²b + 3ab² + b³'},
+      {expr:evalCuSum(a,b),comment:'Resultado simplificado'},
+    ];
+    case'cu_diff':return [
+      {expr:`(${fa} − ${fb})³`,comment:'Cubo da diferença'},
+      {expr:`${fa}³ − 3·${fa}²·${fb} + 3·${fa}·${fb}² − ${fb}³`,comment:'Aplicamos: a³ − 3a²b + 3ab² − b³'},
+      {expr:evalCuDiff(a,b),comment:'Resultado simplificado'},
+    ];
+  }
+}
+
+function evalSqSum(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)) return ''+(na+nb)**2;
+  return fmt(a)+'² + '+2+'·'+fmt(a)+'·'+fmt(b)+' + '+fmt(b)+'²';
+}
+function evalSqDiff(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)) return ''+(na-nb)**2;
+  return fmt(a)+'² − '+2+'·'+fmt(a)+'·'+fmt(b)+' + '+fmt(b)+'²';
+}
+function evalConj(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)) return ''+(na**2-nb**2);
+  return fmt(a)+'² − '+fmt(b)+'²';
+}
+function evalCuSum(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)) return ''+(na+nb)**3;
+  return fmt(a)+'³ + 3·'+fmt(a)+'²·'+fmt(b)+' + 3·'+fmt(a)+'·'+fmt(b)+'² + '+fmt(b)+'³';
+}
+function evalCuDiff(a,b){
+  const na=parseFloat(a),nb=parseFloat(b);
+  if(!isNaN(na)&&!isNaN(nb)) return ''+(na-nb)**3;
+  return fmt(a)+'³ − 3·'+fmt(a)+'²·'+fmt(b)+' + 3·'+fmt(a)+'·'+fmt(b)+'² − '+fmt(b)+'³';
+}
+
+function expand(){
+  const steps=getSteps();
+  const area=document.getElementById('steps-area');
+  area.innerHTML='';
+  steps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='step-block';
+    const isLast=i===steps.length-1;
+    if(isLast) d.className='result-big';
+    d.innerHTML=`<div>${isLast?'= ':''}<strong>${s.expr}</strong></div>${s.comment?`<div class="step-comment">${s.comment}</div>`:''}`;
+    area.appendChild(d);
+    setTimeout(()=>d.classList.add('vis'),(i+1)*220);
+  });
+}
+
+setPN('sq_sum');
+</script>

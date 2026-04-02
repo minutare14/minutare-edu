@@ -1,29 +1,43 @@
 :root {
-  --bg-paper: #F3F4F6;
-  --surface: #FFFFFF;
-  --text-main: #111827;
-  --text-muted: #6B7280;
+  /* Tonal Surfaces */
+  --surface: #f8f9fa;
+  --surface-container-low: #f1f4f6;
+  --surface-container: #eaeff1;
+  --surface-container-highest: #dbe4e7;
+  --surface-container-lowest: #ffffff;
   
-  --blue-soft: #EFF6FF;
-  --blue-ink: #2563EB;
-  --blue-hover: #1D4ED8;
+  /* Text & Accents - Muted, Academic */
+  --text-main: #2b3437;
+  --text-muted: #586064;
+  --primary: #39608e;
+  --primary-dim: #2c5481;
+  --primary-container: #d3e4ff;
+  --on-primary: #ffffff;
+  --secondary-container: #d1e6f0;
+  --on-secondary-container: #41545d;
+  --error: #9f403d;
   
-  --green-soft: #ECFDF5;
-  --green-ink: #059669;
-  
-  --amber-soft: #FEF3C7;
-  --amber-ink: #D97706;
-  
-  --red-soft: #FEF2F2;
-  --red-ink: #DC2626;
+  /* Borders & Shadows - The "No-Line" Rule fallback */
+  --outline-variant: #abb3b7;
+  --border-soft: rgba(171, 179, 183, 0.15); /* Ghost Border */
+  --shadow-soft: 0 10px 40px rgba(43, 52, 55, 0.06); /* Ambient depth */
 
-  --font-title: 'Manrope', sans-serif;
-  --font-body: 'Public Sans', sans-serif;
-  
-  --space-sm: 12px;
-  --space-md: 24px;
-  --space-lg: 32px;
-  
-  --radius-box: 16px;
-  --radius-btn: 12px;
+  /* Typography Scale */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-title: 'Space Grotesk', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Spacing Scale - Editorial White Space */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 72px;
+
+  /* Corner Shape */
+  --radius-box: 16px; /* Soft minimalist lg */
+  --radius-btn: 24px; /* xl / pill feeling */
 }

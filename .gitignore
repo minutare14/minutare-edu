@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+tmp-home.png
+tmp_login_function.txt

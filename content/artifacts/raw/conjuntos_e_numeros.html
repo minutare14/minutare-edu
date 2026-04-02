@@ -1,0 +1,103 @@
+
+<style>
+.sec { margin: 0 0 2rem; }
+h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 .75rem; }
+h3 { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 .5rem; }
+.tag { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; margin: 3px 3px 3px 0; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.col { flex: 1; min-width: 140px; }
+.badge { font-size: 13px; padding: 4px 12px; border-radius: var(--border-radius-md); display: inline-block; margin-bottom: 6px; }
+.op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.op-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: .6rem .9rem; }
+.op-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.op-sym { font-size: 18px; font-weight: 500; margin-right: 6px; }
+.op-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.q-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 6px 14px; font-size: 13px; color: var(--color-text-primary); cursor: pointer; margin-top: 8px; }
+.q-btn:hover { background: var(--color-background-secondary); }
+.venn { display: flex; justify-content: center; margin: .5rem 0 1rem; }
+</style>
+
+<div style="padding: 1rem 0">
+
+<div class="sec">
+<h2>Conjuntos numéricos — hierarquia</h2>
+<div class="venn">
+<svg viewBox="0 0 480 200" width="100%" style="max-width:480px">
+  <rect x="4" y="4" width="472" height="192" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+  <text x="460" y="24" text-anchor="end" font-size="13" fill="#0C447C" font-weight="500">ℝ Reais</text>
+  <rect x="20" y="20" width="380" height="160" rx="10" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+  <text x="390" y="38" text-anchor="end" font-size="13" fill="#27500A" font-weight="500">ℚ Racionais</text>
+  <rect x="36" y="38" width="280" height="124" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="306" y="56" text-anchor="end" font-size="13" fill="#633806" font-weight="500">ℤ Inteiros</text>
+  <rect x="52" y="58" width="176" height="88" rx="10" fill="#FAECE7" stroke="#993C1D" stroke-width="1"/>
+  <text x="218" y="76" text-anchor="end" font-size="13" fill="#4A1B0C" font-weight="500">ℕ Naturais</text>
+  <text x="112" y="115" text-anchor="middle" font-size="13" fill="#4A1B0C">0, 1, 2, 3…</text>
+  <text x="290" y="135" text-anchor="middle" font-size="12" fill="#633806">…−3,−2,−1</text>
+  <text x="356" y="155" text-anchor="middle" font-size="12" fill="#27500A">½, ¾, 0.1̄…</text>
+  <text x="446" y="175" text-anchor="middle" font-size="12" fill="#0C447C">√2, π, e…</text>
+</svg>
+</div>
+
+<div class="row">
+  <div class="col card">
+    <span class="badge" style="background:#FAECE7;color:#4A1B0C">ℕ Naturais</span>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:4px 0 0">Números de contar: 0, 1, 2, 3, … (inclui o zero na maioria das definições)</p>
+  </div>
+  <div class="col card">
+    <span class="badge" style="background:#FAEEDA;color:#633806">ℤ Inteiros</span>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:4px 0 0">Naturais + negativos: …−2, −1, 0, 1, 2…</p>
+  </div>
+  <div class="col card">
+    <span class="badge" style="background:#EAF3DE;color:#27500A">ℚ Racionais</span>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:4px 0 0">Toda fração p/q (q≠0): ½, 0.3̄, −4/7… Dízimas periódicas são racionais!</p>
+  </div>
+  <div class="col card">
+    <span class="badge" style="background:#E6F1FB;color:#0C447C">ℝ Reais</span>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:4px 0 0">ℚ + irracionais: √2, π, e… Preenche toda a reta numérica.</p>
+  </div>
+</div>
+</div>
+
+<div class="sec">
+<h2>Operações entre conjuntos</h2>
+<div class="op-grid">
+  <div class="op-card">
+    <div class="op-title"><span class="op-sym" style="color:#185FA5">A ∪ B</span>União</div>
+    <div class="op-desc">Tudo que está em A <em>ou</em> em B (ou nos dois)</div>
+  </div>
+  <div class="op-card">
+    <div class="op-title"><span class="op-sym" style="color:#3B6D11">A ∩ B</span>Interseção</div>
+    <div class="op-desc">Apenas o que está em A <em>e</em> em B ao mesmo tempo</div>
+  </div>
+  <div class="op-card">
+    <div class="op-title"><span class="op-sym" style="color:#993C1D">A − B</span>Diferença</div>
+    <div class="op-desc">Está em A mas <em>não</em> está em B</div>
+  </div>
+  <div class="op-card">
+    <div class="op-title"><span class="op-sym" style="color:#854F0B">Aᶜ</span>Complementar</div>
+    <div class="op-desc">Tudo no universo que <em>não</em> está em A</div>
+  </div>
+</div>
+</div>
+
+<div class="sec">
+<h2>Classificar um número</h2>
+<div id="classify-out" style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px">Digite um número para classificá-lo:</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <input id="num-in" type="text" placeholder="ex: 3, −5, 1/2, √2, 0.333…" style="flex:1;min-width:160px"/>
+  <button class="q-btn" onclick="classifyNum()">Classificar ↗</button>
+</div>
+<div id="tags-out" style="margin-top:10px"></div>
+</div>
+
+</div>
+
+<script>
+function classifyNum() {
+  const val = document.getElementById('num-in').value.trim();
+  if (!val) return;
+  sendPrompt('Classifique o número ' + val + ' nos conjuntos numéricos (ℕ, ℤ, ℚ, ℝ). Seja direto e mostre em quais conjuntos ele pertence e por quê.');
+}
+document.getElementById('num-in').addEventListener('keydown', e => { if(e.key==='Enter') classifyNum(); });
+</script>

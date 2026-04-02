@@ -1,0 +1,159 @@
+
+<style>
+*{box-sizing:border-box}
+#mm{padding:1rem 0}
+#mm-canvas{width:100%;display:block}
+.mm-info{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:.75rem 1rem;margin-top:.75rem;font-size:13px;color:var(--color-text-primary);min-height:56px;transition:all .2s}
+.mm-title{font-weight:500;font-size:14px;margin-bottom:.25rem}
+.mm-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;margin-top:.5rem}
+.mm-btn:hover{background:var(--color-background-secondary)}
+</style>
+<div id="mm">
+<canvas id="mm-canvas" height="480"></canvas>
+<div class="mm-info" id="mm-info">
+  <div class="mm-title">Clique em qualquer nó para explorar</div>
+  <div>Mapa completo dos números reais — da contagem ao contínuo</div>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('mm-canvas');
+let W=canvas.clientWidth||560,H=480;
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+const bg=isDark?'#1a1a18':'#ffffff';
+const textPri=isDark?'#e8e6dc':'#2c2c2a';
+const textSec=isDark?'#888780':'#5f5e5a';
+
+const nodes=[
+  {id:'R',x:.5,y:.08,r:38,color:'#378ADD',textColor:'#0C447C',label:'ℝ',sub:'Reais',
+   info:'ℝ reúne todos os números da reta numérica: racionais e irracionais. Preenche o contínuo sem lacunas.',
+   examples:'Ex: −√3, 0, ½, π, e, √5'},
+  {id:'Q',x:.28,y:.28,r:32,color:'#1D9E75',textColor:'#085041',label:'ℚ',sub:'Racionais',
+   info:'ℚ = {p/q | p,q ∈ ℤ, q≠0}. Todo número que pode ser escrito como fração. Dízimas periódicas são racionais!',
+   examples:'Ex: −½, 0, ¾, 1, 0.333…, −7'},
+  {id:'Irr',x:.72,y:.28,r:30,color:'#D85A30',textColor:'#4A1B0C',label:'𝕀',sub:'Irracionais',
+   info:'Números que não podem ser escritos como p/q. Expansão decimal infinita e não periódica.',
+   examples:'Ex: √2, √3, π≈3.14159…, e≈2.71828…, φ'},
+  {id:'Z',x:.22,y:.52,r:28,color:'#7F77DD',textColor:'#26215C',label:'ℤ',sub:'Inteiros',
+   info:'ℤ = {…,−2,−1,0,1,2,…}. Inclui negativos, zero e positivos.',
+   examples:'Ex: −100, −3, 0, 7, 42'},
+  {id:'Zpos',x:.42,y:.52,r:22,color:'#EF9F27',textColor:'#412402',label:'ℤ⁺',sub:'Int. positivos',
+   info:'Inteiros positivos: {1, 2, 3, …}. Diferentes de ℕ pois não incluem o zero (em algumas definições).',
+   examples:'Ex: 1, 2, 3, 100, 999'},
+  {id:'Zneg',x:.12,y:.52,r:22,color:'#E24B4A',textColor:'#501313',label:'ℤ⁻',sub:'Int. negativos',
+   info:'Inteiros negativos: {…,−3,−2,−1}. Surgiram da necessidade de representar dívidas e temperaturas abaixo de zero.',
+   examples:'Ex: −1, −5, −100'},
+  {id:'N',x:.22,y:.76,r:26,color:'#D85A30',textColor:'#4A1B0C',label:'ℕ',sub:'Naturais',
+   info:'ℕ = {0,1,2,3,…}. Os primeiros números inventados pela humanidade. Usados para contar.',
+   examples:'Ex: 0, 1, 2, 3, 100'},
+  {id:'primes',x:.38,y:.88,r:20,color:'#993356',textColor:'#4B1528',label:'ℙ',sub:'Primos',
+   info:'Subconjunto de ℕ: números com exatamente 2 divisores (1 e ele mesmo). Bloco fundamental da aritmética.',
+   examples:'Ex: 2, 3, 5, 7, 11, 13, 17…'},
+  {id:'zero',x:.12,y:.88,r:18,color:'#5F5E5A',textColor:'#2C2C2A',label:'0',sub:'Zero',
+   info:'O zero é natural (ℕ), inteiro (ℤ), racional (ℚ) e real (ℝ). Elemento neutro da adição.',
+   examples:'0 = 0/1 = 0/7 = …'},
+  {id:'pi',x:.82,y:.48,r:22,color:'#D85A30',textColor:'#4A1B0C',label:'π',sub:'Pi',
+   info:'π ≈ 3.14159265… Razão entre circunferência e diâmetro. Irracional e transcendente — não é raiz de nenhum polinômio com coef. inteiros.',
+   examples:'Transcendente: não satisfaz a·x²+b·x+c=0 com a,b,c ∈ ℤ'},
+  {id:'e',x:.9,y:.68,r:20,color:'#D85A30',textColor:'#4A1B0C',label:'e',sub:'Euler',
+   info:'e ≈ 2.71828… Base do logaritmo natural. Irracional e transcendente. Aparece em crescimento exponencial.',
+   examples:'e = lim(1+1/n)ⁿ quando n→∞'},
+  {id:'sqrt2',x:.72,y:.7,r:20,color:'#D85A30',textColor:'#4A1B0C',label:'√2',sub:'Irracional',
+   info:'√2 ≈ 1.41421… Diagonal do quadrado de lado 1. Primeiro irracional descoberto pelos pitagóricos.',
+   examples:'Algébrico: satisfaz x²−2=0'},
+];
+
+const edges=[
+  ['R','Q'],['R','Irr'],['Q','Z'],['Q','Zpos'],['Z','N'],['Z','Zneg'],['N','primes'],['N','zero'],
+  ['Irr','pi'],['Irr','e'],['Irr','sqrt2'],
+];
+
+let hovered=null;
+
+function px(v){return v*W;}
+function py(v){return v*H;}
+
+function draw(hover){
+  ctx.clearRect(0,0,W,H);
+
+  edges.forEach(([a,b])=>{
+    const na=nodes.find(n=>n.id===a),nb=nodes.find(n=>n.id===b);
+    const dx=px(nb.x)-px(na.x),dy=py(nb.y)-py(na.y);
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const sx=px(na.x)+dx/dist*na.r,sy=py(na.y)+dy/dist*na.r;
+    const ex=px(nb.x)-dx/dist*nb.r,ey=py(nb.y)-dy/dist*nb.r;
+    ctx.strokeStyle=isDark?'rgba(200,200,200,.12)':'rgba(0,0,0,.1)';
+    ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  nodes.forEach(n=>{
+    const x=px(n.x),y=py(n.y),r=n.r;
+    const isHov=hover&&hover.id===n.id;
+    ctx.beginPath();ctx.arc(x,y,r+(isHov?4:0),0,Math.PI*2);
+    ctx.fillStyle=n.color+'28';ctx.fill();
+    ctx.strokeStyle=n.color;ctx.lineWidth=isHov?2.5:1.5;ctx.stroke();
+    ctx.fillStyle=isDark?n.color+'dd':n.textColor;
+    ctx.font=`bold ${r*.7+4}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(n.label,x,y-(r>.24*W?5:3));
+    ctx.font=`${Math.max(9,r*.3+5)}px sans-serif`;
+    ctx.fillStyle=isDark?n.color+'99':n.textColor+'aa';
+    ctx.fillText(n.sub,x,y+r*.45+(r>25?4:2));
+  });
+}
+
+function getNode(mx,my){
+  return nodes.find(n=>{
+    const dx=mx-px(n.x),dy=my-py(n.y);
+    return Math.sqrt(dx*dx+dy*dy)<n.r+8;
+  });
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=W/rect.width,scaleY=H/rect.height;
+  const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+  const n=getNode(mx,my);
+  canvas.style.cursor=n?'pointer':'default';
+  if(n!==hovered){hovered=n;draw(n);}
+});
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=W/rect.width,scaleY=H/rect.height;
+  const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+  const n=getNode(mx,my);
+  if(n){
+    document.getElementById('mm-info').innerHTML=`
+      <div class="mm-title" style="color:${n.color}">${n.label} — ${n.sub}</div>
+      <div>${n.info}</div>
+      <div style="margin-top:.35rem;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)">${n.examples}</div>
+      <button class="mm-btn" onclick="sendPrompt('Me explique ${n.sub} (${n.label}) com definição formal, exemplos e onde aparece na matemática.')">Aprofundar em ${n.sub} ↗</button>
+    `;
+  }
+});
+
+canvas.addEventListener('touchstart',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=W/rect.width,scaleY=H/rect.height;
+  const mx=(e.touches[0].clientX-rect.left)*scaleX,my=(e.touches[0].clientY-rect.top)*scaleY;
+  const n=getNode(mx,my);
+  if(n){
+    document.getElementById('mm-info').innerHTML=`
+      <div class="mm-title" style="color:${n.color}">${n.label} — ${n.sub}</div>
+      <div>${n.info}</div>
+      <div style="margin-top:.35rem;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)">${n.examples}</div>
+      <button class="mm-btn" onclick="sendPrompt('Me explique ${n.sub} (${n.label}) com definição formal, exemplos e onde aparece na matemática.')">Aprofundar em ${n.sub} ↗</button>
+    `;
+  }
+  e.preventDefault();
+},{passive:false});
+
+draw(null);
+window.addEventListener('resize',()=>{
+  W=canvas.clientWidth||560;canvas.width=W;draw(hovered);
+});
+</script>

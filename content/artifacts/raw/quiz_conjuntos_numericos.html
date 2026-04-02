@@ -1,0 +1,108 @@
+
+<style>
+*{box-sizing:border-box}
+.qcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:.75rem}
+.opt{width:100%;text-align:left;background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:.65rem 1rem;font-size:14px;color:var(--color-text-primary);cursor:pointer;margin:.3rem 0;transition:background .15s,border-color .15s}
+.opt:hover:not(:disabled){background:var(--color-background-secondary)}
+.opt.correct{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success)}
+.opt.wrong{background:var(--color-background-danger);border-color:var(--color-border-danger);color:var(--color-text-danger)}
+.opt.reveal{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success);opacity:.7}
+.prog{height:4px;background:var(--color-border-tertiary);border-radius:2px;overflow:hidden;margin-bottom:1rem}
+.prog-fill{height:100%;background:#378ADD;border-radius:2px;transition:width .4s}
+.badge{font-size:12px;padding:3px 10px;border-radius:999px;display:inline-block;margin-right:6px}
+.exp{font-size:13px;color:var(--color-text-secondary);margin-top:.75rem;padding:.6rem .9rem;background:var(--color-background-secondary);border-radius:var(--border-radius-md);display:none}
+.next-btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 20px;font-size:13px;color:var(--color-text-primary);cursor:pointer;background:none;margin-top:.75rem;display:none}
+.next-btn:hover{background:var(--color-background-secondary)}
+.score-card{text-align:center;padding:2rem 1rem}
+</style>
+
+<div style="padding:1rem 0">
+<div class="prog"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+<div id="meta" style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;font-size:13px;color:var(--color-text-secondary)">
+  <span id="qnum">Questão 1/10</span>
+  <span style="margin-left:auto">Acertos: <strong id="score">0</strong></span>
+</div>
+<div class="qcard">
+  <div id="qtopic" style="font-size:12px;color:var(--color-text-secondary);margin-bottom:.4rem"></div>
+  <div id="qtext" style="font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:.75rem"></div>
+  <div id="opts"></div>
+  <div class="exp" id="exp"></div>
+  <button class="next-btn" id="next-btn" onclick="next()">Próxima →</button>
+</div>
+<div id="score-card" class="score-card" style="display:none">
+  <div style="font-size:36px;font-weight:500;color:var(--color-text-primary)" id="final-score"></div>
+  <div style="font-size:14px;color:var(--color-text-secondary);margin:.5rem 0 1.5rem" id="final-msg"></div>
+  <button class="next-btn" style="display:inline-block" onclick="restart()">Refazer quiz ↺</button>
+  <button class="next-btn" style="display:inline-block;margin-left:8px" onclick="sendPrompt('Me explique detalhadamente os conjuntos numéricos: ℕ, ℤ, ℚ e ℝ com exemplos.')">Revisar conteúdo ↗</button>
+</div>
+</div>
+
+<script>
+const Qs=[
+{t:"Classificação de números",q:"O número −7 pertence a qual(is) conjunto(s)?",opts:["Apenas ℕ","ℤ e ℝ, mas não ℚ","ℤ, ℚ e ℝ","Apenas ℝ"],ans:2,exp:"−7 é inteiro (ℤ), portanto também racional (ℚ = p/q → −7/1) e real (ℝ). Não pertence a ℕ pois ℕ = {0,1,2,3…}."},
+{t:"Hierarquia dos conjuntos",q:"Qual a relação correta entre os conjuntos numéricos?",opts:["ℝ ⊂ ℚ ⊂ ℤ ⊂ ℕ","ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ","ℤ ⊂ ℕ ⊂ ℚ ⊂ ℝ","ℕ ⊂ ℚ ⊂ ℤ ⊂ ℝ"],ans:1,exp:"A hierarquia correta é ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ. Todo natural é inteiro, todo inteiro é racional e todo racional é real."},
+{t:"Números irracionais",q:"√2 pertence a qual conjunto?",opts:["ℚ (racional)","ℤ (inteiro)","ℝ \\ ℚ (irracional)","ℕ (natural)"],ans:2,exp:"√2 ≈ 1,41421… é irracional: não pode ser escrito como p/q. Pertence a ℝ mas não a ℚ."},
+{t:"Operações entre conjuntos",q:"Se A = {1,2,3} e B = {2,3,4}, qual é A ∩ B?",opts:["{1,2,3,4}","{2,3}","{1,4}","{}"],ans:1,exp:"A interseção A ∩ B contém os elementos que estão em A E em B simultaneamente: {2,3}."},
+{t:"Operações entre conjuntos",q:"Com A = {1,2,3} e B = {2,3,4}, qual é A ∪ B?",opts:["{2,3}","{1,2,3,4}","{1,4}","{1,2,3}"],ans:1,exp:"A união A ∪ B reúne todos os elementos de A ou B: {1,2,3,4}. Cada elemento aparece uma única vez."},
+{t:"Números racionais",q:"Qual destes NÃO é um número racional?",opts:["0,333…","−4/7","√9","√5"],ans:3,exp:"√5 ≈ 2,236… é irracional (dízima não periódica). √9 = 3 ∈ ℤ ⊂ ℚ, 0,333… = 1/3 ∈ ℚ e −4/7 ∈ ℚ por definição."},
+{t:"Diferença de conjuntos",q:"Com A = {a,b,c,d} e B = {b,d,e}, qual é A \\ B?",opts:["{a,c}","{b,d}","{a,b,c,d,e}","{e}"],ans:0,exp:"A diferença A \\ B (ou A − B) contém elementos de A que NÃO estão em B: retiramos b e d de A, ficando {a,c}."},
+{t:"Complementar",q:"Com universo U = {1,2,3,4,5} e A = {1,3,5}, qual é Aᶜ?",opts:["{1,3,5}","{2,4}","{1,2,3,4,5}","{}"],ans:1,exp:"O complementar Aᶜ contém os elementos do universo U que não estão em A: {2,4}."},
+{t:"Classificação de números",q:"O número 0 pertence a quais conjuntos?",opts:["Apenas ℕ","ℕ, ℤ, ℚ e ℝ","Apenas ℤ","ℚ e ℝ, mas não ℕ e ℤ"],ans:1,exp:"0 pertence a ℕ (zero é natural na maioria das definições), portanto também a ℤ, ℚ (= 0/1) e ℝ."},
+{t:"Números irracionais",q:"Qual afirmação sobre π é verdadeira?",opts:["π ∈ ℚ porque tem decimal","π ∈ ℝ \\ ℚ (é irracional)","π = 22/7 exatamente","π ∈ ℤ"],ans:1,exp:"π ≈ 3,14159… é irracional: sua expansão decimal é infinita e não periódica. 22/7 é apenas uma aproximação."},
+];
+let cur=0,sc=0,answered=false;
+function render(){
+  const q=Qs[cur];
+  document.getElementById('qnum').textContent=`Questão ${cur+1}/${Qs.length}`;
+  document.getElementById('prog').style.width=`${cur/Qs.length*100}%`;
+  document.getElementById('qtopic').textContent=q.t;
+  document.getElementById('qtext').textContent=q.q;
+  document.getElementById('exp').style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  const od=document.getElementById('opts');
+  od.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';b.textContent=o;
+    b.onclick=()=>answer(i,b);
+    od.appendChild(b);
+  });
+  answered=false;
+}
+function answer(i,btn){
+  if(answered)return;
+  answered=true;
+  const q=Qs[cur];
+  const btns=document.querySelectorAll('.opt');
+  btns.forEach(b=>b.disabled=true);
+  if(i===q.ans){sc++;btn.classList.add('correct');}
+  else{btn.classList.add('wrong');btns[q.ans].classList.add('reveal');}
+  document.getElementById('score').textContent=sc;
+  const ex=document.getElementById('exp');
+  ex.textContent=q.exp;ex.style.display='block';
+  document.getElementById('next-btn').style.display='inline-block';
+  document.getElementById('next-btn').textContent=cur<Qs.length-1?'Próxima →':'Ver resultado';
+}
+function next(){
+  cur++;
+  if(cur>=Qs.length){showResult();}else{render();}
+}
+function showResult(){
+  document.querySelector('.qcard').style.display='none';
+  document.getElementById('meta').style.display='none';
+  document.getElementById('score-card').style.display='block';
+  document.getElementById('prog').style.width='100%';
+  const pct=Math.round(sc/Qs.length*100);
+  document.getElementById('final-score').textContent=`${sc} / ${Qs.length} (${pct}%)`;
+  const msgs=['Continue estudando — revise os conceitos!','Quase lá! Revise os erros.','Bom trabalho! Alguns pontos para revisar.','Muito bem! Domínio sólido.','Perfeito! Excelente domínio!'];
+  document.getElementById('final-msg').textContent=msgs[Math.floor(pct/21)];
+}
+function restart(){
+  cur=0;sc=0;
+  document.querySelector('.qcard').style.display='block';
+  document.getElementById('meta').style.display='flex';
+  document.getElementById('score-card').style.display='none';
+  render();
+}
+render();
+</script>

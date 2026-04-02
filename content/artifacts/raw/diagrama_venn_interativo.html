@@ -1,0 +1,158 @@
+
+<style>
+*{box-sizing:border-box}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.op-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 14px;font-size:13px;color:var(--color-text-primary);cursor:pointer;transition:.15s;font-family:var(--font-mono)}
+.op-btn:hover,.op-btn.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.el-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:500;margin:3px;cursor:default;border:1.5px solid transparent;transition:.2s}
+.el-chip.in-res{transform:scale(1.08)}
+.info-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .9rem;font-size:13px;color:var(--color-text-primary);min-height:36px;font-family:var(--font-mono)}
+</style>
+
+<div style="padding:1rem 0">
+
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+
+<div style="flex:1;min-width:240px">
+  <div class="card">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:.4rem">Conjunto A</div>
+    <div id="chips-a"></div>
+    <div style="display:flex;gap:6px;margin-top:.5rem">
+      <input id="inp-a" type="text" placeholder="elemento" style="flex:1;font-size:13px">
+      <button class="op-btn" onclick="addEl('a')" style="padding:5px 10px">+</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:.4rem">Conjunto B</div>
+    <div id="chips-b"></div>
+    <div style="display:flex;gap:6px;margin-top:.5rem">
+      <input id="inp-b" type="text" placeholder="elemento" style="flex:1;font-size:13px">
+      <button class="op-btn" onclick="addEl('b')" style="padding:5px 10px">+</button>
+    </div>
+  </div>
+</div>
+
+<div style="flex:1.5;min-width:280px">
+  <div class="card">
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.6rem">Operação</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="op-row">
+      <button class="op-btn act" onclick="setOp('union')" id="op-union">A ∪ B</button>
+      <button class="op-btn" onclick="setOp('inter')" id="op-inter">A ∩ B</button>
+      <button class="op-btn" onclick="setOp('diff_ab')" id="op-diff_ab">A − B</button>
+      <button class="op-btn" onclick="setOp('diff_ba')" id="op-diff_ba">B − A</button>
+    </div>
+    <div style="margin-top:1rem">
+      <svg id="venn-svg" viewBox="0 0 320 160" width="100%">
+        <defs>
+          <clipPath id="ca"><ellipse cx="105" cy="80" rx="85" ry="60"/></clipPath>
+          <clipPath id="cb"><ellipse cx="215" cy="80" rx="85" ry="60"/></clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:.3rem;margin-top:.75rem">Resultado</div>
+    <div class="info-box" id="result-box"></div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin:.5rem 0 .2rem">Definição</div>
+    <div id="def-box" style="font-size:13px;color:var(--color-text-secondary)"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+let setA=new Set(['1','2','3','4']), setB=new Set(['3','4','5','6']), op='union';
+const BLUE='#378ADD', GREEN='#1D9E75', PURPLE='#7F77DD';
+
+function renderChips(id,set){
+  const el=document.getElementById('chips-'+id);
+  el.innerHTML='';
+  const color=id==='a'?BLUE:GREEN;
+  set.forEach(v=>{
+    const c=document.createElement('span');
+    c.className='el-chip';
+    c.style.background=color+'22';
+    c.style.color=color;
+    c.style.borderColor=color+'55';
+    c.innerHTML=v+'<span style="opacity:.5;cursor:pointer;font-size:11px" onclick="removeEl(\''+id+'\',\''+v+'\')">✕</span>';
+    el.appendChild(c);
+  });
+}
+
+function addEl(id){
+  const inp=document.getElementById('inp-'+id);
+  const v=inp.value.trim();
+  if(!v)return;
+  if(id==='a')setA.add(v);else setB.add(v);
+  inp.value='';
+  update();
+}
+document.getElementById('inp-a').addEventListener('keydown',e=>{if(e.key==='Enter')addEl('a')});
+document.getElementById('inp-b').addEventListener('keydown',e=>{if(e.key==='Enter')addEl('b')});
+
+function removeEl(id,v){
+  if(id==='a')setA.delete(v);else setB.delete(v);
+  update();
+}
+function setOp(o){
+  op=o;
+  ['union','inter','diff_ab','diff_ba'].forEach(k=>document.getElementById('op-'+k).classList.toggle('act',k===o));
+  update();
+}
+function getResult(){
+  switch(op){
+    case'union':return new Set([...setA,...setB]);
+    case'inter':return new Set([...setA].filter(x=>setB.has(x)));
+    case'diff_ab':return new Set([...setA].filter(x=>!setB.has(x)));
+    case'diff_ba':return new Set([...setB].filter(x=>!setA.has(x)));
+  }
+}
+const DEFS={
+  union:'A ∪ B = elementos em A OU em B',
+  inter:'A ∩ B = elementos em A E em B',
+  diff_ab:'A − B = em A mas NÃO em B',
+  diff_ba:'B − A = em B mas NÃO em A',
+};
+function update(){
+  renderChips('a',setA);renderChips('b',setB);
+  const res=getResult();
+  document.getElementById('result-box').textContent='{'+[...res].join(', ')+'}';
+  document.getElementById('def-box').textContent=DEFS[op];
+  drawVenn(res);
+}
+function drawVenn(res){
+  const svg=document.getElementById('venn-svg');
+  const highlight=(which)=>{
+    if(op==='union')return which!=='none';
+    if(op==='inter')return which==='both';
+    if(op==='diff_ab')return which==='only_a';
+    if(op==='diff_ba')return which==='only_b';
+  };
+  const ha=highlight('only_a'), hb=highlight('only_b'), hi=highlight('both');
+  svg.innerHTML=`
+    <defs>
+      <clipPath id="ca"><ellipse cx="105" cy="80" rx="85" ry="60"/></clipPath>
+      <clipPath id="cb"><ellipse cx="215" cy="80" rx="85" ry="60"/></clipPath>
+    </defs>
+    <ellipse cx="105" cy="80" rx="85" ry="60" fill="${ha?BLUE+'33':'transparent'}" stroke="${BLUE}" stroke-width="1.5"/>
+    <ellipse cx="215" cy="80" rx="85" ry="60" fill="${hb?GREEN+'33':'transparent'}" stroke="${GREEN}" stroke-width="1.5"/>
+    ${hi?`<ellipse cx="105" cy="80" rx="85" ry="60" fill="${PURPLE+'44'}" clip-path="url(#cb)" stroke="none"/>
+    <ellipse cx="215" cy="80" rx="85" ry="60" fill="${PURPLE+'44'}" clip-path="url(#ca)" stroke="none"/>`:''}
+    <text x="75" y="55" text-anchor="middle" font-size="12" font-weight="500" fill="${BLUE}">A</text>
+    <text x="245" y="55" text-anchor="middle" font-size="12" font-weight="500" fill="${GREEN}">B</text>
+    <text x="160" y="75" text-anchor="middle" font-size="10" fill="${PURPLE}" font-weight="500">${hi?'∩':''}</text>
+  `;
+  const arrA=[...setA].filter(x=>!setB.has(x));
+  const arrI=[...setA].filter(x=>setB.has(x));
+  const arrB=[...setB].filter(x=>!setA.has(x));
+  const place=(items,cx,color,inRes)=>items.slice(0,4).map((v,i)=>{
+    const r=inRes?color:color+'88';
+    const fw=inRes?'500':'400';
+    const y=90+i*16-Math.min(items.length-1,3)*8;
+    return `<text x="${cx}" y="${y}" text-anchor="middle" font-size="11" fill="${r}" font-weight="${fw}">${v}</text>`;
+  }).join('');
+  svg.innerHTML+=place(arrA,75,BLUE,op==='union'||op==='diff_ab');
+  svg.innerHTML+=place(arrI,160,PURPLE,op==='union'||op==='inter');
+  svg.innerHTML+=place(arrB,245,GREEN,op==='union'||op==='diff_ba');
+}
+update();
+</script>

@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules
+dist
+coverage
+*.log
+.env
+.env.local
+tmp-home.png
+tmp_login_function.txt
+preview-runtime.log
+server-runtime.log
+auth-main-server.log
+auth-test-server.log
+.DS_Store

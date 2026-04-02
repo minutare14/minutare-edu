@@ -1,0 +1,157 @@
+
+<style>
+*{box-sizing:border-box}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.tech-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 14px;font-size:13px;color:var(--color-text-primary);cursor:pointer;transition:.15s}
+.tech-btn:hover,.tech-btn.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.step{display:flex;gap:10px;align-items:flex-start;padding:.6rem .75rem;border-radius:var(--border-radius-md);background:var(--color-background-secondary);margin:.35rem 0;font-size:14px;opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s}
+.step.vis{opacity:1;transform:none}
+.step-n{background:var(--color-background-info);color:var(--color-text-info);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;margin-top:1px}
+.result{font-size:16px;font-weight:500;font-family:var(--font-mono);padding:.75rem 1rem;background:var(--color-background-success);color:var(--color-text-success);border-radius:var(--border-radius-md);margin-top:.5rem;opacity:0;transition:opacity .4s .3s}
+.result.vis{opacity:1}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--color-background-warning);color:var(--color-text-warning);display:inline-block;margin-bottom:.4rem}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.6rem">Técnica de fatoração</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" id="tech-row">
+    <button class="tech-btn act" onclick="setTech('fce')" id="t-fce">Fator comum</button>
+    <button class="tech-btn" onclick="setTech('dq')" id="t-dq">Dif. de quadrados</button>
+    <button class="tech-btn" onclick="setTech('tqp')" id="t-tqp">Trinômio perfeito</button>
+    <button class="tech-btn" onclick="setTech('tri')" id="t-tri">Trinômio 2º grau</button>
+    <button class="tech-btn" onclick="setTech('agr')" id="t-agr">Agrupamento</button>
+  </div>
+</div>
+
+<div class="card" id="input-area"></div>
+<div id="steps-out"></div>
+
+</div>
+
+<script>
+const techs={
+  fce:{label:'Fator comum em evidência',inputs:[{id:'expr',label:'Expressão',ph:'ex: 6x² + 9x'}]},
+  dq:{label:'Diferença de quadrados (a² − b²)',inputs:[{id:'a',label:'a',ph:'ex: x ou 3'},{id:'b',label:'b',ph:'ex: 4 ou 2y'}]},
+  tqp:{label:'Trinômio quadrado perfeito',inputs:[{id:'a',label:'a',ph:'ex: x'},{id:'b',label:'b',ph:'ex: 5'}]},
+  tri:{label:'Trinômio do 2º grau (x² + bx + c)',inputs:[{id:'b',label:'coef. b',ph:'ex: 5'},{id:'c',label:'coef. c',ph:'ex: 6'}]},
+  agr:{label:'Agrupamento',inputs:[{id:'a',label:'a',ph:'ex: x'},{id:'b',label:'b',ph:'ex: y'},{id:'p',label:'p (fator)',ph:'ex: (x+y)'}]},
+};
+let cur='fce';
+
+function setTech(k){
+  cur=k;
+  Object.keys(techs).forEach(t=>document.getElementById('t-'+t).classList.toggle('act',t===k));
+  buildInputs();
+  document.getElementById('steps-out').innerHTML='';
+}
+
+function buildInputs(){
+  const t=techs[cur];
+  let h=`<div class="tag">${t.label}</div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:.5rem 0">`;
+  t.inputs.forEach(i=>{
+    h+=`<div><div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:3px">${i.label}</div><input type="text" id="i-${i.id}" placeholder="${i.ph}" style="width:120px"></div>`;
+  });
+  h+=`</div><button class="tech-btn act" onclick="doFactor()" style="margin-top:4px">Fatorar passo a passo →</button>`;
+  document.getElementById('input-area').innerHTML=h;
+}
+
+function val(id){return (document.getElementById('i-'+id)||{value:''}).value.trim();}
+function fmt(v){if(/^-?\d/.test(v)&&parseFloat(v)<0)return'('+v+')';return v;}
+
+function doFactor(){
+  const area=document.getElementById('steps-out');
+  area.innerHTML='';
+  let steps=[];
+  switch(cur){
+    case'fce':steps=stepsFCE();break;
+    case'dq':steps=stepsDQ();break;
+    case'tqp':steps=stepsTQP();break;
+    case'tri':steps=stepsTRI();break;
+    case'agr':steps=stepsAGR();break;
+  }
+  if(!steps.length){area.innerHTML='<div style="font-size:13px;color:var(--color-text-danger)">Preencha todos os campos.</div>';return;}
+  const res=steps.pop();
+  steps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='step';
+    d.innerHTML=`<div class="step-n">${i+1}</div><div><div style="font-family:var(--font-mono)">${s.expr}</div><div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">${s.comment}</div></div>`;
+    area.appendChild(d);
+    setTimeout(()=>d.classList.add('vis'),i*200);
+  });
+  const rd=document.createElement('div');
+  rd.className='result';
+  rd.innerHTML='<span style="font-size:12px;font-weight:400;font-family:var(--font-sans);display:block;margin-bottom:4px">Resultado fatorado</span>= '+res;
+  area.appendChild(rd);
+  setTimeout(()=>rd.classList.add('vis'),steps.length*200+100);
+}
+
+function stepsFCE(){
+  const expr=val('expr');if(!expr)return[];
+  return [
+    {expr,comment:'Expressão original'},
+    {expr:'Identificar o maior fator comum entre os termos',comment:'Buscar o MDC dos coeficientes e a menor potência das variáveis comuns'},
+    {expr:'Colocar o fator comum em evidência',comment:'Dividir cada termo pelo fator comum'},
+  ];
+}
+
+function stepsDQ(){
+  const a=val('a'),b=val('b');if(!a||!b)return[];
+  return[
+    {expr:`${fmt(a)}² − ${fmt(b)}²`,comment:'Expressão original — diferença de dois quadrados'},
+    {expr:'Identificar: a = '+a+', b = '+b,comment:'Reconhecer a forma a² − b²'},
+    {expr:'Aplicar: a² − b² = (a+b)(a−b)',comment:'Fórmula da diferença de quadrados'},
+    '('+a+'+'+b+')('+a+'−'+b+')',
+  ];
+}
+
+function stepsTQP(){
+  const a=val('a'),b=val('b');if(!a||!b)return[];
+  const sgn='+';
+  const nb=parseFloat(b);
+  const c=isNaN(nb)?b+'²':nb**2;
+  const coef2=isNaN(nb)?'2·'+a+'·'+b:2*nb;
+  return[
+    {expr:`${a}² + ${coef2}·? + ${c}`,comment:'Verificar se é trinômio quadrado perfeito'},
+    {expr:`2·${fmt(a)}·${fmt(b)} = ${coef2} ✓`,comment:'Confirmar que o termo do meio = 2ab'},
+    {expr:'Aplicar: a² + 2ab + b² = (a+b)²',comment:'Fórmula do quadrado perfeito'},
+    '('+a+' + '+b+')²',
+  ];
+}
+
+function stepsTRI(){
+  const bv=val('b'),cv=val('c');if(!bv||!cv)return[];
+  const nb=parseInt(bv),nc=parseInt(cv);
+  if(isNaN(nb)||isNaN(nc)){
+    return[
+      {expr:`x² + (${bv})x + (${cv})`,comment:'Trinômio do 2º grau'},
+      {expr:'Encontrar r e s tal que r + s = b e r · s = c',comment:'Método de inspeção'},
+      `(x + r)(x + s)`,
+    ];
+  }
+  let r=null,s=null;
+  for(let i=-50;i<=50;i++){for(let j=-50;j<=50;j++){if(i+j===nb&&i*j===nc){r=i;s=j;break;}}}
+  if(r===null)return[{expr:`x² + ${nb}x + ${nc}`,comment:'Trinômio do 2º grau'},{expr:'Não encontrei r,s inteiros simples. Tente a fórmula de Bhaskara.',comment:''}];
+  const rs=r>=0?'+'+r:r, ss=s>=0?'+'+s:s;
+  return[
+    {expr:`x² + ${nb}x + ${nc}`,comment:'Trinômio original'},
+    {expr:`r + s = ${nb} e r · s = ${nc}`,comment:'Condições para r e s'},
+    {expr:`r = ${r}, s = ${s}`,comment:`${r} + ${s} = ${nb} ✓ e ${r} × ${s} = ${r*s} ✓`},
+    {expr:'Aplicar: (x + r)(x + s)',comment:'Forma fatorada'},
+    `(x ${rs})(x ${ss})`,
+  ];
+}
+
+function stepsAGR(){
+  const a=val('a'),b=val('b'),p=val('p');if(!a||!b||!p)return[];
+  return[
+    {expr:`${a}·${p} + ${b}·${p}`,comment:'Expressão original com fator comum ${p}'},
+    {expr:`${p} é o fator comum dos dois grupos`,comment:'Identificar fator comum'},
+    {expr:'Colocar '+p+' em evidência',comment:'Fator comum em evidência'},
+    `${p}·(${a} + ${b})`,
+  ];
+}
+
+setTech('fce');
+</script>

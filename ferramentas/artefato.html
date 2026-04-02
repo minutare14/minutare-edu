@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artefato Interativo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <style>
+        :root {
+            --color-background-primary: #ffffff;
+            --color-background-secondary: #f8fafc;
+            --color-background-info: #eff6ff;
+            --color-background-success: #ecfdf5;
+            --color-background-danger: #fef2f2;
+            --color-background-warning: #fff7ed;
+            --color-border-tertiary: rgba(16, 32, 58, 0.08);
+            --color-border-secondary: rgba(16, 32, 58, 0.14);
+            --color-border-info: rgba(37, 99, 235, 0.22);
+            --color-border-success: rgba(5, 150, 105, 0.22);
+            --color-border-danger: rgba(220, 38, 38, 0.22);
+            --color-text-primary: #10203a;
+            --color-text-secondary: #5e6b85;
+            --color-text-info: #163f9b;
+            --color-text-success: #0f766e;
+            --color-text-danger: #b91c1c;
+            --color-text-warning: #b45309;
+            --border-radius-lg: 18px;
+            --border-radius-md: 14px;
+            --font-sans: 'Public Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+        }
+
+        body {
+            min-height: 100vh;
+        }
+
+        #artifact-mount {
+            width: 100%;
+            padding: 0;
+        }
+
+        .artifact-state {
+            padding: 1rem;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--color-border-tertiary);
+            background: var(--color-background-secondary);
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .artifact-state--error {
+            color: var(--color-text-danger);
+            background: var(--color-background-danger);
+            border-color: var(--color-border-danger);
+        }
+    </style>
+</head>
+<body>
+    <main id="artifact-mount">
+        <div class="artifact-state">Carregando artefato interativo…</div>
+    </main>
+
+    <script>
+        (function () {
+            const mount = document.getElementById('artifact-mount');
+            const params = new URLSearchParams(window.location.search);
+            const frameId = params.get('frameId') || '';
+            const sourcePath = params.get('src') || '';
+
+            function postToParent(type, payload = {}) {
+                window.parent?.postMessage({ type, frameId, sourcePath, ...payload }, '*');
+            }
+
+            function showState(message, modifier = '') {
+                mount.innerHTML = `<div class="artifact-state ${modifier}">${message}</div>`;
+                postHeight();
+            }
+
+            function isAllowedArtifactPath(path) {
+                return typeof path === 'string' && path.startsWith('/content/artifacts/raw/') && path.endsWith('.html');
+            }
+
+            function postHeight() {
+                const height = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                    mount.scrollHeight,
+                );
+
+                postToParent('artifact-height', { height });
+            }
+
+            function resolveFromArtifactPath(assetPath) {
+                return new URL(assetPath, new URL(sourcePath, window.location.origin)).toString();
+            }
+
+            function cloneResolvedStyles(styleNode) {
+                if (styleNode.tagName === 'LINK') {
+                    const link = document.createElement('link');
+                    Array.from(styleNode.attributes).forEach((attribute) => {
+                        const value =
+                            attribute.name === 'href'
+                                ? resolveFromArtifactPath(attribute.value)
+                                : attribute.value;
+                        link.setAttribute(attribute.name, value);
+                    });
+                    return link;
+                }
+
+                return styleNode.cloneNode(true);
+            }
+
+            async function appendExecutableScript(scriptNode) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+
+                    if (scriptNode.src) {
+                        script.src = resolveFromArtifactPath(scriptNode.getAttribute('src'));
+                        script.async = false;
+                        script.onload = () => resolve();
+                        script.onerror = () => reject(new Error(`Falha ao carregar script externo: ${script.src}`));
+                    } else {
+                        script.textContent = scriptNode.textContent;
+                        resolve();
+                    }
+
+                    document.body.appendChild(script);
+                });
+            }
+
+            function installHostBridge() {
+                window.sendPrompt = function (prompt) {
+                    if (!prompt) return;
+                    postToParent('artifact-prompt', { prompt: String(prompt) });
+                };
+            }
+
+            async function loadArtifact() {
+                if (!isAllowedArtifactPath(sourcePath)) {
+                    console.error('[artifact-host] caminho inválido', { frameId, sourcePath });
+                    showState('Caminho de artefato inválido.', 'artifact-state--error');
+                    return;
+                }
+
+                installHostBridge();
+                console.info('[artifact-host] trying to load artifact', { frameId, sourcePath });
+
+                try {
+                    const response = await fetch(sourcePath);
+                    console.info('[artifact-host] fetch response', {
+                        frameId,
+                        sourcePath,
+                        status: response.status,
+                        contentType: response.headers.get('content-type'),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Não foi possível carregar ${sourcePath}`);
+                    }
+
+                    const fragment = await response.text();
+                    const parsed = new DOMParser().parseFromString(fragment, 'text/html');
+
+                    if (parsed.getElementById('page-home') || parsed.querySelector('.app-container')) {
+                        throw new Error(`O caminho ${sourcePath} não aponta para um artefato válido. O servidor devolveu a aplicação principal em vez do HTML do artefato.`);
+                    }
+
+                    const styles = Array.from(parsed.querySelectorAll('style, link[rel="stylesheet"]'));
+                    const scripts = Array.from(parsed.querySelectorAll('script'));
+
+                    styles.forEach((styleNode) => document.head.appendChild(cloneResolvedStyles(styleNode)));
+                    styles.forEach((styleNode) => styleNode.remove());
+                    scripts.forEach((scriptNode) => scriptNode.remove());
+
+                    mount.innerHTML = '';
+                    const nodes = parsed.body && parsed.body.childNodes.length ? parsed.body.childNodes : parsed.childNodes;
+                    Array.from(nodes).forEach((node) => mount.appendChild(node.cloneNode(true)));
+
+                    for (const scriptNode of scripts) {
+                        await appendExecutableScript(scriptNode);
+                    }
+
+                    console.info('[artifact-host] artifact ready', { frameId, sourcePath, scripts: scripts.length, styles: styles.length });
+                    postToParent('artifact-ready');
+                    postHeight();
+                    requestAnimationFrame(postHeight);
+                    setTimeout(postHeight, 250);
+                    setTimeout(postHeight, 900);
+
+                    const resizeObserver = new ResizeObserver(() => postHeight());
+                    resizeObserver.observe(document.body);
+                    resizeObserver.observe(mount);
+
+                    const mutationObserver = new MutationObserver(() => postHeight());
+                    mutationObserver.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+
+                    window.addEventListener('resize', postHeight);
+                } catch (error) {
+                    console.error('[artifact-host] erro ao carregar artefato', error);
+                    showState(error instanceof Error ? error.message : 'Erro ao carregar artefato.', 'artifact-state--error');
+                }
+            }
+
+            loadArtifact();
+        })();
+    </script>
+</body>
+</html>

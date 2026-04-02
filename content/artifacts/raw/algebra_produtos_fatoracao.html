@@ -1,0 +1,140 @@
+
+<style>
+.alg-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.alg-h2{font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 .75rem;display:block}
+.alg-h3{font-size:15px;font-weight:500;color:var(--color-text-primary);margin:.75rem 0 .5rem}
+.formula{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .9rem;font-family:var(--font-mono);font-size:14px;color:var(--color-text-primary);margin:.4rem 0}
+.note{font-size:12px;color:var(--color-text-secondary);margin-top:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.prop-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:.6rem;flex-wrap:wrap}
+.prop-sym{font-family:var(--font-mono);font-size:14px;min-width:140px;color:var(--color-text-primary)}
+.prop-name{font-size:13px;color:var(--color-text-secondary)}
+.badge2{font-size:12px;padding:3px 9px;border-radius:999px;display:inline-block}
+.step{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .9rem;font-size:13px;color:var(--color-text-primary);margin-top:6px;min-height:32px}
+.ask-btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 14px;font-size:13px;color:var(--color-text-primary);cursor:pointer;background:none;margin-top:8px}
+.ask-btn:hover{background:var(--color-background-secondary)}
+.tab-row{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 14px;font-size:13px;cursor:pointer;background:none;color:var(--color-text-primary)}
+.tab-btn.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.tab-btn:hover{background:var(--color-background-secondary)}
+.section{display:none}.section.vis{display:block}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="tab-row">
+  <button class="tab-btn act" onclick="showTab('props')" id="tb-props">Propriedades</button>
+  <button class="tab-btn" onclick="showTab('pn')" id="tb-pn">Produtos notáveis</button>
+  <button class="tab-btn" onclick="showTab('fat')" id="tb-fat">Fatoração</button>
+  <button class="tab-btn" onclick="showTab('ex')" id="tb-ex">Praticar ↗</button>
+</div>
+
+<div id="sec-props" class="section vis">
+  <span class="alg-h2">Propriedades básicas da álgebra</span>
+  <div class="alg-card">
+    <div class="alg-h3">Adição e multiplicação</div>
+    <div class="prop-row"><span class="prop-sym">a + b = b + a</span><span class="prop-name">Comutativa da adição</span></div>
+    <div class="prop-row"><span class="prop-sym">a · b = b · a</span><span class="prop-name">Comutativa da multiplicação</span></div>
+    <div class="prop-row"><span class="prop-sym">(a+b)+c = a+(b+c)</span><span class="prop-name">Associativa da adição</span></div>
+    <div class="prop-row"><span class="prop-sym">(a·b)·c = a·(b·c)</span><span class="prop-name">Associativa da multiplicação</span></div>
+    <div class="prop-row"><span class="prop-sym">a·(b+c) = a·b + a·c</span><span class="prop-name">Distributiva</span></div>
+    <div class="prop-row"><span class="prop-sym">a + 0 = a</span><span class="prop-name">Elemento neutro da adição</span></div>
+    <div class="prop-row"><span class="prop-sym">a · 1 = a</span><span class="prop-name">Elemento neutro da mult.</span></div>
+    <div class="prop-row"><span class="prop-sym">a + (−a) = 0</span><span class="prop-name">Inverso aditivo (oposto)</span></div>
+    <div class="prop-row"><span class="prop-sym">a · (1/a) = 1, a≠0</span><span class="prop-name">Inverso multiplicativo</span></div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Potenciação</div>
+    <div class="prop-row"><span class="prop-sym">aᵐ · aⁿ = aᵐ⁺ⁿ</span><span class="prop-name">Mesma base, soma expoentes</span></div>
+    <div class="prop-row"><span class="prop-sym">aᵐ / aⁿ = aᵐ⁻ⁿ</span><span class="prop-name">Mesma base, subtrai expoentes</span></div>
+    <div class="prop-row"><span class="prop-sym">(aᵐ)ⁿ = aᵐⁿ</span><span class="prop-name">Potência de potência</span></div>
+    <div class="prop-row"><span class="prop-sym">(a·b)ⁿ = aⁿ·bⁿ</span><span class="prop-name">Produto, distribui o expoente</span></div>
+    <div class="prop-row"><span class="prop-sym">a⁰ = 1 (a≠0)</span><span class="prop-name">Expoente zero</span></div>
+    <div class="prop-row"><span class="prop-sym">a⁻ⁿ = 1/aⁿ</span><span class="prop-name">Expoente negativo</span></div>
+  </div>
+</div>
+
+<div id="sec-pn" class="section">
+  <span class="alg-h2">Produtos notáveis</span>
+  <div class="alg-card">
+    <div class="alg-h3">Quadrado da soma</div>
+    <div class="formula">(a + b)² = a² + 2ab + b²</div>
+    <div class="note">Ex: (x+3)² = x² + 6x + 9</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Quadrado da diferença</div>
+    <div class="formula">(a − b)² = a² − 2ab + b²</div>
+    <div class="note">Ex: (x−4)² = x² − 8x + 16</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Produto da soma pela diferença</div>
+    <div class="formula">(a + b)(a − b) = a² − b²</div>
+    <div class="note">Ex: (x+5)(x−5) = x² − 25</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Cubo da soma</div>
+    <div class="formula">(a + b)³ = a³ + 3a²b + 3ab² + b³</div>
+    <div class="note">Ex: (x+2)³ = x³ + 6x² + 12x + 8</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Cubo da diferença</div>
+    <div class="formula">(a − b)³ = a³ − 3a²b + 3ab² − b³</div>
+    <div class="note">Ex: (x−1)³ = x³ − 3x² + 3x − 1</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">Soma de cubos / Diferença de cubos</div>
+    <div class="formula">a³ + b³ = (a+b)(a²−ab+b²)</div>
+    <div class="formula">a³ − b³ = (a−b)(a²+ab+b²)</div>
+  </div>
+</div>
+
+<div id="sec-fat" class="section">
+  <span class="alg-h2">Técnicas de fatoração</span>
+  <div class="alg-card">
+    <div class="alg-h3">1. Fator comum em evidência</div>
+    <div class="formula">ab + ac = a(b + c)</div>
+    <div class="note">Coloque o fator comum para fora. Ex: 6x² + 9x = 3x(2x + 3)</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">2. Diferença de quadrados</div>
+    <div class="formula">a² − b² = (a+b)(a−b)</div>
+    <div class="note">Ex: x² − 16 = (x+4)(x−4)</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">3. Trinômio quadrado perfeito</div>
+    <div class="formula">a² ± 2ab + b² = (a ± b)²</div>
+    <div class="note">Ex: x² + 10x + 25 = (x+5)²</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">4. Agrupamento</div>
+    <div class="formula">ax + bx + ay + by = x(a+b) + y(a+b) = (x+y)(a+b)</div>
+    <div class="note">Agrupe pares e coloque em evidência.</div>
+  </div>
+  <div class="alg-card">
+    <div class="alg-h3">5. Trinômio do 2º grau</div>
+    <div class="formula">x² + (r+s)x + rs = (x+r)(x+s)</div>
+    <div class="note">Encontre r e s tal que r+s = coef. de x e r·s = termo independente. Ex: x²+5x+6 = (x+2)(x+3)</div>
+  </div>
+</div>
+
+<div id="sec-ex" class="section">
+  <span class="alg-h2">Praticar com Claude</span>
+  <div class="alg-card" style="display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:13px;color:var(--color-text-secondary)">Peça exercícios ou tire dúvidas sobre qualquer tópico:</div>
+    <button class="ask-btn" onclick="sendPrompt('Me dê 3 exercícios de produtos notáveis com gabarito comentado, nível básico.')">Exercícios de produtos notáveis ↗</button>
+    <button class="ask-btn" onclick="sendPrompt('Me dê 3 exercícios de fatoração de polinômios com solução passo a passo.')">Exercícios de fatoração ↗</button>
+    <button class="ask-btn" onclick="sendPrompt('Me dê 3 exercícios sobre propriedades da álgebra com gabarito.')">Exercícios de propriedades ↗</button>
+    <button class="ask-btn" onclick="sendPrompt('Explique a diferença entre fatorar e expandir uma expressão algébrica, com exemplos.')">Fatorar vs. expandir — explicação ↗</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(t){
+  ['props','pn','fat','ex'].forEach(k=>{
+    document.getElementById('sec-'+k).classList.toggle('vis', k===t);
+    document.getElementById('tb-'+k).classList.toggle('act', k===t);
+  });
+}
+</script>

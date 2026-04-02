@@ -1,0 +1,172 @@
+
+<style>
+.sec2{margin:0 0 2rem}
+h2b{font-size:18px;font-weight:500;color:var(--color-text-primary);display:block;margin:0 0 .75rem}
+.card2{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.irow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:.5rem}
+.ilabel{font-size:13px;font-weight:500;color:var(--color-text-primary);min-width:80px}
+.isym{font-family:var(--font-mono);font-size:13px;color:var(--color-text-secondary)}
+.idef{font-size:13px;color:var(--color-text-secondary)}
+.slider-row{display:flex;align-items:center;gap:10px;margin:.5rem 0}
+.slider-row label{font-size:13px;color:var(--color-text-secondary);min-width:20px}
+.slider-row span{font-size:13px;font-weight:500;min-width:28px}
+.type-row{display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0}
+.type-btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:13px;cursor:pointer;background:none;color:var(--color-text-primary)}
+.type-btn.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.type-btn:hover{background:var(--color-background-secondary)}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="sec2">
+<span class="h2b" style="font-size:18px;font-weight:500;color:var(--color-text-primary);display:block;margin:0 0 .75rem">Tipos de intervalo</span>
+
+<div class="card2">
+  <div class="irow">
+    <span class="ilabel" style="color:#185FA5">Aberto (a,b)</span>
+    <span class="isym">a &lt; x &lt; b</span>
+  </div>
+  <div class="idef">Não inclui os extremos. Representado com <strong>parênteses</strong> e círculos <strong>vazios</strong> na reta.</div>
+  <svg viewBox="0 0 300 40" width="100%" style="max-width:300px;margin-top:8px">
+    <line x1="20" y1="20" x2="280" y2="20" stroke="#888" stroke-width="1.5"/>
+    <line x1="100" y1="20" x2="200" y2="20" stroke="#185FA5" stroke-width="3"/>
+    <circle cx="100" cy="20" r="6" fill="none" stroke="#185FA5" stroke-width="2"/>
+    <circle cx="200" cy="20" r="6" fill="none" stroke="#185FA5" stroke-width="2"/>
+    <text x="100" y="38" text-anchor="middle" font-size="12" fill="#185FA5">a</text>
+    <text x="200" y="38" text-anchor="middle" font-size="12" fill="#185FA5">b</text>
+  </svg>
+</div>
+
+<div class="card2">
+  <div class="irow">
+    <span class="ilabel" style="color:#3B6D11">Fechado [a,b]</span>
+    <span class="isym">a ≤ x ≤ b</span>
+  </div>
+  <div class="idef">Inclui os extremos. Representado com <strong>colchetes</strong> e círculos <strong>preenchidos</strong> na reta.</div>
+  <svg viewBox="0 0 300 40" width="100%" style="max-width:300px;margin-top:8px">
+    <line x1="20" y1="20" x2="280" y2="20" stroke="#888" stroke-width="1.5"/>
+    <line x1="100" y1="20" x2="200" y2="20" stroke="#3B6D11" stroke-width="3"/>
+    <circle cx="100" cy="20" r="6" fill="#3B6D11" stroke="#3B6D11" stroke-width="2"/>
+    <circle cx="200" cy="20" r="6" fill="#3B6D11" stroke="#3B6D11" stroke-width="2"/>
+    <text x="100" y="38" text-anchor="middle" font-size="12" fill="#3B6D11">a</text>
+    <text x="200" y="38" text-anchor="middle" font-size="12" fill="#3B6D11">b</text>
+  </svg>
+</div>
+
+<div class="card2">
+  <div class="irow">
+    <span class="ilabel" style="color:#854F0B">Semiabertos</span>
+    <span class="isym">[a,b) ou (a,b]</span>
+  </div>
+  <div class="idef">Um lado incluído, outro não.</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+    <div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px">[a, b) — inclui a, exclui b</div>
+      <svg viewBox="0 0 300 40" width="160">
+        <line x1="20" y1="20" x2="280" y2="20" stroke="#888" stroke-width="1.5"/>
+        <line x1="100" y1="20" x2="200" y2="20" stroke="#854F0B" stroke-width="3"/>
+        <circle cx="100" cy="20" r="6" fill="#854F0B" stroke="#854F0B" stroke-width="2"/>
+        <circle cx="200" cy="20" r="6" fill="none" stroke="#854F0B" stroke-width="2"/>
+        <text x="100" y="38" text-anchor="middle" font-size="12" fill="#854F0B">a</text>
+        <text x="200" y="38" text-anchor="middle" font-size="12" fill="#854F0B">b</text>
+      </svg>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px">(a, b] — exclui a, inclui b</div>
+      <svg viewBox="0 0 300 40" width="160">
+        <line x1="20" y1="20" x2="280" y2="20" stroke="#888" stroke-width="1.5"/>
+        <line x1="100" y1="20" x2="200" y2="20" stroke="#854F0B" stroke-width="3"/>
+        <circle cx="100" cy="20" r="6" fill="none" stroke="#854F0B" stroke-width="2"/>
+        <circle cx="200" cy="20" r="6" fill="#854F0B" stroke="#854F0B" stroke-width="2"/>
+        <text x="100" y="38" text-anchor="middle" font-size="12" fill="#854F0B">a</text>
+        <text x="200" y="38" text-anchor="middle" font-size="12" fill="#854F0B">b</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="card2">
+  <div class="irow">
+    <span class="ilabel" style="color:#533AB7">Infinitos</span>
+    <span class="isym">(−∞,b], [a,+∞), (−∞,+∞)</span>
+  </div>
+  <div class="idef">∞ nunca é incluído (sempre parênteses no lado infinito).</div>
+  <svg viewBox="0 0 300 40" width="100%" style="max-width:300px;margin-top:8px">
+    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#888"/></marker></defs>
+    <line x1="20" y1="20" x2="276" y2="20" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="20" y1="20" x2="160" y2="20" stroke="#533AB7" stroke-width="3"/>
+    <circle cx="160" cy="20" r="6" fill="#533AB7" stroke="#533AB7" stroke-width="2"/>
+    <text x="16" y="14" text-anchor="middle" font-size="16" fill="#533AB7">←</text>
+    <text x="160" y="38" text-anchor="middle" font-size="12" fill="#533AB7">b</text>
+    <text x="80" y="14" text-anchor="middle" font-size="11" fill="#533AB7">(−∞, b]</text>
+  </svg>
+</div>
+</div>
+
+<div class="sec2">
+<span style="font-size:18px;font-weight:500;color:var(--color-text-primary);display:block;margin:0 0 .75rem">Visualizador interativo</span>
+<div class="card2">
+  <div class="type-row" id="type-row">
+    <button class="type-btn active" onclick="setType('ab')" id="t-ab">(a, b) aberto</button>
+    <button class="type-btn" onclick="setType('fb')" id="t-fb">[a, b] fechado</button>
+    <button class="type-btn" onclick="setType('sb1')" id="t-sb1">[a, b) semiaberto</button>
+    <button class="type-btn" onclick="setType('sb2')" id="t-sb2">(a, b] semiaberto</button>
+  </div>
+  <div class="slider-row">
+    <label>a</label>
+    <input type="range" min="-10" max="9" value="-3" step="1" id="sl-a" style="flex:1" oninput="draw()"/>
+    <span id="va">-3</span>
+  </div>
+  <div class="slider-row">
+    <label>b</label>
+    <input type="range" min="-9" max="10" value="5" step="1" id="sl-b" style="flex:1" oninput="draw()"/>
+    <span id="vb">5</span>
+  </div>
+  <div id="int-label" style="font-size:15px;font-weight:500;color:var(--color-text-primary);margin:.5rem 0"></div>
+  <svg id="reta" viewBox="0 0 400 60" width="100%" style="max-width:400px"></svg>
+</div>
+</div>
+
+</div>
+
+<script>
+let itype = 'ab';
+function setType(t){
+  itype = t;
+  ['ab','fb','sb1','sb2'].forEach(k=>{
+    document.getElementById('t-'+k).classList.toggle('active', k===t);
+  });
+  draw();
+}
+function draw(){
+  const a = +document.getElementById('sl-a').value;
+  let b = +document.getElementById('sl-b').value;
+  if(b <= a){ b = a+1; document.getElementById('sl-b').value = b; }
+  document.getElementById('va').textContent = a;
+  document.getElementById('vb').textContent = b;
+  const leftInc = itype==='fb'||itype==='sb1';
+  const rightInc = itype==='fb'||itype==='sb2';
+  const lb = itype==='ab'?'(': itype==='fb'?'[': itype==='sb1'?'[':'(';
+  const rb = itype==='ab'?')': itype==='fb'?']': itype==='sb1'?')':']';
+  document.getElementById('int-label').textContent = lb+a+', '+b+rb+' : '+lb+(leftInc?'≤':'<')+' x '+rb.replace(']','').replace(')','')+(rightInc?'≤':'<')+b;
+  const svg = document.getElementById('reta');
+  const W=400, cx=200, scale=16;
+  const min=-10, max=10;
+  const px = v => cx + v*scale;
+  const color='#185FA5';
+  svg.innerHTML = `
+    <defs>
+      <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#888"/></marker>
+      <marker id="a3" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto"><path d="M8,0 L8,6 L0,3 z" fill="#888"/></marker>
+    </defs>
+    <line x1="20" y1="30" x2="376" y2="30" stroke="#888" stroke-width="1.5" marker-end="url(#a2)" marker-start="url(#a3)"/>
+    ${Array.from({length:21},(_,i)=>{const v=i-10;const x=px(v);return`<line x1="${x}" y1="26" x2="${x}" y2="34" stroke="#aaa" stroke-width="1"/><text x="${x}" y="48" text-anchor="middle" font-size="10" fill="#aaa">${v}</text>`}).join('')}
+    <line x1="${px(a)}" y1="30" x2="${px(b)}" y2="30" stroke="${color}" stroke-width="4"/>
+    <circle cx="${px(a)}" cy="30" r="7" fill="${leftInc?color:'white'}" stroke="${color}" stroke-width="2"/>
+    <circle cx="${px(b)}" cy="30" r="7" fill="${rightInc?color:'white'}" stroke="${color}" stroke-width="2"/>
+    <text x="${px(a)}" y="18" text-anchor="middle" font-size="12" fill="${color}">${a}</text>
+    <text x="${px(b)}" y="18" text-anchor="middle" font-size="12" fill="${color}">${b}</text>
+  `;
+}
+draw();
+</script>

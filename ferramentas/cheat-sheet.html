@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheat Sheet — CTIA03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:#2563eb; --green:#059669; --amber:#d97706; --red:#dc2626;
+    --text:#10203a; --muted:#5e6b85;
+    --blue-soft:#eff6ff; --green-soft:#ecfdf5; --amber-soft:#fff7ed; --red-soft:#fef2f2;
+    --font-title:'Manrope',sans-serif; --font-body:'Public Sans',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:var(--font-body);
+    background:#f5f7fb;
+    color:var(--text);
+    padding:24px;
+  }
+
+  /* ── topo ── */
+  .top-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:28px; gap:16px; flex-wrap:wrap;
+  }
+  .top-bar h1 { font-family:var(--font-title); font-size:1.5rem; }
+  .top-bar p  { font-size:.85rem; color:var(--muted); }
+  .btn-print {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 20px; border-radius:12px;
+    background:var(--blue); color:#fff;
+    font-family:var(--font-body); font-size:.9rem; font-weight:700;
+    border:none; cursor:pointer;
+    transition:opacity .15s;
+  }
+  .btn-print:hover { opacity:.88; }
+
+  /* ── grid de blocos ── */
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:16px;
+  }
+
+  /* ── bloco ── */
+  .block {
+    border-radius:16px;
+    padding:18px 20px;
+    border:1px solid rgba(16,32,58,.08);
+    background:#fff;
+    break-inside:avoid;
+  }
+  .block__kicker {
+    display:inline-block;
+    font-family:var(--font-title);
+    font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 10px; border-radius:999px; margin-bottom:12px;
+  }
+  .block__title {
+    font-family:var(--font-title);
+    font-size:1rem; margin-bottom:14px;
+  }
+  .block--blue  { border-top:3px solid var(--blue); }
+  .block--green { border-top:3px solid var(--green); }
+  .block--amber { border-top:3px solid var(--amber); }
+  .block--red   { border-top:3px solid var(--red); }
+  .block--blue  .block__kicker { background:var(--blue-soft);  color:var(--blue);  }
+  .block--green .block__kicker { background:var(--green-soft); color:var(--green); }
+  .block--amber .block__kicker { background:var(--amber-soft); color:var(--amber); }
+  .block--red   .block__kicker { background:var(--red-soft);   color:var(--red);   }
+
+  /* ── tabela ── */
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th {
+    background:rgba(16,32,58,.05);
+    font-weight:700; font-size:.75rem; text-transform:uppercase;
+    letter-spacing:.05em; padding:6px 10px; text-align:left;
+  }
+  td { padding:6px 10px; border-top:1px solid rgba(16,32,58,.06); }
+  tr:last-child td { border-bottom:none; }
+
+  /* ── fórmula inline ── */
+  .f { font-weight:700; font-family:var(--font-title); font-size:.95rem; }
+  .f-blue  { color:var(--blue);  }
+  .f-green { color:var(--green); }
+  .f-amber { color:var(--amber); }
+  .f-red   { color:var(--red);   }
+
+  /* ── lista de regras ── */
+  .rules { display:grid; gap:8px; }
+  .rule {
+    display:grid; grid-template-columns:auto 1fr;
+    gap:10px; align-items:start;
+    padding:10px 12px; border-radius:10px;
+    background:rgba(16,32,58,.03);
+    font-size:.87rem; line-height:1.5;
+  }
+  .rule__symbol {
+    font-family:var(--font-title); font-weight:800; font-size:1rem;
+    padding-top:1px;
+  }
+
+  /* ── chips de conjunto ── */
+  .set-row {
+    display:flex; flex-wrap:wrap; gap:8px;
+    margin-top:10px;
+  }
+  .chip {
+    padding:6px 12px; border-radius:999px;
+    font-weight:700; font-size:.82rem;
+  }
+  .chip--N { background:#fef2f2; color:var(--red);   }
+  .chip--Z { background:#fff7ed; color:var(--amber); }
+  .chip--Q { background:#ecfdf5; color:var(--green); }
+  .chip--I { background:#f5f3ff; color:#7c3aed;      }
+  .chip--R { background:#eff6ff; color:var(--blue);  }
+
+  /* ── nota de rodapé ── */
+  .footer-note {
+    margin-top:24px;
+    text-align:center;
+    font-size:.78rem; color:var(--muted);
+  }
+
+  /* ── IMPRESSÃO ── */
+  @media print {
+    body { background:#fff; padding:10mm; }
+    .top-bar .btn-print { display:none; }
+    .top-bar { margin-bottom:14px; }
+    .block { break-inside:avoid; border:1px solid #ddd; }
+    .grid  { grid-template-columns:repeat(2,1fr); gap:10px; }
+    @page { size:A4; margin:10mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <h1>Cheat Sheet — Bases Matemáticas</h1>
+    <p>CTIA03 · Todos os tópicos em uma folha</p>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+</div>
+
+<div class="grid">
+
+  <!-- CONJUNTOS NUMÉRICOS -->
+  <div class="block block--blue">
+    <span class="block__kicker">Conjuntos Numéricos</span>
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nome</th><th>Exemplos</th></tr></thead>
+      <tbody>
+        <tr><td class="f f-red">ℕ</td><td>Naturais</td><td>0, 1, 2, 3…</td></tr>
+        <tr><td class="f f-amber">ℤ</td><td>Inteiros</td><td>…−2, −1, 0, 1, 2…</td></tr>
+        <tr><td class="f f-green">ℚ</td><td>Racionais</td><td>½, 0,25, 0,333…</td></tr>
+        <tr><td class="f" style="color:#7c3aed">𝕀</td><td>Irracionais</td><td>π, √2, e…</td></tr>
+        <tr><td class="f f-blue">ℝ</td><td>Reais</td><td>ℝ = ℚ ∪ 𝕀</td></tr>
+      </tbody>
+    </table>
+    <div class="set-row">
+      <span class="chip chip--N">ℕ ⊂</span>
+      <span class="chip chip--Z">ℤ ⊂</span>
+      <span class="chip chip--Q">ℚ ⊂</span>
+      <span class="chip chip--R">ℝ</span>
+      <span class="chip chip--I">𝕀 ⊂ ℝ</span>
+    </div>
+  </div>
+
+  <!-- PERTINÊNCIA vs INCLUSÃO -->
+  <div class="block block--green">
+    <span class="block__kicker">Símbolos de Conjunto</span>
+    <div class="rules">
+      <div class="rule">
+        <span class="rule__symbol f-green">∈</span>
+        <div><strong>Pertence</strong> — liga <em>elemento</em> ao conjunto<br>
+        Ex: 3 ∈ ℕ &nbsp;·&nbsp; π ∈ 𝕀</div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol" style="color:#dc2626">∉</span>
+        <div><strong>Não pertence</strong><br>Ex: −2 ∉ ℕ</div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol f-blue">⊂</span>
+        <div><strong>Está contido</strong> — liga <em>conjunto</em> a conjunto<br>
+        Ex: ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ</div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">∅</span>
+        <div><strong>Conjunto vazio</strong> — ∅ ⊂ a <em>todo</em> conjunto</div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">∪ ∩</span>
+        <div><strong>∪ = União</strong> (junta tudo) &nbsp;·&nbsp; <strong>∩ = Interseção</strong> (apenas o que repete)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERVALOS -->
+  <div class="block block--amber">
+    <span class="block__kicker">Intervalos Reais</span>
+    <table>
+      <thead><tr><th>Notação</th><th>Desigualdade</th><th>Extremos</th></tr></thead>
+      <tbody>
+        <tr><td class="f">[a, b]</td><td>a ≤ x ≤ b</td><td>● ● incluídos</td></tr>
+        <tr><td class="f">]a, b[</td><td>a &lt; x &lt; b</td><td>○ ○ excluídos</td></tr>
+        <tr><td class="f">[a, b[</td><td>a ≤ x &lt; b</td><td>● ○ misto</td></tr>
+        <tr><td class="f">]a, b]</td><td>a &lt; x ≤ b</td><td>○ ● misto</td></tr>
+        <tr><td class="f">[a, +∞[</td><td>x ≥ a</td><td>● ∞ sempre aberto</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;font-size:.83rem;padding:8px 10px;background:#fff7ed;border-radius:8px;">
+      <strong>Regra:</strong> ≤ / ≥ → <strong>[</strong> (inclui, ●) &nbsp;|&nbsp; &lt; / &gt; → <strong>]</strong> (exclui, ○)
+    </p>
+  </div>
+
+  <!-- PRODUTOS NOTÁVEIS -->
+  <div class="block block--blue">
+    <span class="block__kicker">Produtos Notáveis</span>
+    <div class="rules">
+      <div class="rule">
+        <span class="rule__symbol f-blue">²</span>
+        <div><span class="f">(a + b)² = a² + <span class="f-amber">2ab</span> + b²</span><br>
+        <small style="color:var(--muted)">Não mate o 2ab!</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol f-blue">²</span>
+        <div><span class="f">(a − b)² = a² − <span class="f-amber">2ab</span> + b²</span></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol f-green">±</span>
+        <div><span class="f">(a+b)(a−b) = a² − b²</span><br>
+        <small style="color:var(--muted)">Soma × diferença = diferença de quadrados</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol f-amber">³</span>
+        <div><span class="f">(a+b)³ = a³ + 3a²b + 3ab² + b³</span></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol f-amber">³</span>
+        <div><span class="f">(a−b)³ = a³ − 3a²b + 3ab² − b³</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FATORAÇÃO -->
+  <div class="block block--green">
+    <span class="block__kicker">Fatoração — Fluxograma</span>
+    <div class="rules">
+      <div class="rule"><span class="rule__symbol">①</span><div><strong>Fator em evidência:</strong> algo se repete?<br><span class="f">ax + ay = a(x + y)</span></div></div>
+      <div class="rule"><span class="rule__symbol">②</span><div><strong>Diferença de quadrados:</strong> dois termos com −<br><span class="f">a² − b² = (a+b)(a−b)</span></div></div>
+      <div class="rule"><span class="rule__symbol">③</span><div><strong>Trinômio quadrado perfeito:</strong> 3 termos<br><span class="f">a² ± 2ab + b² = (a ± b)²</span></div></div>
+      <div class="rule"><span class="rule__symbol">④</span><div><strong>Agrupamento:</strong> 4 termos, evidência em etapas</div></div>
+    </div>
+    <p style="margin-top:12px;font-size:.82rem;padding:8px 10px;background:#ecfdf5;border-radius:8px;">
+      ⚠ Só cancela termos em frações se estiverem <strong>multiplicando</strong> (fatorados)
+    </p>
+  </div>
+
+  <!-- ÁLGEBRA / PROPRIEDADES -->
+  <div class="block block--amber">
+    <span class="block__kicker">Propriedades da Álgebra</span>
+    <div class="rules">
+      <div class="rule">
+        <span class="rule__symbol">🔄</span>
+        <div><strong>Comutativa:</strong> a+b = b+a &nbsp;·&nbsp; a·b = b·a<br>
+        <small style="color:var(--muted)">Não vale para − e ÷</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">( )</span>
+        <div><strong>Associativa:</strong> (a+b)+c = a+(b+c)<br>
+        <small style="color:var(--muted)">Troca os parênteses, não a ordem</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">🚿</span>
+        <div><strong>Distributiva (chuveirinho):</strong><br>
+        <span class="f">a(b+c) = ab + ac</span><br>
+        <small style="color:var(--muted)">O carteiro visita TODOS os termos de dentro</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">0·1</span>
+        <div><strong>Neutros:</strong> x + 0 = x &nbsp;·&nbsp; x · 1 = x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELAÇÃO DE ORDEM -->
+  <div class="block block--red">
+    <span class="block__kicker">Relação de Ordem</span>
+    <div class="rules">
+      <div class="rule">
+        <span class="rule__symbol f-red">🐊</span>
+        <div><strong>O jacaré come o MAIOR:</strong> 5 &gt; 2, −1 &gt; −8</div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">−</span>
+        <div><strong>Negativos:</strong> −8 &lt; −2 (mais à esquerda = menor)<br>
+        <small style="color:var(--muted)">Imagine o termômetro — dever 8 é pior que dever 2</small></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">⚠</span>
+        <div><strong>Mult./div. por negativo → inverte o sinal!</strong><br>
+        <span class="f">se a &lt; b e c &lt; 0, então ac &gt; bc</span></div>
+      </div>
+      <div class="rule">
+        <span class="rule__symbol">×</span>
+        <div><strong>Frações — multiplicação cruzada:</strong><br>
+        3/4 vs 5/7 → 7×3=21, 4×5=20 → 3/4 &gt; 5/7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POTENCIAÇÃO E RADICIAÇÃO -->
+  <div class="block block--blue">
+    <span class="block__kicker">Potenciação &amp; Radiciação</span>
+    <table>
+      <thead><tr><th>Propriedade</th><th>Fórmula</th></tr></thead>
+      <tbody>
+        <tr><td>Mesma base — produto</td><td class="f">aᵐ · aⁿ = aᵐ⁺ⁿ</td></tr>
+        <tr><td>Mesma base — quociente</td><td class="f">aᵐ ÷ aⁿ = aᵐ⁻ⁿ</td></tr>
+        <tr><td>Potência de potência</td><td class="f">(aᵐ)ⁿ = aᵐ·ⁿ</td></tr>
+        <tr><td>Expoente zero</td><td class="f">a⁰ = 1 (a ≠ 0)</td></tr>
+        <tr><td>Expoente negativo</td><td class="f">a⁻ⁿ = 1/aⁿ</td></tr>
+        <tr><td>Expoente fracionário</td><td class="f">aᵐ/ⁿ = ⁿ√(aᵐ)</td></tr>
+        <tr><td>Produto de radicandos</td><td class="f">ⁿ√(a·b) = ⁿ√a · ⁿ√b</td></tr>
+        <tr><td>Raiz de raiz</td><td class="f">ᵐ√(ⁿ√a) = ᵐⁿ√a</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;font-size:.82rem;padding:8px 10px;background:#eff6ff;border-radius:8px;">
+      ⚠ 2³ · 3² ≠ 6⁵ — só une potências com a <strong>mesma base</strong>
+    </p>
+  </div>
+
+  <!-- RAÍZES ÚTEIS -->
+  <div class="block block--green">
+    <span class="block__kicker">Raízes para memorizar</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+      <table>
+        <thead><tr><th>Raiz</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td class="f">√2</td><td>≈ 1,414</td></tr>
+          <tr><td class="f">√3</td><td>≈ 1,732</td></tr>
+          <tr><td class="f">√5</td><td>≈ 2,236</td></tr>
+          <tr><td class="f">√7</td><td>≈ 2,646</td></tr>
+          <tr><td class="f">√10</td><td>≈ 3,162</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Raiz</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td class="f">√4</td><td>= 2</td></tr>
+          <tr><td class="f">√9</td><td>= 3</td></tr>
+          <tr><td class="f">√16</td><td>= 4</td></tr>
+          <tr><td class="f">√25</td><td>= 5</td></tr>
+          <tr><td class="f">√100</td><td>= 10</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note">CTIA03 — Bases Matemáticas · minutare-edu · Use Ctrl+P ou o botão acima para imprimir / salvar em PDF</p>
+
+</body>
+</html>

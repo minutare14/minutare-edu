@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erros Fatais — CTIA03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --text:#10203a; --muted:#5e6b85; --red:#dc2626; --red-soft:#fef2f2;
+    --green:#059669; --green-soft:#ecfdf5;
+    --blue:#2563eb; --blue-soft:#eff6ff;
+    --amber:#d97706; --amber-soft:#fff7ed;
+    --font-title:'Manrope',sans-serif; --font-body:'Public Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font-body);background:#f5f7fb;color:var(--text);padding:24px;}
+
+  .page-header{
+    margin-bottom:32px;
+    padding:24px 28px;
+    border-radius:20px;
+    background:var(--red-soft);
+    border:1.5px solid rgba(220,38,38,.2);
+  }
+  .page-header__label{
+    display:inline-block;
+    font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--red);margin-bottom:8px;
+  }
+  .page-header h1{font-family:var(--font-title);font-size:1.6rem;margin-bottom:8px;color:var(--red);}
+  .page-header p{font-size:.9rem;color:var(--muted);max-width:60ch;}
+
+  .section-title{
+    font-family:var(--font-title);font-size:1rem;font-weight:800;
+    letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);margin:32px 0 16px;
+  }
+
+  .errors-grid{display:grid;gap:14px;}
+
+  .error-card{
+    border-radius:16px;overflow:hidden;
+    box-shadow:0 4px 16px rgba(17,24,39,.06);
+  }
+  .error-card__wrong{
+    padding:16px 20px;
+    background:var(--red-soft);
+    border:1.5px solid rgba(220,38,38,.15);
+    border-bottom:none;
+    border-radius:16px 16px 0 0;
+  }
+  .error-card__right{
+    padding:16px 20px;
+    background:var(--green-soft);
+    border:1.5px solid rgba(5,150,105,.18);
+    border-top:none;
+    border-radius:0 0 16px 16px;
+  }
+  .error-card__wrong .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--red);margin-bottom:8px;
+  }
+  .error-card__right .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--green);margin-bottom:8px;
+  }
+  .error-card__topic{
+    font-size:.75rem;color:var(--muted);font-weight:600;
+    float:right;margin-top:-2px;
+    background:rgba(255,255,255,.7);
+    padding:3px 8px;border-radius:999px;
+  }
+  .code{
+    font-family:var(--font-title);font-size:1.05rem;font-weight:700;
+    line-height:1.5;
+  }
+  .wrong{color:var(--red);text-decoration:line-through;opacity:.7;}
+  .right{color:var(--green);}
+  .note{font-size:.83rem;color:var(--muted);margin-top:6px;line-height:1.5;}
+
+  /* contador */
+  .counter{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:16px 20px;border-radius:14px;
+    background:#fff;border:1px solid rgba(16,32,58,.08);
+    margin-bottom:28px;font-size:.88rem;
+  }
+  .counter__num{
+    font-family:var(--font-title);font-size:2rem;font-weight:800;color:var(--red);
+  }
+
+  @media print{
+    body{background:#fff;padding:8mm;}
+    .page-header{padding:14px 18px;}
+    @page{size:A4;margin:10mm;}
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header__label">⚠ Atenção máxima</span>
+  <h1>Erros Fatais — CTIA03</h1>
+  <p>Os erros mais comuns compilados de todos os módulos. Leia isso <strong>antes de entrar na prova</strong>.</p>
+</div>
+
+<div class="counter">
+  <div class="counter__num">14</div>
+  <div>erros documentados diretamente nos materiais do curso, organizados por tópico.</div>
+</div>
+
+<!-- ──────────────────── CONJUNTOS ──────────────────── -->
+<p class="section-title">Conjuntos</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Noção de Conjunto</span>
+      <div class="code wrong">ℕ ∈ ℤ</div>
+      <p class="note">Usar ∈ para relacionar dois conjuntos.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">ℕ ⊂ ℤ</div>
+      <p class="note">∈ liga <em>elemento</em> → conjunto. &nbsp;⊂ liga <em>conjunto</em> → conjunto.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Conjunto Vazio</span>
+      <div class="code wrong">{∅} = conjunto vazio</div>
+      <p class="note">Isso é um conjunto com um elemento dentro (o símbolo ∅).</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">∅ &nbsp; ou &nbsp; { }</div>
+      <p class="note">Conjunto vazio é representado apenas por ∅ ou chaves vazias { }.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Diferença</span>
+      <div class="code wrong">A − B = B − A</div>
+      <p class="note">Achar que a diferença é comutativa.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">A − B ≠ B − A (em geral)</div>
+      <p class="note">A−B são os elementos exclusivos de A. B−A são os exclusivos de B. Resultados diferentes.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ──────────────────── CONJUNTOS NUMÉRICOS ──────────────────── -->
+<p class="section-title">Conjuntos Numéricos</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Racional vs Irracional</span>
+      <div class="code wrong">0,777… é irracional</div>
+      <p class="note">O aluno vê "infinito" e marca irracional.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">0,777… = 7/9 → é RACIONAL (ℚ)</div>
+      <p class="note">Dízima <em>periódica</em> tem fração equivalente → é racional. Irracional só se for decimal <em>sem padrão que se repete</em>.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Raízes</span>
+      <div class="code wrong">√16 é irracional</div>
+      <p class="note">Achar que toda raiz quadrada é irracional.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">√16 = 4 → é NATURAL (ℕ)</div>
+      <p class="note">Resolva a raiz <em>antes</em> de classificar. √4=2, √9=3, √25=5 são todos naturais.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ──────────────────── INTERVALOS ──────────────────── -->
+<p class="section-title">Intervalos Reais</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Infinito</span>
+      <div class="code wrong">[2, +∞]</div>
+      <p class="note">Fechar o intervalo no infinito com colchete ].</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">[2, +∞[ &nbsp;ou&nbsp; [2, +∞)</div>
+      <p class="note">Infinito não é um número — nunca pode ser incluído. <em>Sempre</em> aberto.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Bolinha na reta</span>
+      <div class="code wrong">Bolinha vazia para ≤ ou ≥</div>
+      <p class="note">Esquecer de pintar a bolinha quando o sinal inclui o extremo.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">≤ / ≥ → ● pintada &nbsp;|&nbsp; &lt; / &gt; → ○ vazia</div>
+      <p class="note">Regra direta: tem "traço embaixo" do sinal (≤ ≥)? Tem tinta na bolinha.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ──────────────────── ÁLGEBRA ──────────────────── -->
+<p class="section-title">Álgebra e Produtos Notáveis</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Erro da morte</span>
+      <span class="error-card__topic">Quadrado da Soma</span>
+      <div class="code wrong">(a + b)² = a² + b²</div>
+      <p class="note">O erro mais clássico da álgebra. O termo do meio some.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">(a + b)² = a² + <span style="color:var(--amber)">2ab</span> + b²</div>
+      <p class="note">O 2ab <em>nunca</em> pode ser esquecido. Se der branco, abra a potência e faça (a+b)(a+b) no chuveirinho.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Distributiva</span>
+      <div class="code wrong">2(x + 5) = 2x + 5</div>
+      <p class="note">O carteiro só entregou para o primeiro morador.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">2(x + 5) = 2x + 10</div>
+      <p class="note">O número de fora multiplica <em>todos</em> os termos de dentro.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Distributiva com negativo</span>
+      <div class="code wrong">−3(x − 2) = −3x − 6</div>
+      <p class="note">Esquecer o jogo de sinais no segundo termo.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">−3(x − 2) = −3x + 6</div>
+      <p class="note">(−3) × (−2) = +6. Menos com menos dá mais.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Crime matemático</span>
+      <span class="error-card__topic">Fatoração em Frações</span>
+      <div class="code wrong">(x + 2) / x = 2 &nbsp;(cancelou o x)</div>
+      <p class="note">Cortar termo que está somando, não multiplicando.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">Só cancela se estiver multiplicando (fatorado)</div>
+      <p class="note">Fatore primeiro: (x+3)² / (x+3) = (x+3)(x+3) / (x+3) = <strong>x+3</strong> ✓</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Expoente na evidência</span>
+      <div class="code wrong">x⁵ − x² = x²(x³ − 0)</div>
+      <p class="note">Achar que x² ÷ x² = 0.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">x⁵ − x² = x²(x³ − 1)</div>
+      <p class="note">x² ÷ x² = <strong>1</strong>, nunca 0. O 1 fica dentro do parênteses.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ──────────────────── ORDEM ──────────────────── -->
+<p class="section-title">Relação de Ordem</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Negativos</span>
+      <div class="code wrong">−8 &gt; −2 &nbsp;(pois 8 &gt; 2)</div>
+      <p class="note">Confundir o módulo (valor absoluto) com o valor real.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">−8 &lt; −2</div>
+      <p class="note">Termômetro ou dinheiro: dever 8 reais é <em>pior</em> que dever 2. Mais à esquerda na reta = menor.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Multiplicação por negativo</span>
+      <div class="code wrong">3 &gt; 2 &nbsp;→&nbsp; ×(−1) &nbsp;→&nbsp; −3 &gt; −2</div>
+      <p class="note">Manter o sinal da desigualdade ao multiplicar por negativo.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">3 &gt; 2 &nbsp;→&nbsp; ×(−1) &nbsp;→&nbsp; −3 &lt; −2</div>
+      <p class="note">Multiplicou ou dividiu por número <strong>negativo</strong>? O sinal da desigualdade <em>inverte</em>.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ──────────────────── POTENCIAÇÃO ──────────────────── -->
+<p class="section-title">Potenciação e Radiciação</p>
+<div class="errors-grid">
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Bases diferentes</span>
+      <div class="code wrong">2³ · 3² = 6⁵</div>
+      <p class="note">Somar expoentes de bases diferentes.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">2³ · 3² = 8 · 9 = 72 &nbsp;(calcula separado)</div>
+      <p class="note">Só une expoentes com a <em>mesma base</em>: 2³ · 2² = 2⁵.</p>
+    </div>
+  </div>
+
+  <div class="error-card">
+    <div class="error-card__wrong">
+      <span class="badge">❌ Errado</span>
+      <span class="error-card__topic">Raiz de soma</span>
+      <div class="code wrong">√(a² + b²) = a + b</div>
+      <p class="note">Distribuir a raiz sobre a soma.</p>
+    </div>
+    <div class="error-card__right">
+      <span class="badge">✓ Correto</span>
+      <div class="code right">√(9 + 16) = √25 = 5 &nbsp;≠ 3 + 4 = 7</div>
+      <p class="note">A raiz distribui apenas sobre <em>produto e quociente</em>, nunca sobre soma ou subtração.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+
+<style>
+*{box-sizing:border-box}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:none;color:var(--color-text-primary)}
+.pill:hover,.pill.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+#notation{font-family:var(--font-mono);font-size:16px;font-weight:500;color:var(--color-text-primary);margin:.5rem 0}
+#ineq{font-size:13px;color:var(--color-text-secondary)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:.75rem}
+.info-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .75rem;font-size:13px}
+.info-label{color:var(--color-text-secondary);font-size:11px}
+.info-val{font-weight:500;color:var(--color-text-primary);margin-top:2px}
+svg#reta{cursor:default;user-select:none;touch-action:none}
+.check-row{display:flex;gap:16px;flex-wrap:wrap;margin:.5rem 0}
+.check-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-primary);cursor:pointer}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.5rem">Tipo de intervalo</div>
+  <div class="row" id="type-btns">
+    <button class="pill act" onclick="setType('oo')" id="p-oo">(a, b) aberto</button>
+    <button class="pill" onclick="setType('cc')" id="p-cc">[a, b] fechado</button>
+    <button class="pill" onclick="setType('co')" id="p-co">[a, b) semi</button>
+    <button class="pill" onclick="setType('oc')" id="p-oc">(a, b] semi</button>
+    <button class="pill" onclick="setType('li')" id="p-li">(-∞, b]</button>
+    <button class="pill" onclick="setType('ri')" id="p-ri">[a, +∞)</button>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.5rem">Arraste os pontos na reta ou use os controles</div>
+  <svg id="reta" viewBox="0 0 580 80" width="100%"></svg>
+  <div class="row" style="margin-top:4px">
+    <span style="font-size:13px;color:var(--color-text-secondary);min-width:14px">a</span>
+    <input type="range" id="sl-a" min="-10" max="9" value="-3" step="1" style="flex:1" oninput="setA(+this.value)">
+    <span id="va" style="font-size:13px;font-weight:500;min-width:24px">-3</span>
+  </div>
+  <div class="row" style="margin-top:2px">
+    <span style="font-size:13px;color:var(--color-text-secondary);min-width:14px">b</span>
+    <input type="range" id="sl-b" min="-9" max="10" value="5" step="1" style="flex:1" oninput="setB(+this.value)">
+    <span id="vb" style="font-size:13px;font-weight:500;min-width:24px">5</span>
+  </div>
+</div>
+
+<div class="card">
+  <div id="notation"></div>
+  <div id="ineq"></div>
+  <div class="info-grid">
+    <div class="info-box"><div class="info-label">Comprimento</div><div class="info-val" id="len">8</div></div>
+    <div class="info-box"><div class="info-label">Ponto médio</div><div class="info-val" id="mid">1</div></div>
+    <div class="info-box"><div class="info-label">x = 0 incluído?</div><div class="info-val" id="zero">Sim</div></div>
+  </div>
+  <div style="margin-top:.75rem">
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.4rem">Testar um valor</div>
+    <div class="row">
+      <input type="number" id="test-val" placeholder="ex: 2.5" step="0.5" style="width:100px">
+      <span id="test-result" style="font-size:13px;font-weight:500"></span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let itype='oo', a=-3, b=5;
+const W=580, PAD=40, RANGE=20;
+const px = v => PAD + (v+10)/(RANGE)*( W-2*PAD);
+const vx = x => Math.round((x-PAD)/(W-2*PAD)*RANGE - 10);
+const BLUE='#378ADD', DARK='#0C447C';
+
+function typeInfo(){
+  const map={
+    oo:{lb:'(',rb:')',la:false,ra:false,ineq:'a < x < b'},
+    cc:{lb:'[',rb:']',la:true,ra:true,ineq:'a ≤ x ≤ b'},
+    co:{lb:'[',rb:')',la:true,ra:false,ineq:'a ≤ x < b'},
+    oc:{lb:'(',rb:']',la:false,ra:true,ineq:'a < x ≤ b'},
+    li:{lb:'(−∞,',rb:']',la:false,ra:true,ineq:'x ≤ b'},
+    ri:{lb:'[',rb:',+∞)',la:true,ra:false,ineq:'x ≥ a'},
+  };
+  return map[itype];
+}
+
+function draw(){
+  const svg=document.getElementById('reta');
+  const ti=typeInfo();
+  const inf=itype==='li'||itype==='ri';
+  const ax=px(a), bx=px(b);
+  const lx=itype==='li'?PAD-10:ax;
+  const rx=itype==='ri'?W-PAD+10:bx;
+
+  let s=`<defs><marker id="arL" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M8 1L2 5L8 9" fill="none" stroke="#888" stroke-width="1.5"/></marker>
+  <marker id="arR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker></defs>`;
+  s+=`<line x1="${PAD-20}" y1="40" x2="${W-PAD+20}" y2="40" stroke="#aaa" stroke-width="1.5" marker-start="url(#arL)" marker-end="url(#arR)"/>`;
+  for(let v=-10;v<=10;v++){const x=px(v);s+=`<line x1="${x}" y1="37" x2="${x}" y2="43" stroke="#bbb" stroke-width="1"/><text x="${x}" y="58" text-anchor="middle" font-size="10" fill="#999">${v}</text>`;}
+  s+=`<line x1="${lx}" y1="40" x2="${rx}" y2="40" stroke="${BLUE}" stroke-width="4"/>`;
+  if(itype==='li') s+=`<polygon points="${PAD-10},40 ${PAD},34 ${PAD},46" fill="${BLUE}" opacity=".8"/>`;
+  if(itype==='ri') s+=`<polygon points="${W-PAD+10},40 ${W-PAD},34 ${W-PAD},46" fill="${BLUE}" opacity=".8"/>`;
+  if(itype!=='li'){
+    const fill=ti.la?BLUE:'white';
+    s+=`<circle cx="${ax}" cy="40" r="8" fill="${fill}" stroke="${BLUE}" stroke-width="2.5" style="cursor:ew-resize" id="dot-a"/>`;
+    s+=`<text x="${ax}" y="22" text-anchor="middle" font-size="12" font-weight="500" fill="${DARK}">a=${a}</text>`;
+  }
+  if(itype!=='ri'){
+    const fill=ti.ra?BLUE:'white';
+    s+=`<circle cx="${bx}" cy="40" r="8" fill="${fill}" stroke="${BLUE}" stroke-width="2.5" style="cursor:ew-resize" id="dot-b"/>`;
+    s+=`<text x="${bx}" y="75" text-anchor="middle" font-size="12" font-weight="500" fill="${DARK}">b=${b}</text>`;
+  }
+  svg.innerHTML=s;
+  bindDrag();
+  updateInfo();
+}
+
+function updateInfo(){
+  const ti=typeInfo();
+  const aN=itype==='li'?'−∞':a, bN=itype==='ri'?'+∞':b;
+  document.getElementById('notation').textContent=ti.lb+aN+', '+bN+ti.rb;
+  const la=ti.la?'≤':'<', ra=ti.ra?'≤':'<';
+  let iq='';
+  if(itype==='li') iq='x '+ra+' '+b;
+  else if(itype==='ri') iq=a+' '+la+' x';
+  else iq=a+' '+la+' x '+ra+' '+b;
+  document.getElementById('ineq').textContent=iq;
+  const len=b-a;
+  document.getElementById('len').textContent=itype==='li'||itype==='ri'?'∞':len;
+  document.getElementById('mid').textContent=itype==='li'||itype==='ri'?'—':((a+b)/2).toFixed(1);
+  const z=inInterval(0);
+  document.getElementById('zero').textContent=z?'Sim':'Não';
+  document.getElementById('zero').style.color=z?'var(--color-text-success)':'var(--color-text-danger)';
+  const tv=document.getElementById('test-val').value;
+  if(tv!=='') testVal();
+}
+
+function inInterval(x){
+  const ti=typeInfo();
+  if(itype==='li') return ti.ra? x<=b : x<b;
+  if(itype==='ri') return ti.la? x>=a : x>a;
+  const left=ti.la? x>=a : x>a;
+  const right=ti.ra? x<=b : x<b;
+  return left&&right;
+}
+
+function testVal(){
+  const v=parseFloat(document.getElementById('test-val').value);
+  if(isNaN(v)){document.getElementById('test-result').textContent='';return;}
+  const r=inInterval(v);
+  const el=document.getElementById('test-result');
+  el.textContent=r?`${v} ∈ intervalo ✓`:`${v} ∉ intervalo ✗`;
+  el.style.color=r?'var(--color-text-success)':'var(--color-text-danger)';
+}
+document.addEventListener('input',e=>{if(e.target.id==='test-val')testVal();});
+
+function setA(v){a=Math.min(v,b-1);document.getElementById('sl-a').value=a;document.getElementById('va').textContent=a;draw();}
+function setB(v){b=Math.max(v,a+1);document.getElementById('sl-b').value=b;document.getElementById('vb').textContent=b;draw();}
+function setType(t){
+  itype=t;
+  ['oo','cc','co','oc','li','ri'].forEach(k=>document.getElementById('p-'+k).classList.toggle('act',k===t));
+  draw();
+}
+
+function bindDrag(){
+  const svg=document.getElementById('reta');
+  const rect=()=>svg.getBoundingClientRect();
+  let dragging=null;
+  const getClientX=ev=>ev.touches?ev.touches[0].clientX:ev.clientX;
+  svg.onmousedown=svg.ontouchstart=ev=>{
+    const cx=getClientX(ev)-rect().left;
+    const svgW=rect().width;
+    const scale=W/svgW;
+    const scx=cx*scale;
+    const da=itype!=='li'?Math.abs(scx-px(a)):999;
+    const db=itype!=='ri'?Math.abs(scx-px(b)):999;
+    if(Math.min(da,db)<16){dragging=da<db?'a':'b';}
+    ev.preventDefault();
+  };
+  window.onmousemove=window.ontouchmove=ev=>{
+    if(!dragging)return;
+    const cx=getClientX(ev)-rect().left;
+    const svgW=rect().width;
+    const scale=W/svgW;
+    let v=Math.round(vx(cx*scale));
+    v=Math.max(-10,Math.min(10,v));
+    if(dragging==='a')setA(v);else setB(v);
+    ev.preventDefault();
+  };
+  window.onmouseup=window.ontouchend=()=>{dragging=null;};
+}
+
+draw();
+</script>

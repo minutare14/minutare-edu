@@ -1,0 +1,232 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#c3d{width:100%;height:420px;display:block;cursor:grab}
+#c3d:active{cursor:grabbing}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;padding:.75rem 0;align-items:center}
+.lbl{font-size:13px;color:var(--color-text-secondary)}
+.btn3{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 13px;font-size:13px;color:var(--color-text-primary);cursor:pointer}
+.btn3:hover{background:var(--color-background-secondary)}
+.btn3.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+#info-panel{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .9rem;font-size:13px;color:var(--color-text-primary);min-height:36px;margin-top:4px}
+</style>
+
+<div id="c3d"></div>
+<div class="ctrl">
+  <span class="lbl">Destacar:</span>
+  <button class="btn3 act" onclick="highlight('all')" id="b-all">Todos</button>
+  <button class="btn3" onclick="highlight('N')" id="b-N">ℕ Naturais</button>
+  <button class="btn3" onclick="highlight('Z')" id="b-Z">ℤ Inteiros</button>
+  <button class="btn3" onclick="highlight('Q')" id="b-Q">ℚ Racionais</button>
+  <button class="btn3" onclick="highlight('R')" id="b-R">ℝ Reais</button>
+  <button class="btn3" style="margin-left:auto" onclick="sendPrompt('Me explique a hierarquia dos conjuntos numéricos ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ com exemplos práticos.')">Explicar ↗</button>
+</div>
+<div id="info-panel">Arraste para girar · Scroll para zoom · Clique numa esfera para mais info</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const container = document.getElementById('c3d');
+const W = container.clientWidth, H = 420;
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setClearColor(0x000000, 0);
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 100);
+camera.position.set(0, 0, 10);
+
+const ambLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(5, 8, 6);
+scene.add(dirLight);
+const dirLight2 = new THREE.DirectionalLight(0x8888ff, 0.3);
+dirLight2.position.set(-5, -3, -4);
+scene.add(dirLight2);
+
+const sets = [
+  {name:'ℝ Reais',     key:'R', r:3.8, color:0x378ADD, opacity:0.13, desc:'Todos os números da reta: racionais + irracionais (√2, π, e…)'},
+  {name:'ℚ Racionais', key:'Q', r:2.8, color:0x1D9E75, opacity:0.18, desc:'Frações p/q (q≠0): inclui inteiros, naturais e dízimas periódicas'},
+  {name:'ℤ Inteiros',  key:'Z', r:1.9, color:0x7F77DD, opacity:0.25, desc:'Negativos, zero e positivos: …−2,−1,0,1,2…'},
+  {name:'ℕ Naturais',  key:'N', r:1.1, color:0xD85A30, opacity:0.45, desc:'Números de contar: 0, 1, 2, 3, 4…'},
+];
+
+const meshes = [];
+const wireMeshes = [];
+
+sets.forEach(s => {
+  const geo = new THREE.SphereGeometry(s.r, 48, 48);
+  const mat = new THREE.MeshPhongMaterial({
+    color: s.color, transparent: true, opacity: s.opacity,
+    side: THREE.DoubleSide, depthWrite: false
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData = s;
+  scene.add(mesh);
+  meshes.push(mesh);
+
+  const wgeo = new THREE.SphereGeometry(s.r + 0.01, 24, 24);
+  const wmat = new THREE.MeshBasicMaterial({
+    color: s.color, wireframe: true, transparent: true, opacity: 0.07
+  });
+  const wire = new THREE.Mesh(wgeo, wmat);
+  scene.add(wire);
+  wireMeshes.push(wire);
+});
+
+const floatData = [
+  {text:'√2 ≈ 1.414…', pos:[1.5,0.8,0], set:'R', color:0x378ADD},
+  {text:'π ≈ 3.14…',   pos:[-1.8,1.2,0.5], set:'R', color:0x378ADD},
+  {text:'½',           pos:[0.5,1.8,0.8], set:'Q', color:0x1D9E75},
+  {text:'¾',           pos:[-1.0,0.6,1.2], set:'Q', color:0x1D9E75},
+  {text:'-3',          pos:[0.3,-1.3,0.5], set:'Z', color:0x7F77DD},
+  {text:'-1',          pos:[-0.6,0.3,1.0], set:'Z', color:0x7F77DD},
+  {text:'0',           pos:[0.2,0.2,0.7], set:'N', color:0xD85A30},
+  {text:'2',           pos:[-0.4,-0.4,0.6], set:'N', color:0xD85A30},
+  {text:'5',           pos:[0.5,0.5,0.4], set:'N', color:0xD85A30},
+];
+
+function makeLabel(txt, color){
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,128,64);
+  ctx.fillStyle = '#'+color.toString(16).padStart(6,'0');
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(txt, 64, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false});
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(0.8, 0.4, 1);
+  return sprite;
+}
+
+const labelSprites = [];
+floatData.forEach(d => {
+  const sp = makeLabel(d.text, d.color);
+  sp.position.set(...d.pos);
+  sp.userData = {set: d.set};
+  scene.add(sp);
+  labelSprites.push(sp);
+});
+
+function makeSetLabel(txt, color, pos){
+  const canvas = document.createElement('canvas');
+  canvas.width = 192; canvas.height = 72;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,192,72);
+  ctx.fillStyle = '#'+color.toString(16).padStart(6,'0');
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(txt, 96, 36);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, opacity:0.9});
+  const sp = new THREE.Sprite(mat);
+  sp.position.set(...pos);
+  sp.scale.set(1.2, 0.45, 1);
+  scene.add(sp);
+}
+makeSetLabel('ℝ', 0x378ADD, [3.2, 3.0, 0]);
+makeSetLabel('ℚ', 0x1D9E75, [2.2, 2.2, 0]);
+makeSetLabel('ℤ', 0x7F77DD, [1.4, 1.4, 0]);
+makeSetLabel('ℕ', 0xD85A30, [0.6, 0.7, 0]);
+
+let curHighlight = 'all';
+function highlight(key){
+  curHighlight = key;
+  ['all','N','Z','Q','R'].forEach(k=>document.getElementById('b-'+k).classList.toggle('act',k===key));
+  const setOrder = {N:0, Z:1, Q:2, R:3};
+  meshes.forEach((m,i)=>{
+    const sk = sets[i].key;
+    let active = key==='all' || sk===key;
+    m.material.opacity = active ? (key==='all'?sets[i].opacity:sets[i].opacity*3.5) : 0.04;
+  });
+  wireMeshes.forEach((m,i)=>{
+    const sk = sets[i].key;
+    let active = key==='all' || sk===key;
+    m.material.opacity = active ? 0.12 : 0.02;
+  });
+  labelSprites.forEach(sp=>{
+    const sk = sp.userData.set;
+    const belongs = {N:['N'], Z:['N','Z'], Q:['N','Z','Q'], R:['N','Z','Q','R']};
+    const active = key==='all' || (belongs[key]||[]).includes(sk);
+    sp.material.opacity = active ? 1.0 : 0.1;
+  });
+  if(key!=='all'){
+    const s = sets.find(s=>s.key===key);
+    document.getElementById('info-panel').textContent = s.name+': '+s.desc;
+  } else {
+    document.getElementById('info-panel').textContent = 'Arraste para girar · Scroll para zoom · Clique numa esfera para mais info';
+  }
+}
+
+let isDrag=false, prevX=0, prevY=0, rotX=0.3, rotY=0;
+const group = new THREE.Group();
+scene.children.slice().forEach(c=>{ if(c!==ambLight&&c!==dirLight&&c!==dirLight2){ scene.remove(c); group.add(c); } });
+scene.add(group);
+
+const el = renderer.domElement;
+el.addEventListener('mousedown', e=>{isDrag=true;prevX=e.clientX;prevY=e.clientY;});
+window.addEventListener('mouseup', ()=>isDrag=false);
+window.addEventListener('mousemove', e=>{
+  if(!isDrag)return;
+  const dx=(e.clientX-prevX)*0.008, dy=(e.clientY-prevY)*0.008;
+  rotY+=dx; rotX+=dy; rotX=Math.max(-1.2,Math.min(1.2,rotX));
+  prevX=e.clientX; prevY=e.clientY;
+});
+el.addEventListener('wheel', e=>{
+  camera.position.z = Math.max(5, Math.min(18, camera.position.z + e.deltaY*0.01));
+  e.preventDefault();
+},{passive:false});
+
+el.addEventListener('touchstart', e=>{isDrag=true;prevX=e.touches[0].clientX;prevY=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend', ()=>isDrag=false);
+window.addEventListener('touchmove', e=>{
+  if(!isDrag||!e.touches.length)return;
+  const dx=(e.touches[0].clientX-prevX)*0.008, dy=(e.touches[0].clientY-prevY)*0.008;
+  rotY+=dx; rotX+=dy; rotX=Math.max(-1.2,Math.min(1.2,rotX));
+  prevX=e.touches[0].clientX; prevY=e.touches[0].clientY;
+},{passive:true});
+
+const raycaster = new THREE.Raycaster();
+el.addEventListener('click', e=>{
+  if(Math.abs(e.movementX)+Math.abs(e.movementY)>4)return;
+  const rect=el.getBoundingClientRect();
+  const mouse=new THREE.Vector2(
+    (e.clientX-rect.left)/rect.width*2-1,
+    -((e.clientY-rect.top)/rect.height)*2+1
+  );
+  raycaster.setFromCamera(mouse, camera);
+  const hits=raycaster.intersectObjects(meshes);
+  if(hits.length){
+    const s=hits[0].object.userData;
+    document.getElementById('info-panel').textContent=s.name+': '+s.desc;
+    highlight(s.key);
+  }
+});
+
+let autoRotate = true;
+el.addEventListener('mousedown',()=>{autoRotate=false;});
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(autoRotate) rotY += 0.004;
+  group.rotation.x = rotX;
+  group.rotation.y = rotY;
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+  const nw=container.clientWidth;
+  renderer.setSize(nw,H);
+  camera.aspect=nw/H;
+  camera.updateProjectionMatrix();
+});
+</script>

@@ -1,0 +1,196 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#alg3d{width:100%;height:420px;display:block;cursor:grab}
+#alg3d:active{cursor:grabbing}
+.actrl{display:flex;gap:8px;flex-wrap:wrap;padding:.65rem 0;align-items:center}
+.abtn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 13px;font-size:13px;color:var(--color-text-primary);cursor:pointer;font-family:var(--font-mono)}
+.abtn:hover,.abtn.aact{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.arow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:.25rem 0}
+.albl{font-size:13px;color:var(--color-text-secondary);min-width:50px}
+.ainfo{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .9rem;font-size:13px;color:var(--color-text-primary);margin-top:4px;font-family:var(--font-mono)}
+</style>
+
+<div id="alg3d"></div>
+<div class="actrl">
+  <span style="font-size:13px;color:var(--color-text-secondary)">Visualizar:</span>
+  <button class="abtn aact" onclick="setFn('sq_sum')" id="af-sq_sum">z = (x+y)²</button>
+  <button class="abtn" onclick="setFn('sq_diff')" id="af-sq_diff">z = (x−y)²</button>
+  <button class="abtn" onclick="setFn('conj')" id="af-conj">z = x²−y²</button>
+  <button class="abtn" onclick="setFn('x2y2')" id="af-x2y2">z = x²+y²</button>
+  <button class="abtn" onclick="setFn('cube')" id="af-cube">z = (x+y)³</button>
+</div>
+<div class="arow">
+  <span class="albl">Rotação</span>
+  <input type="range" id="arot" min="0" max="628" value="60" step="1" style="flex:1;max-width:220px" oninput="setRot(this.value)">
+  <span class="albl">Inclinação</span>
+  <input type="range" id="atilt" min="-60" max="60" value="30" step="1" style="flex:1;max-width:180px" oninput="setTilt(this.value)">
+</div>
+<div class="ainfo" id="ainfo"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const acont=document.getElementById('alg3d');
+const AW=acont.clientWidth, AH=420;
+const renderer3=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer3.setSize(AW,AH);
+renderer3.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer3.setClearColor(0,0);
+acont.appendChild(renderer3.domElement);
+
+const scene3=new THREE.Scene();
+const cam3=new THREE.PerspectiveCamera(45,AW/AH,0.1,200);
+cam3.position.set(0,10,18);
+cam3.lookAt(0,0,0);
+
+scene3.add(new THREE.AmbientLight(0xffffff,0.5));
+const dl3a=new THREE.DirectionalLight(0xffffff,0.8);
+dl3a.position.set(8,12,8);
+scene3.add(dl3a);
+const dl3b=new THREE.DirectionalLight(0x4488ff,0.4);
+dl3b.position.set(-8,-6,-8);
+scene3.add(dl3b);
+const dl3c=new THREE.DirectionalLight(0xff8844,0.2);
+dl3c.position.set(0,4,-10);
+scene3.add(dl3c);
+
+const group3=new THREE.Group();
+scene3.add(group3);
+
+const axLen=5;
+[[1,0,0,0xE24B4A],[0,1,0,0x1D9E75],[0,0,1,0x378ADD]].forEach(([x,y,z,col])=>{
+  const ag=new THREE.CylinderGeometry(0.04,0.04,axLen*2,8);
+  const am=new THREE.MeshPhongMaterial({color:col,opacity:0.5,transparent:true});
+  const ax=new THREE.Mesh(ag,am);
+  if(x) ax.rotation.z=Math.PI/2;
+  if(z) ax.rotation.x=Math.PI/2;
+  group3.add(ax);
+  ['x','y','z'].forEach((lbl,i)=>{
+    if((i===0&&x)||(i===1&&y)||(i===2&&z)){
+      const cv=document.createElement('canvas');cv.width=64;cv.height=64;
+      const cx2=cv.getContext('2d');cx2.fillStyle='#'+col.toString(16).padStart(6,'0');
+      cx2.font='bold 40px sans-serif';cx2.textAlign='center';cx2.textBaseline='middle';
+      cx2.fillText(lbl,32,32);
+      const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));
+      sp.position.set(x*(axLen+0.6),y*(axLen+0.6),z*(axLen+0.6));
+      sp.scale.set(0.5,0.5,1);
+      group3.add(sp);
+    }
+  });
+});
+
+const fns={
+  sq_sum:{fn:(x,y)=>Math.min((x+y)**2,16),label:'z = (x+y)²',desc:'Quadrado da soma — superfície parabólica. Mínimo em x=−y, cresce simetricamente.', colors:[0x378ADD,0x1D9E75]},
+  sq_diff:{fn:(x,y)=>Math.min((x-y)**2,16),label:'z = (x−y)²',desc:'Quadrado da diferença — vale 0 na diagonal x=y e cresce afastando.', colors:[0x7F77DD,0xD85A30]},
+  conj:{fn:(x,y)=>Math.max(Math.min(x**2-y**2,10),-10),label:'z = x²−y²',desc:'Produto (x+y)(x−y) = x²−y² — forma de sela (saddle). Cresce em x, decresce em y.', colors:[0xD85A30,0x378ADD]},
+  x2y2:{fn:(x,y)=>Math.min(x**2+y**2,16),label:'z = x²+y²',desc:'Paraboloide — mínimo na origem, cresce radialmente. Aparece em distâncias quadráticas.', colors:[0x1D9E75,0x7F77DD]},
+  cube:{fn:(x,y)=>Math.max(Math.min(((x+y)**3)/8,-8),8),label:'z = (x+y)³/8',desc:'Cubo da soma — superfície cúbica, ponto de inflexão em x=−y, sobe/desce assimetricamente.', colors:[0xEF9F27,0x993C1D]},
+};
+
+let surfMesh=null;
+let curFn='sq_sum';
+
+function buildSurface(key){
+  if(surfMesh){group3.remove(surfMesh);surfMesh.geometry.dispose();surfMesh.material.dispose();}
+  const {fn,colors}=fns[key];
+  const N=60, R=4;
+  const geo=new THREE.BufferGeometry();
+  const verts=[],cols=[];
+  const C1=new THREE.Color(colors[0]), C2=new THREE.Color(colors[1]);
+
+  for(let i=0;i<=N;i++){
+    for(let j=0;j<=N;j++){
+      const x=(i/N*2-1)*R;
+      const y=(j/N*2-1)*R;
+      const z=fn(x,y);
+      verts.push(x,z*0.5,y);
+      const t=Math.max(0,Math.min(1,(z+8)/16));
+      const c=C1.clone().lerp(C2,t);
+      cols.push(c.r,c.g,c.b);
+    }
+  }
+  const indices=[];
+  for(let i=0;i<N;i++){
+    for(let j=0;j<N;j++){
+      const a=i*(N+1)+j, b=a+1, c=a+(N+1), d=c+1;
+      indices.push(a,b,d, a,d,c);
+    }
+  }
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  const mat=new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:60,transparent:true,opacity:0.88});
+  surfMesh=new THREE.Mesh(geo,mat);
+  group3.add(surfMesh);
+
+  const wgeo=new THREE.BufferGeometry();
+  const wverts=[];
+  for(let i=0;i<=N;i+=6){
+    for(let j=0;j<=N;j++){
+      const x=(i/N*2-1)*R, y=(j/N*2-1)*R;
+      wverts.push(x,fn(x,y)*0.5,y);
+    }
+  }
+  const wmat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.08});
+  const wg=new THREE.BufferGeometry();
+  wg.setAttribute('position',new THREE.Float32BufferAttribute(wverts,3));
+}
+
+function setFn(k){
+  curFn=k;
+  Object.keys(fns).forEach(f=>document.getElementById('af-'+f).classList.toggle('aact',f===k));
+  buildSurface(k);
+  document.getElementById('ainfo').textContent=fns[k].label+'   —   '+fns[k].desc;
+}
+
+let rotA=0.1, tiltA=0.52, drag3=false, mp3x=0, mp3y=0;
+function setRot(v){rotA=v/100;}
+function setTilt(v){tiltA=v*Math.PI/180;}
+
+const el3=renderer3.domElement;
+el3.addEventListener('mousedown',e=>{drag3=true;mp3x=e.clientX;mp3y=e.clientY;});
+window.addEventListener('mouseup',()=>drag3=false);
+window.addEventListener('mousemove',e=>{
+  if(!drag3)return;
+  rotA+=(e.clientX-mp3x)*0.008;
+  tiltA+=(e.clientY-mp3y)*0.006;
+  tiltA=Math.max(-1.2,Math.min(1.2,tiltA));
+  mp3x=e.clientX;mp3y=e.clientY;
+  document.getElementById('arot').value=rotA*100;
+  document.getElementById('atilt').value=tiltA*180/Math.PI;
+});
+el3.addEventListener('wheel',e=>{
+  cam3.position.z=Math.max(8,Math.min(30,cam3.position.z+e.deltaY*0.018));
+  e.preventDefault();
+},{passive:false});
+el3.addEventListener('touchstart',e=>{drag3=true;mp3x=e.touches[0].clientX;mp3y=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend',()=>drag3=false);
+window.addEventListener('touchmove',e=>{
+  if(!drag3||!e.touches.length)return;
+  rotA+=(e.touches[0].clientX-mp3x)*0.008;
+  tiltA+=(e.touches[0].clientY-mp3y)*0.006;
+  tiltA=Math.max(-1.2,Math.min(1.2,tiltA));
+  mp3x=e.touches[0].clientX;mp3y=e.touches[0].clientY;
+},{passive:true});
+
+let autoA=true;
+el3.addEventListener('mousedown',()=>autoA=false);
+
+function animate3(){
+  requestAnimationFrame(animate3);
+  if(autoA) rotA+=0.005;
+  group3.rotation.y=rotA;
+  group3.rotation.x=tiltA;
+  renderer3.render(scene3,cam3);
+}
+animate3();
+setFn('sq_sum');
+
+window.addEventListener('resize',()=>{
+  const nw=acont.clientWidth;
+  renderer3.setSize(nw,AH);
+  cam3.aspect=nw/AH;
+  cam3.updateProjectionMatrix();
+});
+</script>

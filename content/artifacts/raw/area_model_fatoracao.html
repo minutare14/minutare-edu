@@ -1,0 +1,150 @@
+
+<style>
+*{box-sizing:border-box}
+#am-wrap{padding:1rem 0}
+.am-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.am-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:.3rem 0}
+.am-lbl{font-size:13px;color:var(--color-text-secondary);min-width:14px}
+.am-val{font-size:13px;font-weight:500;min-width:28px;text-align:right}
+.am-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 13px;font-size:13px;color:var(--color-text-primary);cursor:pointer}
+.am-btn:hover,.am-btn.on{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+#am-canvas{width:100%;display:block;border-radius:var(--border-radius-md)}
+.am-formula{font-family:var(--font-mono);font-size:15px;font-weight:500;color:var(--color-text-primary);padding:.5rem .75rem;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-top:.5rem}
+.am-explain{font-size:13px;color:var(--color-text-secondary);margin-top:.4rem}
+</style>
+<div id="am-wrap">
+<div class="am-card">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.5rem">Modelo de área — visualize (a+b)² geometricamente</div>
+  <div class="am-row">
+    <span class="am-lbl">a</span>
+    <input type="range" id="am-a" min="1" max="7" value="4" step="1" style="flex:1;max-width:200px" oninput="drawAM()">
+    <span class="am-val" id="am-av">4</span>
+    <span class="am-lbl" style="margin-left:12px">b</span>
+    <input type="range" id="am-b" min="1" max="5" value="2" step="1" style="flex:1;max-width:200px" oninput="drawAM()">
+    <span class="am-val" id="am-bv">2</span>
+  </div>
+  <div class="am-row" style="margin-top:.5rem">
+    <button class="am-btn on" onclick="setMode('sq')" id="am-sq">(a+b)²</button>
+    <button class="am-btn" onclick="setMode('rect')" id="am-rect">(a+b)(a−b)</button>
+    <button class="am-btn" onclick="setMode('dist')" id="am-dist">a(b+c) distributiva</button>
+  </div>
+</div>
+<canvas id="am-canvas" height="340"></canvas>
+<div class="am-card" style="margin-top:.75rem">
+  <div class="am-formula" id="am-formula"></div>
+  <div class="am-explain" id="am-explain"></div>
+</div>
+</div>
+<script>
+let mode='sq';
+function setMode(m){
+  mode=m;
+  ['sq','rect','dist'].forEach(k=>document.getElementById('am-'+k).classList.toggle('on',k===m));
+  drawAM();
+}
+
+function drawAM(){
+  const a=+document.getElementById('am-a').value;
+  const b=+document.getElementById('am-b').value;
+  document.getElementById('am-av').textContent=a;
+  document.getElementById('am-bv').textContent=b;
+
+  const canvas=document.getElementById('am-canvas');
+  const W=canvas.clientWidth||520;
+  canvas.width=W;
+  const ctx=canvas.getContext('2d');
+  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  ctx.clearRect(0,0,W,340);
+
+  const PAD=40,MAX=260;
+  const COLORS={
+    a2:{fill:'rgba(55,138,221,0.18)',stroke:'#378ADD',text:'#0C447C'},
+    ab:{fill:'rgba(29,158,117,0.18)',stroke:'#1D9E75',text:'#085041'},
+    b2:{fill:'rgba(127,119,221,0.18)',stroke:'#7F77DD',text:'#3C3489'},
+    neg:{fill:'rgba(226,75,74,0.15)',stroke:'#E24B4A',text:'#791F1F'},
+    dist:{fill:'rgba(239,159,39,0.18)',stroke:'#EF9F27',text:'#633806'},
+  };
+
+  const textCol=isDark?'#c2c0b6':'#3d3d3a';
+  const dimCol=isDark?'#888':'#aaa';
+
+  function cell(x,y,w,h,scheme,label,sublabel){
+    ctx.fillStyle=scheme.fill;
+    ctx.strokeStyle=scheme.stroke;
+    ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(x,y,w,h,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=scheme.text;
+    ctx.font='bold 15px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,x+w/2,y+h/2-(sublabel?8:0));
+    if(sublabel){
+      ctx.font='12px sans-serif';
+      ctx.fillStyle=isDark?scheme.stroke+'cc':scheme.text+'bb';
+      ctx.fillText(sublabel,x+w/2,y+h/2+10);
+    }
+  }
+  function dimLine(x1,y1,x2,y2,label,side){
+    ctx.strokeStyle=dimCol;ctx.lineWidth=.8;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=dimCol;ctx.font='13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,(x1+x2)/2+(side==='l'?-14:0),(y1+y2)/2+(side==='t'?-12:0));
+  }
+
+  if(mode==='sq'){
+    const total=a+b;
+    const scale=Math.min(MAX/total,32);
+    const aw=a*scale,bw=b*scale,side=(a+b)*scale;
+    const ox=PAD+20,oy=PAD+20;
+    cell(ox,oy,aw,aw,COLORS.a2,'a²','= '+a+'×'+a+'='+(a*a));
+    cell(ox+aw,oy,bw,aw,COLORS.ab,'ab','= '+a+'×'+b+'='+(a*b));
+    cell(ox,oy+aw,aw,bw,COLORS.ab,'ab','= '+b+'×'+a+'='+(b*a));
+    cell(ox+aw,oy+aw,bw,bw,COLORS.b2,'b²','= '+b+'×'+b+'='+(b*b));
+    dimLine(ox,oy-18,ox+aw,oy-18,'a','t');
+    dimLine(ox+aw,oy-18,ox+side,oy-18,'b','t');
+    dimLine(ox-18,oy,ox-18,oy+aw,'a','l');
+    dimLine(ox-18,oy+aw,ox-18,oy+side,'b','l');
+    ctx.strokeStyle=COLORS.a2.stroke;ctx.lineWidth=2;ctx.setLineDash([]);
+    ctx.strokeRect(ox,oy,side,side);
+    document.getElementById('am-formula').textContent=`(${a}+${b})² = ${a}² + 2·${a}·${b} + ${b}² = ${a*a} + ${2*a*b} + ${b*b} = ${(a+b)**2}`;
+    document.getElementById('am-explain').textContent='O quadrado grande tem lado (a+b). Ele se divide em: um quadrado a², dois retângulos ab e um quadrado b².';
+  } else if(mode==='rect'){
+    const bval=Math.min(b,a-1)||1;
+    const scale=Math.min(MAX/a,36);
+    const aw=a*scale,bw=bval*scale,diffW=(a-bval)*scale;
+    const ox=PAD+20,oy=PAD+30;
+    cell(ox,oy,aw,aw,COLORS.a2,'a²','= '+a+'²='+(a*a));
+    cell(ox,oy+aw,aw,bw,COLORS.neg,'−ab','= −'+a+'·'+bval+'='+(-(a*bval)));
+    ctx.strokeStyle=COLORS.a2.stroke;ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.strokeRect(ox,oy,aw,aw+bw);ctx.setLineDash([]);
+    dimLine(ox,oy-16,ox+aw,oy-16,'a','t');
+    dimLine(ox-16,oy,ox-16,oy+aw,'a','l');
+    dimLine(ox-16,oy+aw,ox-16,oy+aw+bw,'b','l');
+    const ox2=ox+aw+32;
+    cell(ox2,oy,aw,aw,COLORS.a2,'a²','');
+    cell(ox2,oy+aw-bw,aw,bw,COLORS.neg,'−b·a','');
+    const resW=(a-bval)*scale;
+    cell(ox2,oy,resW,aw-bw,COLORS.ab,'(a+b)','(a−b)');
+    document.getElementById('am-formula').textContent=`(${a}+${bval})(${a}−${bval}) = ${a}² − ${bval}² = ${a*a} − ${bval*bval} = ${a*a-bval*bval}`;
+    document.getElementById('am-explain').textContent='Retire um retângulo b×a do canto: o que sobra tem dimensões (a+b)×(a−b), que é exatamente a² − b².';
+  } else {
+    const c=3;
+    const scale=Math.min(MAX/(b+c),28);
+    const aw=a*scale*.6,bw=b*scale,cw=c*scale;
+    const h=aw*1.3;const ox=PAD+10,oy=PAD+30;
+    cell(ox,oy,bw,h,COLORS.ab,'a·b','= '+a+'·'+b+'='+(a*b));
+    cell(ox+bw+4,oy,cw,h,COLORS.dist,'a·c','= '+a+'·'+c+'='+(a*c));
+    ctx.strokeStyle=dimCol;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(ox-12,oy);ctx.lineTo(ox-12,oy+h);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=dimCol;ctx.font='14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText('a='+a,ox-16,oy+h/2);
+    dimLine(ox,oy-16,ox+bw,oy-16,'b='+b,'t');
+    dimLine(ox+bw+4,oy-16,ox+bw+4+cw,oy-16,'c='+c,'t');
+    document.getElementById('am-formula').textContent=`${a}·(${b}+${c}) = ${a}·${b} + ${a}·${c} = ${a*b} + ${a*c} = ${a*(b+c)}`;
+    document.getElementById('am-explain').textContent='A propriedade distributiva: multiplicar a pela soma é o mesmo que multiplicar a por cada parcela separadamente.';
+  }
+}
+drawAM();
+window.addEventListener('resize',()=>drawAM());
+</script>

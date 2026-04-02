@@ -1,0 +1,217 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#r3d{width:100%;height:380px;display:block;cursor:grab}
+#r3d:active{cursor:grabbing}
+.rctrl{display:flex;gap:8px;flex-wrap:wrap;padding:.6rem 0;align-items:center}
+.rbtn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer}
+.rbtn:hover,.rbtn.ract{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.rrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:.3rem 0}
+.rlbl{font-size:13px;color:var(--color-text-secondary);min-width:40px}
+.rinfo{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .9rem;font-size:13px;color:var(--color-text-primary);margin-top:4px;font-family:var(--font-mono)}
+</style>
+
+<div id="r3d"></div>
+<div class="rctrl">
+  <span style="font-size:13px;color:var(--color-text-secondary)">Tipo:</span>
+  <button class="rbtn ract" onclick="setIT('oo')" id="ri-oo">(a,b) aberto</button>
+  <button class="rbtn" onclick="setIT('cc')" id="ri-cc">[a,b] fechado</button>
+  <button class="rbtn" onclick="setIT('co')" id="ri-co">[a,b)</button>
+  <button class="rbtn" onclick="setIT('oc')" id="ri-oc">(a,b]</button>
+  <button class="rbtn" onclick="setIT('inf')" id="ri-inf">(-∞,b]</button>
+</div>
+<div class="rrow">
+  <span class="rlbl">a =</span>
+  <input type="range" id="ra" min="-8" max="2" value="-3" step="1" style="flex:1;max-width:200px" oninput="upd()">
+  <span id="rav" style="font-size:13px;font-weight:500;min-width:20px">-3</span>
+  <span class="rlbl" style="margin-left:12px">b =</span>
+  <input type="range" id="rb" min="-2" max="8" value="4" step="1" style="flex:1;max-width:200px" oninput="upd()">
+  <span id="rbv" style="font-size:13px;font-weight:500;min-width:20px">4</span>
+</div>
+<div class="rinfo" id="rinfo"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const cont = document.getElementById('r3d');
+const W2=cont.clientWidth, H2=380;
+const renderer2 = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer2.setSize(W2,H2);
+renderer2.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer2.setClearColor(0,0);
+cont.appendChild(renderer2.domElement);
+
+const scene2=new THREE.Scene();
+const cam2=new THREE.PerspectiveCamera(40,W2/H2,0.1,100);
+cam2.position.set(0,4,14);
+cam2.lookAt(0,0,0);
+
+scene2.add(new THREE.AmbientLight(0xffffff,0.6));
+const dl=new THREE.DirectionalLight(0xffffff,0.9);
+dl.position.set(4,8,6);
+scene2.add(dl);
+const dl2=new THREE.DirectionalLight(0x4488ff,0.3);
+dl2.position.set(-6,-4,-4);
+scene2.add(dl2);
+
+const SCALE=0.9;
+const group2=new THREE.Group();
+scene2.add(group2);
+
+function px3(v){return v*SCALE;}
+
+const axisGeo=new THREE.CylinderGeometry(0.03,0.03,20,12);
+const axisMat=new THREE.MeshPhongMaterial({color:0x888888});
+const axMesh=new THREE.Mesh(axisGeo,axisMat);
+axMesh.rotation.z=Math.PI/2;
+group2.add(axMesh);
+
+[[-8,-4,-2,0,2,4,8]].flat().forEach(v=>{
+  const tg=new THREE.CylinderGeometry(0.04,0.04,0.25,8);
+  const tm=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({color:0x888888}));
+  tm.position.set(px3(v),0,0);
+  group2.add(tm);
+
+  const canvas=document.createElement('canvas');
+  canvas.width=80;canvas.height=48;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,80,48);
+  ctx.fillStyle='#888';
+  ctx.font='bold 24px sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(v,40,24);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),transparent:true}));
+  sp.position.set(px3(v),-0.7,0);
+  sp.scale.set(0.6,0.36,1);
+  group2.add(sp);
+});
+
+function makeArrow(dir){
+  const cg=new THREE.ConeGeometry(0.12,0.4,12);
+  const cm=new THREE.Mesh(cg,new THREE.MeshPhongMaterial({color:0x888888}));
+  cm.rotation.z=dir>0?-Math.PI/2:Math.PI/2;
+  cm.position.set(dir>0?px3(10.2):px3(-10.2),0,0);
+  group2.add(cm);
+}
+makeArrow(1);makeArrow(-1);
+
+let intervalMesh=null, capA=null, capB=null, tube=null;
+
+function makeLabel3D(txt, color, pos){
+  const canvas=document.createElement('canvas');
+  canvas.width=160;canvas.height=80;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,160,80);
+  ctx.fillStyle='#'+color.toString(16).padStart(6,'0');
+  ctx.font='bold 36px sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(txt,80,40);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),transparent:true,opacity:0.95}));
+  sp.position.set(pos[0],pos[1],pos[2]);
+  sp.scale.set(1.1,0.55,1);
+  return sp;
+}
+
+let labelA=null,labelB=null,notationLabel=null;
+
+function clearInterval3D(){
+  [intervalMesh,capA,capB,tube,labelA,labelB,notationLabel].forEach(m=>{if(m)group2.remove(m);});
+}
+
+let itype='oo';
+function setIT(k){
+  itype=k;
+  ['oo','cc','co','oc','inf'].forEach(id=>document.getElementById('ri-'+id).classList.toggle('ract',id===k));
+  upd();
+}
+
+function upd(){
+  let a=parseInt(document.getElementById('ra').value);
+  let b=parseInt(document.getElementById('rb').value);
+  if(b<=a){b=a+1;document.getElementById('rb').value=b;}
+  document.getElementById('rav').textContent=a;
+  document.getElementById('rbv').textContent=b;
+  clearInterval3D();
+
+  const COLOR=0x378ADD;
+  const la=itype==='cc'||itype==='co';
+  const ra=itype==='cc'||itype==='oc';
+  const isInf=itype==='inf';
+
+  const ax=px3(a), bx=px3(b);
+  const lx=isInf?px3(-9):ax;
+  const len=bx-lx;
+
+  const tg=new THREE.CylinderGeometry(0.09,0.09,len,16);
+  tube=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({color:COLOR,transparent:true,opacity:0.85}));
+  tube.rotation.z=Math.PI/2;
+  tube.position.set(lx+len/2,0,0);
+  group2.add(tube);
+
+  if(!isInf){
+    const rA=la?0.18:0.13;
+    const capGeoA=la?new THREE.SphereGeometry(0.2,20,20):new THREE.TorusGeometry(0.16,0.04,12,32);
+    capA=new THREE.Mesh(capGeoA,new THREE.MeshPhongMaterial({color:COLOR,transparent:!la,opacity:la?1:0.9}));
+    capA.position.set(ax,0,0);
+    group2.add(capA);
+    labelA=makeLabel3D('a='+a,COLOR,[ax,0.7,0]);
+    group2.add(labelA);
+  }
+
+  const capGeoB=ra?new THREE.SphereGeometry(0.2,20,20):new THREE.TorusGeometry(0.16,0.04,12,32);
+  capB=new THREE.Mesh(capGeoB,new THREE.MeshPhongMaterial({color:COLOR,transparent:!ra,opacity:ra?1:0.9}));
+  capB.position.set(bx,0,0);
+  group2.add(capB);
+  labelB=makeLabel3D('b='+b,COLOR,[bx,-0.8,0]);
+  group2.add(labelB);
+
+  if(isInf){
+    const cg=new THREE.ConeGeometry(0.15,0.5,12);
+    const cm=new THREE.Mesh(cg,new THREE.MeshPhongMaterial({color:COLOR}));
+    cm.rotation.z=Math.PI/2;
+    cm.position.set(px3(-9.5),0,0);
+    intervalMesh=cm;
+    group2.add(cm);
+  }
+
+  const lb=itype==='cc'||itype==='co'?'[':'(';
+  const rb2=itype==='cc'||itype==='oc'?']':')';
+  const an=isInf?'−∞':a;
+  const notation=lb+an+', '+b+rb2;
+  const ineqL=la?'≤':'<', ineqR=ra?'≤':'<';
+  let ineq=isInf?'x '+ineqR+' '+b:a+' '+ineqL+' x '+ineqR+' '+b;
+  document.getElementById('rinfo').textContent=notation+'   →   '+ineq+'   |   comprimento: '+(isInf?'∞':b-a);
+}
+
+let rot2Y=0.3,rot2X=0.25,drag2=false,px2=0,py2=0;
+const el2=renderer2.domElement;
+el2.addEventListener('mousedown',e=>{drag2=true;px2=e.clientX;py2=e.clientY;});
+window.addEventListener('mouseup',()=>drag2=false);
+window.addEventListener('mousemove',e=>{
+  if(!drag2)return;
+  rot2Y+=(e.clientX-px2)*0.008;rot2X+=(e.clientY-py2)*0.006;
+  rot2X=Math.max(-1,Math.min(1,rot2X));
+  px2=e.clientX;py2=e.clientY;
+});
+el2.addEventListener('wheel',e=>{
+  cam2.position.z=Math.max(6,Math.min(22,cam2.position.z+e.deltaY*0.012));
+  e.preventDefault();
+},{passive:false});
+
+function animate2(){
+  requestAnimationFrame(animate2);
+  group2.rotation.y=rot2Y;
+  group2.rotation.x=rot2X;
+  renderer2.render(scene2,cam2);
+}
+animate2();
+upd();
+
+window.addEventListener('resize',()=>{
+  const nw=cont.clientWidth;
+  renderer2.setSize(nw,H2);
+  cam2.aspect=nw/H2;
+  cam2.updateProjectionMatrix();
+});
+</script>

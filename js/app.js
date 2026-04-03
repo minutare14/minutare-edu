@@ -218,50 +218,50 @@ function extractChatSections(content) {
 function renderTutorResponse(value) {
     const sections = extractChatSections(value);
 
-    const cards = [
-        {
-            label: 'Resumo rapido',
-            tone: 'summary',
-            body: sections.summary,
-        },
-        {
-            label: 'Explicacao',
-            tone: 'explanation',
-            body: sections.explanation,
-        },
-        {
-            label: 'O que observar',
-            tone: 'observe',
-            body: sections.observe,
-        },
-        {
-            label: 'Erros comuns',
-            tone: 'mistakes',
-            body: sections.mistakes,
-        },
-        {
-            label: 'Exemplo',
-            tone: 'example',
-            body: sections.example,
-        },
-    ];
+    let html = '<div class="chat-response">';
 
-    return `
-        <div class="chat-response">
-            <div class="chat-response__intro">
-                <span class="chat-response__eyebrow">Resposta guiada</span>
-                <p class="chat-response__lede">Leitura em blocos curtos para ficar mais facil de escanear no celular e no desktop.</p>
-            </div>
-            <div class="chat-response__cards">
-                ${cards.map((card) => `
-                    <section class="chat-response__card chat-response__card--${card.tone}">
-                        <span class="chat-response__label">${escapeHtml(card.label)}</span>
-                        <div class="chat-response__body">${renderMarkdownFragment(card.body)}</div>
-                    </section>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    if (sections.summary) {
+        html += `
+            <div class="chat-response__block chat-response__block--summary">
+                <h4 class="chat-response__heading">Conceito central</h4>
+                <div class="chat-response__content">${renderMarkdownFragment(sections.summary)}</div>
+            </div>`;
+    }
+
+    if (sections.explanation) {
+        html += `
+            <div class="chat-response__block chat-response__block--explanation">
+                <h4 class="chat-response__heading">Explicacao</h4>
+                <div class="chat-response__content">${renderMarkdownFragment(sections.explanation)}</div>
+            </div>`;
+    }
+
+    if (sections.example) {
+        html += `
+            <div class="chat-response__block chat-response__block--example">
+                <h4 class="chat-response__heading">Exemplo</h4>
+                <div class="chat-response__content">${renderMarkdownFragment(sections.example)}</div>
+            </div>`;
+    }
+
+    if (sections.mistakes) {
+        html += `
+            <div class="chat-response__block chat-response__block--mistakes">
+                <h4 class="chat-response__heading">Erros comuns</h4>
+                <div class="chat-response__content">${renderMarkdownFragment(sections.mistakes)}</div>
+            </div>`;
+    }
+
+    if (sections.observe) {
+        html += `
+            <div class="chat-response__block chat-response__block--observe">
+                <h4 class="chat-response__heading">Proximo passo</h4>
+                <div class="chat-response__content">${renderMarkdownFragment(sections.observe)}</div>
+            </div>`;
+    }
+
+    html += '</div>';
+    return html;
 }
 
 function normalizeLookup(value) {

@@ -390,18 +390,28 @@
   .chat-backdrop {
     display: none !important;
   }
+
+  /* No desktop, o widget ocupa a coluna direita do flex grid */
   .chat-widget {
     position: sticky;
     top: 74px;
-    right: 0;
     width: 380px;
     height: calc(100vh - 74px);
     flex-shrink: 0;
+    align-self: flex-start;
     pointer-events: auto;
     z-index: 40;
     margin: 0;
+    /* Reset do position:fixed do base */
+    right: unset;
+    bottom: unset;
   }
-  .chat-window {
+
+  /* Força o painel a ser visível mesmo com .hidden no HTML */
+  .chat-window,
+  .chat-window.hidden {
+    display: flex !important;
+    flex-direction: column;
     position: relative;
     inset: auto;
     width: 100%;

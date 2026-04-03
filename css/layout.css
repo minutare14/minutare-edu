@@ -133,7 +133,6 @@
 .desktop-layout-wrapper {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
@@ -149,6 +148,13 @@
   margin: 0;
 }
 
+@media (min-width: 1025px) {
+  .desktop-layout-wrapper {
+    /* Garante que o wrapper seja o contexto de referência para sticky */
+    align-items: stretch;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: var(--app-scroll-offset, 104px);
@@ -156,7 +162,8 @@ html {
 }
 
 body {
-  overflow-x: hidden;
+  /* overflow-x:hidden removido — quebra position:sticky em filhos */
+  overflow-x: clip;
 }
 
 body.chat-open {

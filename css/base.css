@@ -5,6 +5,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
 body {
@@ -17,6 +18,8 @@ body {
   line-height: 1.65;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -52,6 +55,7 @@ button {
   background: none;
   padding: 0;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 code {
@@ -61,4 +65,42 @@ code {
   background: rgba(37, 99, 235, 0.08);
   padding: 2px 6px;
   border-radius: 8px;
+}
+
+button,
+input,
+select,
+textarea {
+  min-height: var(--control-touch-size);
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+img,
+svg,
+canvas,
+iframe,
+video {
+  max-width: 100%;
+}
+
+p,
+li,
+button,
+input,
+select,
+textarea {
+  overflow-wrap: anywhere;
 }

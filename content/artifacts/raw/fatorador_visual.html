@@ -1,157 +1,578 @@
-
 <style>
+:root{
+  --color-background-primary:#fff;
+  --color-background-secondary:#f6f8fb;
+  --color-background-info:#eef5ff;
+  --color-background-success:#ecfdf5;
+  --color-background-warning:#fff8e6;
+  --color-background-danger:#fef2f2;
+  --color-border-tertiary:rgba(20,32,48,.08);
+  --color-border-secondary:rgba(20,32,48,.16);
+  --color-border-info:rgba(37,99,235,.22);
+  --color-border-success:rgba(16,185,129,.2);
+  --color-border-danger:rgba(220,38,38,.18);
+  --color-text-primary:#18212b;
+  --color-text-secondary:#56606d;
+  --color-text-info:#1f4f9b;
+  --color-text-success:#0f766e;
+  --color-text-danger:#b42318;
+  --border-radius-lg:20px;
+  --border-radius-md:14px;
+  --font-sans:'Manrope','Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono','Cascadia Code',monospace;
+}
 *{box-sizing:border-box}
-.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
-.tech-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 14px;font-size:13px;color:var(--color-text-primary);cursor:pointer;transition:.15s}
-.tech-btn:hover,.tech-btn.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
-.step{display:flex;gap:10px;align-items:flex-start;padding:.6rem .75rem;border-radius:var(--border-radius-md);background:var(--color-background-secondary);margin:.35rem 0;font-size:14px;opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s}
+html,body{margin:0;padding:0;background:transparent;color:var(--color-text-primary);font-family:var(--font-sans)}
+body{min-height:100vh}
+#artifact-mount{width:100%}
+.shell{display:grid;gap:16px;padding:12px 0 8px}
+.card{background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px;box-shadow:0 10px 30px rgba(20,32,48,.06)}
+.hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(220px,.8fr);gap:14px}
+.eyebrow{display:inline-flex;width:fit-content;padding:6px 10px;border-radius:999px;margin:0 0 10px;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-info);background:var(--color-background-info)}
+h1{margin:0 0 10px;font-size:clamp(1.55rem,4vw,2.3rem);line-height:1.08}
+.lead{margin:0;max-width:60ch;color:var(--color-text-secondary);line-height:1.7}
+.pill-grid,.tech-tabs,.action-row{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;min-height:40px;padding:8px 12px;border-radius:999px;border:1px solid rgba(37,99,235,.12);background:rgba(37,99,235,.06);color:var(--color-text-info);font-size:.82rem;font-weight:700}
+.guide-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.guide{display:grid;gap:6px;padding:14px;border-radius:16px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary)}
+.guide span,.label{font-size:.73rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary)}
+.guide strong{font-size:.98rem}
+.guide p,.helper,.summary p,.note{margin:0;color:var(--color-text-secondary);line-height:1.55}
+.tech-tabs{margin-bottom:14px}
+.tech-btn,.action-btn{min-height:44px;padding:10px 14px;border-radius:999px;border:1px solid var(--color-border-secondary);background:#fff;color:var(--color-text-primary);font-size:.92rem;font-weight:800}
+.tech-btn.act,.tech-btn:hover{background:var(--color-background-info);border-color:var(--color-border-info);color:var(--color-text-info)}
+.summary{display:grid;gap:10px;padding:14px;border-radius:16px;margin-bottom:14px;background:linear-gradient(135deg,rgba(239,246,255,.92),rgba(255,255,255,.96));border:1px solid rgba(37,99,235,.12)}
+.summary__row{display:grid;gap:4px}
+.summary__value{color:var(--color-text-primary);line-height:1.55}
+.input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:grid;gap:6px}
+.field label{font-size:.82rem;font-weight:800;letter-spacing:.04em;color:var(--color-text-secondary)}
+.field input{width:100%;min-height:46px;padding:12px 14px;border-radius:14px;border:1px solid var(--color-border-secondary);background:#fff;color:var(--color-text-primary);font:inherit;font-size:16px;outline:none}
+.field input:focus{border-color:rgba(37,99,235,.4);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.helper{font-size:.85rem}
+.action-btn.primary{background:linear-gradient(135deg,#1f4f9b,#2d71d1);color:#fff;border-color:transparent;box-shadow:0 12px 28px rgba(31,79,155,.2)}
+.action-btn.secondary{background:var(--color-background-secondary)}
+.steps{display:grid;gap:10px}
+.banner,.error,.result{padding:14px;border-radius:16px;border:1px solid var(--color-border-tertiary);line-height:1.5}
+.banner{background:var(--color-background-success);border-color:var(--color-border-success)}
+.error{background:var(--color-background-danger);border-color:var(--color-border-danger);color:var(--color-text-danger)}
+.step{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;padding:14px;border-radius:16px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease}
 .step.vis{opacity:1;transform:none}
-.step-n{background:var(--color-background-info);color:var(--color-text-info);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;margin-top:1px}
-.result{font-size:16px;font-weight:500;font-family:var(--font-mono);padding:.75rem 1rem;background:var(--color-background-success);color:var(--color-text-success);border-radius:var(--border-radius-md);margin-top:.5rem;opacity:0;transition:opacity .4s .3s}
-.result.vis{opacity:1}
-.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--color-background-warning);color:var(--color-text-warning);display:inline-block;margin-bottom:.4rem}
+.step-n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-background-info);color:var(--color-text-info);font-size:.8rem;font-weight:800}
+.step__expr{font-family:var(--font-mono);font-size:.94rem;line-height:1.45;word-break:break-word}
+.step__comment,.result__note{margin-top:4px;color:var(--color-text-secondary);font-size:.84rem;line-height:1.5}
+.result{display:grid;gap:6px;background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success);opacity:0;transform:translateY(8px);transition:opacity .35s ease .2s,transform .35s ease .2s}
+.result.vis{opacity:1;transform:none}
+.result__expr{font-family:var(--font-mono);font-size:1rem;word-break:break-word}
+.mono{font-family:var(--font-mono)}
+@media (max-width:860px){.hero,.guide-grid,.input-grid{grid-template-columns:1fr}}
+@media (max-width:640px){.card{padding:16px}.tech-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tech-btn,.action-btn{width:100%}.action-row{flex-direction:column}}
 </style>
 
-<div style="padding:1rem 0">
+<div id="artifact-mount">
+  <div class="shell">
+    <section class="card hero">
+      <div>
+        <p class="eyebrow">Fatoracao guiada</p>
+        <h1>Entenda o padrao antes de decorar a resposta</h1>
+        <p class="lead">Digite a expressao do jeito que voce pensa. O artefato entende <span class="mono">^</span> como expoente e mostra por que a expressao pode virar produto.</p>
+      </div>
+      <div class="pill-grid">
+        <span class="pill">Aceita x^2, 2^2, 3x^2</span>
+        <span class="pill">Explica cada passo</span>
+        <span class="pill">Boa leitura no celular</span>
+      </div>
+    </section>
 
-<div class="card">
-  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.6rem">Técnica de fatoração</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap" id="tech-row">
-    <button class="tech-btn act" onclick="setTech('fce')" id="t-fce">Fator comum</button>
-    <button class="tech-btn" onclick="setTech('dq')" id="t-dq">Dif. de quadrados</button>
-    <button class="tech-btn" onclick="setTech('tqp')" id="t-tqp">Trinômio perfeito</button>
-    <button class="tech-btn" onclick="setTech('tri')" id="t-tri">Trinômio 2º grau</button>
-    <button class="tech-btn" onclick="setTech('agr')" id="t-agr">Agrupamento</button>
+    <section class="card guide-grid">
+      <div class="guide"><span>O que ensina</span><strong>Reconhecer fator comum e padroes classicos</strong><p>O objetivo e enxergar a estrutura escondida na conta.</p></div>
+      <div class="guide"><span>Quando usar</span><strong>Quando a conta parecer longa ou repetitiva</strong><p>Funciona como apoio para voltar da forma expandida para a fatorada.</p></div>
+      <div class="guide"><span>O que observar</span><strong>Termos repetidos, sinais e menores expoentes</strong><p>Os passos destacam o que sobra depois da extracao.</p></div>
+      <div class="guide"><span>Conexao com prova</span><strong>Atalho com justificativa clara</strong><p>Questoes cobram reconhecimento do padrao antes da conta completa.</p></div>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">Tecnicas</p>
+      <div class="tech-tabs" id="tech-row"></div>
+      <div class="summary" id="tech-summary" aria-live="polite"></div>
+      <div id="input-area"></div>
+    </section>
+
+    <section class="steps" id="steps-out" aria-live="polite"></section>
   </div>
 </div>
 
-<div class="card" id="input-area"></div>
-<div id="steps-out"></div>
-
-</div>
-
 <script>
-const techs={
-  fce:{label:'Fator comum em evidência',inputs:[{id:'expr',label:'Expressão',ph:'ex: 6x² + 9x'}]},
-  dq:{label:'Diferença de quadrados (a² − b²)',inputs:[{id:'a',label:'a',ph:'ex: x ou 3'},{id:'b',label:'b',ph:'ex: 4 ou 2y'}]},
-  tqp:{label:'Trinômio quadrado perfeito',inputs:[{id:'a',label:'a',ph:'ex: x'},{id:'b',label:'b',ph:'ex: 5'}]},
-  tri:{label:'Trinômio do 2º grau (x² + bx + c)',inputs:[{id:'b',label:'coef. b',ph:'ex: 5'},{id:'c',label:'coef. c',ph:'ex: 6'}]},
-  agr:{label:'Agrupamento',inputs:[{id:'a',label:'a',ph:'ex: x'},{id:'b',label:'b',ph:'ex: y'},{id:'p',label:'p (fator)',ph:'ex: (x+y)'}]},
+const techs = {
+  fce: {
+    label: 'Fator comum',
+    short: 'Digite algo como 3x^2 + 6x + 9.',
+    teach: 'Extrair o maior fator comum em coeficientes e variaveis.',
+    when: 'Quando os termos compartilham algo em comum.',
+    observe: 'O numerico comum e o menor expoente repetido.',
+    proof: 'Atalho frequente em simplificacao algébrica.',
+    inputs: [{ id: 'expr', label: 'Expressao', ph: '3x^2 + 6x + 9' }],
+    hint: 'Aceita ^ como expoente. Exemplos: 2^2, x^2, 3x^2, 4xy^2.',
+  },
+  dq: {
+    label: 'Dif. de quadrados',
+    short: 'Use dois quadrados, como x^2 e 9.',
+    teach: 'Reescrever a^2 - b^2 como produto conjugado.',
+    when: 'Quando ha subtracao entre dois quadrados.',
+    observe: 'A expressao precisa ser lida como soma pela diferenca.',
+    proof: 'Mostra uma fatoracao imediata sem expandir tudo.',
+    inputs: [
+      { id: 'a', label: 'Primeiro termo', ph: 'x^2' },
+      { id: 'b', label: 'Segundo termo', ph: '9' },
+    ],
+    hint: 'Exemplo: x^2 e 9 viram (x + 3)(x - 3).',
+  },
+  tqp: {
+    label: 'Trinomio perfeito',
+    short: 'Cheque se o termo do meio bate com 2ab.',
+    teach: 'Identificar quadrado da soma ou da diferenca.',
+    when: 'Quando os extremos sao quadrados e o termo do meio fecha com o padrao.',
+    observe: 'O sinal do meio define soma ou diferenca.',
+    proof: 'Conecta direto com produtos notaveis.',
+    inputs: [
+      { id: 'a', label: 'a', ph: 'x' },
+      { id: 'b', label: 'b', ph: '5' },
+    ],
+    hint: 'Se 2ab nao bater, o padrao nao fecha.',
+  },
+  tri: {
+    label: 'Trinomio 2º grau',
+    short: 'Procure dois numeros com soma b e produto c.',
+    teach: 'Encontrar fatores de x^2 + bx + c por inspeção.',
+    when: 'Quando o coeficiente principal e 1.',
+    observe: 'Se nao houver par simples, o artefato mostra isso sem forcar a resposta.',
+    proof: 'Atalho muito cobrado em exercicios e revisao.',
+    inputs: [
+      { id: 'b', label: 'Coef. b', ph: '5' },
+      { id: 'c', label: 'Coef. c', ph: '6' },
+    ],
+    hint: 'Exemplo: x^2 + 5x + 6 vira (x + 2)(x + 3).',
+  },
+  agr: {
+    label: 'Agrupamento',
+    short: 'Funciona bem quando um fator comum aparece em blocos.',
+    teach: 'Fatorar por grupos quando a expressao tem blocos parecidos.',
+    when: 'Quando ha quatro termos ou estrutura em pares.',
+    observe: 'Primeiro aparece o fator de cada bloco, depois o fator comum.',
+    proof: 'Ajuda a reorganizar antes de fatorar.',
+    inputs: [
+      { id: 'a', label: 'Primeiro bloco', ph: 'x' },
+      { id: 'b', label: 'Segundo bloco', ph: 'y' },
+      { id: 'p', label: 'Fator comum', ph: '(x + y)' },
+    ],
+    hint: 'Exemplo: a·p + b·p vira p(a + b).',
+  },
 };
-let cur='fce';
 
-function setTech(k){
-  cur=k;
-  Object.keys(techs).forEach(t=>document.getElementById('t-'+t).classList.toggle('act',t===k));
-  buildInputs();
-  document.getElementById('steps-out').innerHTML='';
+const supers = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+let cur = 'fce';
+
+function pretty(value) {
+  return String(value)
+    .replace(/\^(\d+)/g, (_, exp) => String(exp).split('').map((d) => supers[d] || d).join(''))
+    .replace(/\*/g, '·')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-function buildInputs(){
-  const t=techs[cur];
-  let h=`<div class="tag">${t.label}</div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:.5rem 0">`;
-  t.inputs.forEach(i=>{
-    h+=`<div><div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:3px">${i.label}</div><input type="text" id="i-${i.id}" placeholder="${i.ph}" style="width:120px"></div>`;
-  });
-  h+=`</div><button class="tech-btn act" onclick="doFactor()" style="margin-top:4px">Fatorar passo a passo →</button>`;
-  document.getElementById('input-area').innerHTML=h;
+function norm(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[×·]/g, '*')
+    .replace(/[−–]/g, '-')
+    .replace(/⁰/g, '0')
+    .replace(/¹/g, '1')
+    .replace(/²/g, '2')
+    .replace(/³/g, '3')
+    .replace(/⁴/g, '4')
+    .replace(/⁵/g, '5')
+    .replace(/⁶/g, '6')
+    .replace(/⁷/g, '7')
+    .replace(/⁸/g, '8')
+    .replace(/⁹/g, '9')
+    .replace(/\s+/g, '');
 }
 
-function val(id){return (document.getElementById('i-'+id)||{value:''}).value.trim();}
-function fmt(v){if(/^-?\d/.test(v)&&parseFloat(v)<0)return'('+v+')';return v;}
+function splitTerms(expr) {
+  const out = [];
+  let curTerm = '';
 
-function doFactor(){
-  const area=document.getElementById('steps-out');
-  area.innerHTML='';
-  let steps=[];
-  switch(cur){
-    case'fce':steps=stepsFCE();break;
-    case'dq':steps=stepsDQ();break;
-    case'tqp':steps=stepsTQP();break;
-    case'tri':steps=stepsTRI();break;
-    case'agr':steps=stepsAGR();break;
+  for (let i = 0; i < expr.length; i += 1) {
+    const ch = expr[i];
+    const prev = expr[i - 1];
+    if ((ch === '+' || ch === '-') && i > 0 && prev !== '^') {
+      out.push(curTerm);
+      curTerm = ch;
+    } else {
+      curTerm += ch;
+    }
   }
-  if(!steps.length){area.innerHTML='<div style="font-size:13px;color:var(--color-text-danger)">Preencha todos os campos.</div>';return;}
-  const res=steps.pop();
-  steps.forEach((s,i)=>{
-    const d=document.createElement('div');
-    d.className='step';
-    d.innerHTML=`<div class="step-n">${i+1}</div><div><div style="font-family:var(--font-mono)">${s.expr}</div><div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">${s.comment}</div></div>`;
-    area.appendChild(d);
-    setTimeout(()=>d.classList.add('vis'),i*200);
-  });
-  const rd=document.createElement('div');
-  rd.className='result';
-  rd.innerHTML='<span style="font-size:12px;font-weight:400;font-family:var(--font-sans);display:block;margin-bottom:4px">Resultado fatorado</span>= '+res;
-  area.appendChild(rd);
-  setTimeout(()=>rd.classList.add('vis'),steps.length*200+100);
+
+  if (curTerm) out.push(curTerm);
+  return out.filter(Boolean);
 }
 
-function stepsFCE(){
-  const expr=val('expr');if(!expr)return[];
-  return [
-    {expr,comment:'Expressão original'},
-    {expr:'Identificar o maior fator comum entre os termos',comment:'Buscar o MDC dos coeficientes e a menor potência das variáveis comuns'},
-    {expr:'Colocar o fator comum em evidência',comment:'Dividir cada termo pelo fator comum'},
-  ];
+function gcd(a, b) {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y) [x, y] = [y, x % y];
+  return x;
 }
 
-function stepsDQ(){
-  const a=val('a'),b=val('b');if(!a||!b)return[];
-  return[
-    {expr:`${fmt(a)}² − ${fmt(b)}²`,comment:'Expressão original — diferença de dois quadrados'},
-    {expr:'Identificar: a = '+a+', b = '+b,comment:'Reconhecer a forma a² − b²'},
-    {expr:'Aplicar: a² − b² = (a+b)(a−b)',comment:'Fórmula da diferença de quadrados'},
-    '('+a+'+'+b+')('+a+'−'+b+')',
-  ];
+function gcdList(values) {
+  return values.reduce((acc, value) => (acc === 0 ? Math.abs(value) : gcd(acc, value)), 0);
 }
 
-function stepsTQP(){
-  const a=val('a'),b=val('b');if(!a||!b)return[];
-  const sgn='+';
-  const nb=parseFloat(b);
-  const c=isNaN(nb)?b+'²':nb**2;
-  const coef2=isNaN(nb)?'2·'+a+'·'+b:2*nb;
-  return[
-    {expr:`${a}² + ${coef2}·? + ${c}`,comment:'Verificar se é trinômio quadrado perfeito'},
-    {expr:`2·${fmt(a)}·${fmt(b)} = ${coef2} ✓`,comment:'Confirmar que o termo do meio = 2ab'},
-    {expr:'Aplicar: a² + 2ab + b² = (a+b)²',comment:'Fórmula do quadrado perfeito'},
-    '('+a+' + '+b+')²',
-  ];
-}
+function parseTerm(raw) {
+  const s = norm(raw);
+  if (!s) return null;
 
-function stepsTRI(){
-  const bv=val('b'),cv=val('c');if(!bv||!cv)return[];
-  const nb=parseInt(bv),nc=parseInt(cv);
-  if(isNaN(nb)||isNaN(nc)){
-    return[
-      {expr:`x² + (${bv})x + (${cv})`,comment:'Trinômio do 2º grau'},
-      {expr:'Encontrar r e s tal que r + s = b e r · s = c',comment:'Método de inspeção'},
-      `(x + r)(x + s)`,
-    ];
+  const direct = s.match(/^([+-]?\d+(?:\.\d+)?)\^([+-]?\d+)$/);
+  if (direct && /^[+-]?\d+$/.test(direct[2])) {
+    const base = Number(direct[1]);
+    const exp = Number(direct[2]);
+    if (Number.isFinite(base) && Number.isFinite(exp)) {
+      return { coefficient: Math.pow(base, exp), variables: {} };
+    }
   }
-  let r=null,s=null;
-  for(let i=-50;i<=50;i++){for(let j=-50;j<=50;j++){if(i+j===nb&&i*j===nc){r=i;s=j;break;}}}
-  if(r===null)return[{expr:`x² + ${nb}x + ${nc}`,comment:'Trinômio do 2º grau'},{expr:'Não encontrei r,s inteiros simples. Tente a fórmula de Bhaskara.',comment:''}];
-  const rs=r>=0?'+'+r:r, ss=s>=0?'+'+s:s;
-  return[
-    {expr:`x² + ${nb}x + ${nc}`,comment:'Trinômio original'},
-    {expr:`r + s = ${nb} e r · s = ${nc}`,comment:'Condições para r e s'},
-    {expr:`r = ${r}, s = ${s}`,comment:`${r} + ${s} = ${nb} ✓ e ${r} × ${s} = ${r*s} ✓`},
-    {expr:'Aplicar: (x + r)(x + s)',comment:'Forma fatorada'},
-    `(x ${rs})(x ${ss})`,
-  ];
+
+  let i = 0;
+  let sign = 1;
+
+  if (s[i] === '+' || s[i] === '-') {
+    sign = s[i] === '-' ? -1 : 1;
+    i += 1;
+  }
+
+  let num = '';
+  while (i < s.length && /[0-9.]/.test(s[i])) {
+    num += s[i];
+    i += 1;
+  }
+
+  let coefficient = num ? Number(num) : 1;
+  if (!Number.isFinite(coefficient)) return null;
+
+  const variables = {};
+  while (i < s.length) {
+    if (s[i] === '*') {
+      i += 1;
+      continue;
+    }
+
+    const letter = s[i];
+    if (!/[a-zA-Z]/.test(letter)) return null;
+    i += 1;
+
+    let exp = 1;
+    if (s[i] === '^') {
+      i += 1;
+      let text = '';
+      while (i < s.length && /[0-9]/.test(s[i])) {
+        text += s[i];
+        i += 1;
+      }
+      if (!text) return null;
+      exp = Number(text);
+    }
+
+    if (!Number.isFinite(exp) || exp <= 0) return null;
+    variables[letter] = (variables[letter] || 0) + exp;
+  }
+
+  return { coefficient: sign * coefficient, variables };
 }
 
-function stepsAGR(){
-  const a=val('a'),b=val('b'),p=val('p');if(!a||!b||!p)return[];
-  return[
-    {expr:`${a}·${p} + ${b}·${p}`,comment:'Expressão original com fator comum ${p}'},
-    {expr:`${p} é o fator comum dos dois grupos`,comment:'Identificar fator comum'},
-    {expr:'Colocar '+p+' em evidência',comment:'Fator comum em evidência'},
-    `${p}·(${a} + ${b})`,
-  ];
+function formatMonomial(coef, vars = {}, omitOne = true) {
+  if (coef === 0) return '0';
+
+  const sign = coef < 0 ? '-' : '';
+  const abs = Math.abs(coef);
+  const num = omitOne && abs === 1 && Object.keys(vars).length ? '' : String(abs);
+  const letters = Object.entries(vars)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([l, e]) => `${l}${e > 1 ? `^${e}` : ''}`)
+    .join('');
+
+  return `${sign}${num}${letters}` || '0';
 }
 
-setTech('fce');
+function renderShell() {
+  const tech = techs[cur];
+  document.getElementById('tech-summary').innerHTML = `
+    <div class="summary__row"><span class="label">O que este artefato ensina</span><span class="summary__value">${tech.teach}</span></div>
+    <div class="summary__row"><span class="label">Quando usar</span><span class="summary__value">${tech.when}</span></div>
+    <div class="summary__row"><span class="label">O que observar</span><span class="summary__value">${tech.observe}</span></div>
+    <div class="summary__row"><span class="label">Conexao com prova</span><span class="summary__value">${tech.proof}</span></div>
+  `;
+
+  document.getElementById('input-area').innerHTML = `
+    <div class="input-grid">
+      ${tech.inputs
+        .map(
+          (input) => `
+            <div class="field">
+              <label for="i-${input.id}">${input.label}</label>
+              <input id="i-${input.id}" type="text" inputmode="text" placeholder="${input.ph}">
+            </div>
+          `,
+        )
+        .join('')}
+    </div>
+    <div class="helper">${tech.hint}</div>
+    <div class="action-row">
+      <button class="action-btn primary" type="button" onclick="doFactor()">Fatorar passo a passo</button>
+      <button class="action-btn secondary" type="button" onclick="document.querySelectorAll('#input-area input').forEach((el) => (el.value = ''))">Limpar campos</button>
+    </div>
+  `;
+}
+
+function showError(message) {
+  document.getElementById('steps-out').innerHTML = `<div class="error">${message}</div>`;
+}
+
+function factorCommon(expr) {
+  const n = norm(expr);
+  if (!n) return { error: 'Digite uma expressao antes de fatorar.' };
+  if (!/^[+\-]?[0-9a-zA-Z^.*()]+(?:[+\-][0-9a-zA-Z^.*()]+)*$/.test(n)) {
+    return { error: 'Use letras, numeros, +, -, ^ e parenteses simples. Ex: 3x^2 + 6x.' };
+  }
+
+  const raw = splitTerms(n);
+  const terms = raw.map(parseTerm);
+  if (terms.some((term) => !term)) {
+    return { error: 'Algum termo nao foi reconhecido. Tente 3x^2, x^2, 2^2 ou 4xy^2.' };
+  }
+
+  const coeffs = terms.map((term) => Math.round(Math.abs(term.coefficient)));
+  const commonCoeff = gcdList(coeffs) || 1;
+  const commonVars = {};
+
+  Object.keys(terms[0].variables || {}).forEach((letter) => {
+    const exps = terms.map((term) => term.variables[letter]).filter(Boolean);
+    if (exps.length === terms.length) {
+      commonVars[letter] = Math.min(...exps);
+    }
+  });
+
+  if (commonCoeff === 1 && !Object.keys(commonVars).length) {
+    return { error: 'Nao encontrei fator comum. Tente uma expressao com partes repetidas, como 3x^2 + 6x.' };
+  }
+
+  const inner = terms.map((term) => {
+    const vars = { ...term.variables };
+    Object.entries(commonVars).forEach(([letter, exp]) => {
+      vars[letter] = (vars[letter] || 0) - exp;
+      if (vars[letter] <= 0) delete vars[letter];
+    });
+    const coef = term.coefficient / commonCoeff;
+    return formatMonomial(coef, vars, true);
+  });
+
+  const factor = formatMonomial(commonCoeff, commonVars, true);
+  const innerText = inner
+    .map((term, index) => (index === 0 ? pretty(term) : term.startsWith('-') ? pretty(term) : `+${pretty(term)}`))
+    .join(' ');
+
+  return {
+    summary: `Fator comum identificado: ${pretty(factor)}.`,
+    steps: [
+      { expr: pretty(expr), comment: 'Expressao original.' },
+      { expr: `Termos separados: ${raw.map(pretty).join(' | ')}`, comment: 'Primeiro separamos cada parcela.' },
+      { expr: `Fator numerico: MDC(${coeffs.join(', ')}) = ${commonCoeff}`, comment: 'O maior divisor comum dos coeficientes.' },
+      {
+        expr: `Fator literal: ${Object.keys(commonVars).length ? Object.entries(commonVars).map(([l, e]) => `${l}${e > 1 ? `^${e}` : ''}`).join(' ') : 'nenhuma letra repetida'}`,
+        comment: 'Depois pegamos o menor expoente compartilhado.',
+      },
+      { expr: `${pretty(factor)}(${innerText})`, comment: 'A expressao vira produto.' },
+    ],
+    result: `${pretty(factor)}(${innerText})`,
+    note: 'Formatos como 2^2, x^2 e 3x^2 sao lidos normalmente.',
+  };
+}
+
+function diffSquares(a, b) {
+  const x = norm(a);
+  const y = norm(b);
+  if (!x || !y) return { error: 'Preencha os dois termos para mostrar a diferenca de quadrados.' };
+  return {
+    summary: 'A forma esperada e a^2 - b^2.',
+    steps: [
+      { expr: `${pretty(x)} - ${pretty(y)}`, comment: 'Expressao original.' },
+      { expr: `Reconhecer dois quadrados: ${pretty(x)} e ${pretty(y)}`, comment: 'A tecnica funciona quando ambos os lados sao quadrados.' },
+      { expr: `(${pretty(x)} + ${pretty(y)})( ${pretty(x)} - ${pretty(y)} )`, comment: 'Aplicamos o produto conjugado.' },
+    ],
+    result: `(${pretty(x)} + ${pretty(y)})( ${pretty(x)} - ${pretty(y)} )`,
+    note: 'Exemplos como x^2 e 9, ou 3^2 e y^2, entram de forma natural.',
+  };
+}
+
+function tqp(a, b) {
+  const x = norm(a);
+  const y = norm(b);
+  if (!x || !y) return { error: 'Preencha a e b para testar o trinômio perfeito.' };
+  return {
+    summary: 'O centro da checagem e o termo do meio: 2ab.',
+    steps: [
+      { expr: `${pretty(x)}^2 ± 2·${pretty(x)}·${pretty(y)} + ${pretty(y)}^2`, comment: 'Forma que procuramos.' },
+      { expr: `2ab = 2·${pretty(x)}·${pretty(y)}`, comment: 'Conferimos o termo do meio.' },
+      { expr: `(${pretty(x)} ± ${pretty(y)})^2`, comment: 'Se o padrao fechar, o trinômio e um quadrado perfeito.' },
+    ],
+    result: `(${pretty(x)} ± ${pretty(y)})^2`,
+    note: 'Sinal positivo vira soma; sinal negativo vira diferenca.',
+  };
+}
+
+function trinomial(bValue, cValue) {
+  const b = norm(bValue);
+  const c = norm(cValue);
+  if (!b || !c) return { error: 'Preencha b e c para procurar os fatores.' };
+
+  const bn = Number(b);
+  const cn = Number(c);
+  if (!Number.isInteger(bn) || !Number.isInteger(cn)) {
+    return {
+      summary: 'Quando b ou c nao sao inteiros, o artefato mostra o limite do atalho.',
+      steps: [
+        { expr: `x^2 + ${pretty(b)}x + ${pretty(c)}`, comment: 'Trinomio original.' },
+        { expr: 'Procurar r e s com r + s = b e r·s = c', comment: 'Nem sempre existe um par simples.' },
+        { expr: 'Se nao houver par inteiro, use Bhaskara.', comment: 'O artefato nao força uma resposta falsa.' },
+      ],
+      result: 'Sem fatoracao simples por inspeção.',
+      note: 'O objetivo e ensinar a escolha do metodo certo.',
+    };
+  }
+
+  let pair = null;
+  for (let r = -60; r <= 60 && !pair; r += 1) {
+    for (let s = -60; s <= 60; s += 1) {
+      if (r + s === bn && r * s === cn) {
+        pair = [r, s];
+        break;
+      }
+    }
+  }
+
+  if (!pair) {
+    return {
+      summary: 'Nao achei par inteiro simples.',
+      steps: [
+        { expr: `x^2 + ${bn}x + ${cn}`, comment: 'Trinomio original.' },
+        { expr: `Buscamos r + s = ${bn} e r·s = ${cn}`, comment: 'O criterio de fatoracao por inspeção.' },
+        { expr: 'Como nao houve par simples, Bhaskara pode ser o caminho.', comment: 'Isso tambem e aprendizagem.' },
+      ],
+      result: 'Nao encontrado com fatores inteiros pequenos.',
+      note: 'Melhor reconhecer o limite do que forcar.',
+    };
+  }
+
+  const [r, s] = pair;
+  const left = r >= 0 ? `+ ${r}` : `- ${Math.abs(r)}`;
+  const right = s >= 0 ? `+ ${s}` : `- ${Math.abs(s)}`;
+  return {
+    summary: 'A soma precisa bater com b, e o produto precisa bater com c.',
+    steps: [
+      { expr: `x^2 + ${bn}x + ${cn}`, comment: 'Trinomio original.' },
+      { expr: `r + s = ${bn} e r·s = ${cn}`, comment: 'Condições da fatoração.' },
+      { expr: `r = ${r} e s = ${s}`, comment: 'Par encontrado.' },
+      { expr: `(x ${left})(x ${right})`, comment: 'Forma fatorada.' },
+    ],
+    result: `(x ${left})(x ${right})`,
+    note: 'Esse e um atalho muito útil em revisoes.',
+  };
+}
+
+function grouping(aValue, bValue, pValue) {
+  const a = norm(aValue);
+  const b = norm(bValue);
+  const p = norm(pValue);
+  if (!a || !b || !p) return { error: 'Preencha os tres campos para mostrar o agrupamento.' };
+  return {
+    summary: 'Aqui o fator comum aparece em blocos.',
+    steps: [
+      { expr: `${pretty(a)}·${pretty(p)} + ${pretty(b)}·${pretty(p)}`, comment: 'Expressao em dois blocos.' },
+      { expr: `Fator comum: ${pretty(p)}`, comment: 'O mesmo bloco aparece duas vezes.' },
+      { expr: `${pretty(p)}(${pretty(a)} + ${pretty(b)})`, comment: 'Colocamos o fator em evidencia.' },
+    ],
+    result: `${pretty(p)}(${pretty(a)} + ${pretty(b)})`,
+    note: 'A ideia e reorganizar antes de fatorar.',
+  };
+}
+
+function render(result) {
+  const out = document.getElementById('steps-out');
+  out.innerHTML = '';
+
+  if (result.error) {
+    showError(result.error);
+    return;
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'banner';
+  banner.innerHTML = `<strong>${result.summary}</strong><p>${result.note}</p>`;
+  out.appendChild(banner);
+
+  result.steps.forEach((step, index) => {
+    const node = document.createElement('div');
+    node.className = 'step';
+    node.innerHTML = `
+      <div class="step-n">${index + 1}</div>
+      <div>
+        <div class="step__expr">${step.expr}</div>
+        <div class="step__comment">${step.comment}</div>
+      </div>
+    `;
+    out.appendChild(node);
+    requestAnimationFrame(() => setTimeout(() => node.classList.add('vis'), index * 140));
+  });
+
+  const card = document.createElement('div');
+  card.className = 'result';
+  card.innerHTML = `<span class="label">Resultado fatorado</span><div class="result__expr">${result.result}</div><div class="result__note">${result.note}</div>`;
+  out.appendChild(card);
+  requestAnimationFrame(() => setTimeout(() => card.classList.add('vis'), result.steps.length * 140 + 80));
+}
+
+function doFactor() {
+  const fns = {
+    fce: () => factorCommon(document.getElementById('i-expr').value),
+    dq: () => diffSquares(document.getElementById('i-a').value, document.getElementById('i-b').value),
+    tqp: () => tqp(document.getElementById('i-a').value, document.getElementById('i-b').value),
+    tri: () => trinomial(document.getElementById('i-b').value, document.getElementById('i-c').value),
+    agr: () => grouping(document.getElementById('i-a').value, document.getElementById('i-b').value, document.getElementById('i-p').value),
+  };
+
+  render(fns[cur]());
+}
+
+function buildTechButtons() {
+  document.getElementById('tech-row').innerHTML = Object.entries(techs)
+    .map(([key, tech]) => `<button class="tech-btn ${key === cur ? 'act' : ''}" type="button" data-tech="${key}" aria-pressed="${key === cur}">${tech.label}</button>`)
+    .join('');
+
+  document.querySelectorAll('.tech-btn').forEach((button) => {
+    button.addEventListener('click', () => setTech(button.dataset.tech));
+  });
+}
+
+function setTech(next) {
+  cur = next;
+  document.querySelectorAll('.tech-btn').forEach((btn) => {
+    const active = btn.dataset.tech === next;
+    btn.classList.toggle('act', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+  renderShell();
+  document.getElementById('steps-out').innerHTML = '';
+}
+
+buildTechButtons();
+renderShell();
+doFactor();
 </script>

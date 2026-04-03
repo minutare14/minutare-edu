@@ -1,5 +1,36 @@
+function maybeFixMojibake(value) {
+    const text = String(value ?? '');
+    if (!/[ÃÂâ]/.test(text)) return text;
+
+    try {
+        return decodeURIComponent(escape(text));
+    } catch (_error) {
+        return text;
+    }
+}
+
+function repairTextNodes(root) {
+    if (!root || typeof document === 'undefined' || !document.createTreeWalker) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const blockedParents = new Set(['SCRIPT', 'STYLE', 'TEXTAREA']);
+    let current = walker.nextNode();
+
+    while (current) {
+        const parentTag = current.parentElement?.tagName || '';
+        const rawValue = current.nodeValue || '';
+        if (!blockedParents.has(parentTag)) {
+            const nextValue = maybeFixMojibake(rawValue);
+            if (nextValue !== rawValue) {
+                current.nodeValue = nextValue;
+            }
+        }
+        current = walker.nextNode();
+    }
+}
+
 function escapeHtml(value) {
-    return String(value)
+    return maybeFixMojibake(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -703,6 +734,165 @@ function setAIResult(container, title, html) {
     if (window.ContentRenderer?.renderMathIn) window.ContentRenderer.renderMathIn(container);
 }
 
+function getArtifactPedagogy(artifact) {
+    const pedagogy = window.ARTIFACTS_LIBRARY?.pedagogyBySlug?.[artifact?.slug] || {};
+    return {
+        whyHere: pedagogy.whyHere || 'Este artefato foi escolhido para transformar uma ideia abstrata em algo que voce consegue enxergar e testar.',
+        examBridge: pedagogy.examBridge || 'Use este recurso para reconhecer o padrao com mais rapidez em exercicios e revisoes.',
+        gain: pedagogy.gain || 'O ganho principal aqui e ligar teoria, leitura visual e tomada de decisao.',
+    };
+}
+
+function getArtifactModules(artifact) {
+    const moduleSlugs = Array.isArray(artifact?.moduleSlugs) ? artifact.moduleSlugs : [];
+    return getCourseModules().filter((module) => moduleSlugs.includes(module.slug));
+}
+
+function buildArtifactStudyPlan(artifact) {
+    return [
+        `Releia o foco do artefato: ${artifact.teaches || 'entender a ideia central do recurso'}.`,
+        `Use quando: ${artifact.whenToUse || 'estiver revisando o modulo e quiser consolidar a intuicao.'}`,
+        `Observe principalmente: ${artifact.observe || artifact.summary || 'como a representacao muda quando voce interage.'}`,
+        'Feche a exploracao explicando em voz alta qual padrao apareceu e em que tipo de questao ele ajuda.',
+    ];
+}
+
+function buildArtifactTutorPrompt(artifact, modules) {
+    const moduleNames = modules.length ? modules.map((module) => module.title).join(', ') : 'a trilha atual';
+    return [
+        `Explique o artefato "${artifact.title}" como tutor de matematica.`,
+        `Considere que ele apoia: ${moduleNames}.`,
+        'Quero: o que observar, erro comum, conexao com prova e um mini exercicio guiado.',
+    ].join(' ');
+}
+
+function renderArtifactExperiencePage(artifact) {
+    const sourcePageId = window.__LAST_ARTIFACT_SOURCE_PAGE__ || 'page-laboratorio';
+    const modules = getArtifactModules(artifact);
+    const pedagogy = getArtifactPedagogy(artifact);
+    const frameId = `lab-${artifact.slug}`;
+    const embedUrl = `${window.ARTIFACTS_LIBRARY.hostPage}?frameId=${frameId}&src=/content/artifacts/raw/${artifact.file}`;
+    const sourceModule = getCourseModules().find((module) => module.id === sourcePageId) || null;
+    const sourceLabel = sourcePageId === 'page-laboratorio'
+        ? 'Voltar a galeria'
+        : sourceModule
+            ? `Voltar a ${sourceModule.title}`
+            : 'Voltar';
+    const moduleChips = modules.length
+        ? modules.map((module) => `<span class="artifact-chip">${escapeHtml(module.title)}</span>`).join('')
+        : '<span class="artifact-chip">Exploracao complementar</span>';
+    const moduleButtons = modules
+        .map(
+            (module) => `
+                <button class="btn btn--secondary" type="button" onclick="window.navigateTo('${escapeAttribute(module.id)}')">
+                    Ir para ${escapeHtml(module.title)}
+                </button>
+            `,
+        )
+        .join('');
+    const studyPlan = buildArtifactStudyPlan(artifact)
+        .map((step) => `<span class="review-pill">${escapeHtml(step)}</span>`)
+        .join('');
+    const tutorPrompt = buildArtifactTutorPrompt(artifact, modules);
+
+    return `
+        <div class="lab-experience-layout">
+            <header class="module-hero" data-accent="${escapeAttribute(artifact.accent || 'blue')}">
+                <div class="module-hero__copy">
+                    <span class="topic-label">Experiencia guiada</span>
+                    <h2 class="topic-title">${escapeHtml(artifact.title)}</h2>
+                    <p class="module-hero__subtitle">${escapeHtml(artifact.summary || artifact.teaches || 'Artefato interativo para estudo visual.')}</p>
+                    <p class="module-hero__description">${escapeHtml(pedagogy.whyHere)}</p>
+                    <div class="artifact-chip-row" style="margin-top: 18px;">
+                        ${moduleChips}
+                    </div>
+                </div>
+                <div class="module-hero__actions">
+                    <button class="btn btn--secondary" type="button" onclick="window.navigateTo('${escapeAttribute(sourcePageId)}')">${escapeHtml(sourceLabel)}</button>
+                    <button class="btn btn--primary" type="button" onclick='window.ChatWidget?.openWithPrompt(${JSON.stringify(tutorPrompt)}, { submit: false })'>Abrir Tutor IA com contexto</button>
+                    ${moduleButtons}
+                </div>
+            </header>
+
+            <div class="module-shell">
+                <div class="module-shell__content">
+                    <article class="content-sheet">
+                        <header class="content-sheet__header">
+                            <div>
+                                <span class="content-sheet__kicker">Como estudar com este artefato</span>
+                                <h3>Roteiro de exploracao</h3>
+                            </div>
+                            <p>Antes de interagir, alinhe o objetivo do recurso. Assim ele vira ferramenta pedagogica, e nao so um visual bonito.</p>
+                        </header>
+                        <div class="artifact-context-grid">
+                            <div class="artifact-context-box">
+                                <span class="artifact-context-box__label">O que ensina</span>
+                                <p>${escapeHtml(artifact.teaches || 'Ajuda a visualizar o conceito principal do modulo.')}</p>
+                            </div>
+                            <div class="artifact-context-box">
+                                <span class="artifact-context-box__label">Quando usar</span>
+                                <p>${escapeHtml(artifact.whenToUse || 'Use depois da teoria para consolidar a intuicao.')}</p>
+                            </div>
+                            <div class="artifact-context-box">
+                                <span class="artifact-context-box__label">O que observar</span>
+                                <p>${escapeHtml(artifact.observe || 'Observe como a representacao muda a cada interacao.')}</p>
+                            </div>
+                        </div>
+                        <div class="artifact-panel__hint" style="margin-top: 16px;">
+                            <strong>Como explorar:</strong> ${escapeHtml(artifact.hint || artifact.observe || artifact.summary || '')}
+                        </div>
+                        <div class="review-pill-grid review-pill-grid--compact" style="margin-top: 16px;">
+                            ${studyPlan}
+                        </div>
+                    </article>
+
+                    <article class="content-sheet">
+                        <header class="content-sheet__header">
+                            <div>
+                                <span class="content-sheet__kicker">Experiencia interativa</span>
+                                <h3>Manipule o artefato sem perder o contexto</h3>
+                            </div>
+                            <p>Teste ideias no painel abaixo e depois volte aos blocos laterais para transformar o que voce viu em leitura de prova.</p>
+                        </header>
+                        <div class="artifact-frame-shell">
+                            <iframe
+                                class="artifact-frame"
+                                data-artifact-frame="${escapeAttribute(frameId)}"
+                                title="${escapeAttribute(artifact.title)}"
+                                src="${escapeAttribute(embedUrl)}"
+                                style="height: ${Number(artifact.height) || 600}px;"
+                            ></iframe>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="module-shell__aside">
+                    <div class="card module-panel module-panel--visual">
+                        <h3>Por que este artefato esta aqui</h3>
+                        <p>${escapeHtml(pedagogy.whyHere)}</p>
+                    </div>
+
+                    <div class="card module-panel module-panel--focus">
+                        <h3>Conexao com prova</h3>
+                        <p>${escapeHtml(pedagogy.examBridge)}</p>
+                        <div class="box box--example" style="margin-bottom: 0;">
+                            <h4 class="box__title">Ganho de entendimento</h4>
+                            <p>${escapeHtml(pedagogy.gain)}</p>
+                        </div>
+                    </div>
+
+                    <div class="card module-panel module-panel--map">
+                        <h3>Proximo passo recomendado</h3>
+                        <p>${escapeHtml(modules.length ? `Depois de explorar, revise o modulo mais ligado a este recurso: ${modules[0].title}.` : 'Depois de explorar, volte ao modulo correspondente e confira se voce consegue explicar o padrao sem olhar a tela.')}</p>
+                        ${modules.length ? `<button class="btn btn--secondary" type="button" onclick="window.navigateTo('${escapeAttribute(modules[0].id)}')">Revisar modulo agora</button>` : ''}
+                        <button class="btn btn--secondary" type="button" onclick="window.generateSimulado()">Levar para o simulado</button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    `;
+}
+
 window.generateSimulado = function () {
     window.navigateTo('page-simulado');
     const intro = document.getElementById('simulado-intro');
@@ -744,6 +934,25 @@ window.appOpenLaboratoryExperience = function(artifactId) {
                 </div>
             </div>
         `;
+    }
+};
+
+window.appOpenLaboratoryExperience = function(artifactId) {
+    const items = window.ARTIFACTS_LIBRARY?.items || [];
+    const artifact = items.find((item) => item.slug === artifactId);
+    if (!artifact) return;
+
+    window.__LAST_ARTIFACT_SOURCE_PAGE__ = (typeof window.location.hash === 'string'
+        ? window.location.hash.replace('#', '').trim()
+        : '') || 'page-home';
+    window.navigateTo('page-laboratory-experience');
+
+    const container = document.getElementById('lab-experience-container');
+    if (!container) return;
+
+    container.innerHTML = renderArtifactExperiencePage(artifact);
+    if (window.ContentRenderer?.renderMathIn) {
+        window.ContentRenderer.renderMathIn(container);
     }
 };
 
@@ -802,6 +1011,8 @@ window.generateExercises = async function (topic, buttonElement) {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    repairTextNodes(document.body);
+
     const btnBack = document.getElementById('btn-back');
     const btnLogout = document.getElementById('btn-logout');
     const modulesList = document.getElementById('modules-list');
@@ -810,6 +1021,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const reviewDashboard = document.getElementById('review-dashboard');
     const chatToggle = document.getElementById('chat-toggle');
     const chatWindow = document.getElementById('chat-window');
+    const chatBackdrop = document.getElementById('chat-backdrop');
     const chatClose = document.getElementById('chat-close');
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send');
@@ -822,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let pages = [];
     let chatHistory = [];
     let currentUser = null;
+    let chatIsOpen = false;
     const sessionState = {
         ttlMs: 30 * 60 * 1000,
         warningMs: 5 * 60 * 1000,
@@ -1173,9 +1386,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function syncChatVisibility(nextOpen) {
+        chatIsOpen = Boolean(nextOpen);
+        document.body.classList.toggle('chat-open', chatIsOpen);
+        chatToggle?.setAttribute('aria-expanded', chatIsOpen ? 'true' : 'false');
+        chatBackdrop?.classList.toggle('hidden', !chatIsOpen);
+        chatWindow?.classList.toggle('hidden', !chatIsOpen);
+    }
+
     function openChatWindow() {
-        chatWindow.classList.remove('hidden');
+        syncChatVisibility(true);
         ensureChatGreeting();
+        requestAnimationFrame(() => chatInput?.focus());
+    }
+
+    function closeChatWindow() {
+        syncChatVisibility(false);
     }
 
     function getChatFallbackMessage(error) {
@@ -1385,17 +1611,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (chatWindow.classList.contains('hidden')) {
                 openChatWindow();
             } else {
-                chatWindow.classList.add('hidden');
+                closeChatWindow();
             }
         });
     }
-    if (chatClose && chatWindow) chatClose.addEventListener('click', () => chatWindow.classList.add('hidden'));
+    if (chatBackdrop) {
+        chatBackdrop.addEventListener('click', closeChatWindow);
+    }
+    if (chatClose && chatWindow) chatClose.addEventListener('click', closeChatWindow);
     if (chatSend) chatSend.addEventListener('click', sendChatMessage);
     if (chatInput) {
-        chatInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') sendChatMessage();
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
         });
     }
+    if (chatWindow) {
+        chatWindow.addEventListener('click', (event) => {
+            const suggestion = event.target.closest?.('[data-chat-prompt]');
+            if (!suggestion) return;
+            void openChatWithPrompt(suggestion.dataset.chatPrompt || '', { submit: true });
+        });
+    }
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && chatIsOpen) {
+            closeChatWindow();
+        }
+    });
     window.addEventListener('message', handleArtifactMessage);
 
     setLoadingCard(modulesList, 'Carregando módulos...');

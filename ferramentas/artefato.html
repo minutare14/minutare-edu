@@ -83,12 +83,43 @@
             const frameId = params.get('frameId') || '';
             const sourcePath = params.get('src') || '';
 
+            function maybeFixMojibake(value) {
+                const text = String(value ?? '');
+                if (!/[ÃÂâ]/.test(text)) return text;
+
+                try {
+                    return decodeURIComponent(escape(text));
+                } catch (_error) {
+                    return text;
+                }
+            }
+
+            function repairTextNodes(root) {
+                if (!root || !document.createTreeWalker) return;
+
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                const blockedParents = new Set(['SCRIPT', 'STYLE', 'TEXTAREA']);
+                let current = walker.nextNode();
+
+                while (current) {
+                    const parentTag = current.parentElement?.tagName || '';
+                    const rawValue = current.nodeValue || '';
+                    if (!blockedParents.has(parentTag)) {
+                        const nextValue = maybeFixMojibake(rawValue);
+                        if (nextValue !== rawValue) {
+                            current.nodeValue = nextValue;
+                        }
+                    }
+                    current = walker.nextNode();
+                }
+            }
+
             function postToParent(type, payload = {}) {
                 window.parent?.postMessage({ type, frameId, sourcePath, ...payload }, '*');
             }
 
             function showState(message, modifier = '') {
-                mount.innerHTML = `<div class="artifact-state ${modifier}">${message}</div>`;
+                mount.innerHTML = `<div class="artifact-state ${modifier}">${maybeFixMojibake(message)}</div>`;
                 postHeight();
             }
 
@@ -191,10 +222,13 @@
                     mount.innerHTML = '';
                     const nodes = parsed.body && parsed.body.childNodes.length ? parsed.body.childNodes : parsed.childNodes;
                     Array.from(nodes).forEach((node) => mount.appendChild(node.cloneNode(true)));
+                    repairTextNodes(mount);
 
                     for (const scriptNode of scripts) {
                         await appendExecutableScript(scriptNode);
                     }
+
+                    repairTextNodes(document.body);
 
                     console.info('[artifact-host] artifact ready', { frameId, sourcePath, scripts: scripts.length, styles: styles.length });
                     postToParent('artifact-ready');

@@ -1,58 +1,205 @@
-
 <style>
+:root{
+  --color-background-primary:#fff;
+  --color-background-secondary:#f6f8fb;
+  --color-background-info:#eef5ff;
+  --color-background-success:#ecfdf5;
+  --color-background-warning:#fff8e6;
+  --color-background-danger:#fef2f2;
+  --color-border-tertiary:rgba(20,32,48,.08);
+  --color-border-secondary:rgba(20,32,48,.16);
+  --color-border-info:rgba(37,99,235,.22);
+  --color-border-success:rgba(16,185,129,.2);
+  --color-border-danger:rgba(220,38,38,.18);
+  --color-text-primary:#18212b;
+  --color-text-secondary:#56606d;
+  --color-text-info:#1f4f9b;
+  --color-text-success:#0f766e;
+  --color-text-warning:#a15c00;
+  --color-text-danger:#b42318;
+  --border-radius-lg:20px;
+  --border-radius-md:14px;
+  --font-sans:'Manrope','Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono','Cascadia Code',monospace;
+}
 *{box-sizing:border-box}
-#bh{padding:1rem 0}
-.bcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
-.brow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:.3rem 0}
-.blbl{font-size:13px;color:var(--color-text-secondary);min-width:14px}
-.bval{font-size:13px;font-weight:500;min-width:32px;text-align:right}
-#bh-canvas{width:100%;display:block;border-radius:var(--border-radius-md)}
-.bstep{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.5rem .85rem;font-size:13px;font-family:var(--font-mono);color:var(--color-text-primary);margin:.3rem 0;opacity:0;transform:translateX(-6px);transition:opacity .3s,transform .3s}
-.bstep.vis{opacity:1;transform:none}
-.bstep .bc{font-size:11px;color:var(--color-text-secondary);font-family:var(--font-sans);display:block;margin-top:2px}
-.bresult{font-size:15px;font-weight:500;padding:.6rem .85rem;border-radius:var(--border-radius-md);margin-top:.5rem;font-family:var(--font-mono)}
-.bbtn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 16px;font-size:13px;cursor:pointer;color:var(--color-text-primary)}
-.bbtn:hover{background:var(--color-background-secondary)}
+html,body{margin:0;padding:0;background:transparent;color:var(--color-text-primary);font-family:var(--font-sans)}
+body{min-height:100vh}
+#artifact-mount{width:100%}
+.shell{display:grid;gap:16px;padding:12px 0 8px}
+.card{background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px;box-shadow:0 10px 30px rgba(20,32,48,.06)}
+.hero{display:grid;gap:14px;grid-template-columns:minmax(0,1.35fr) minmax(240px,.85fr)}
+.eyebrow{display:inline-flex;width:fit-content;padding:6px 10px;border-radius:999px;margin:0 0 10px;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-info);background:var(--color-background-info)}
+h1{margin:0 0 10px;font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.08}
+.lead{margin:0;max-width:62ch;color:var(--color-text-secondary);line-height:1.7}
+.pill-grid,.legend-grid,.control-grid{display:grid;gap:10px}
+.pill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pill,.badge{display:inline-flex;align-items:center;min-height:40px;padding:8px 12px;border-radius:999px;font-size:.82rem;font-weight:800}
+.pill{border:1px solid rgba(37,99,235,.12);background:rgba(37,99,235,.06);color:var(--color-text-info)}
+.legend-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.legend{padding:14px;border-radius:16px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary)}
+.legend span{display:block;font-size:.73rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:4px}
+.legend strong{display:block;font-size:.98rem;margin-bottom:4px}
+.legend p,.note,.helper,.summary p{margin:0;color:var(--color-text-secondary);line-height:1.55}
+.control-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.control{display:grid;gap:6px;padding:14px;border-radius:16px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary)}
+.control label{font-size:.82rem;font-weight:800;letter-spacing:.04em;color:var(--color-text-secondary)}
+.control input[type=range]{width:100%}
+.value{font-family:var(--font-mono);font-size:.98rem;font-weight:800;color:var(--color-text-primary)}
+.status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.status{padding:14px;border-radius:16px;border:1px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.status span{display:block;font-size:.73rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:4px}
+.status strong{display:block;font-size:1rem;line-height:1.35}
+.status small{display:block;margin-top:4px;color:var(--color-text-secondary);line-height:1.45}
+.status--info{background:var(--color-background-info);border-color:var(--color-border-info)}
+.status--success{background:var(--color-background-success);border-color:var(--color-border-success)}
+.status--warning{background:var(--color-background-warning);border-color:rgba(161,92,0,.18)}
+.status--danger{background:var(--color-background-danger);border-color:var(--color-border-danger)}
+.graph-shell{display:grid;gap:12px}
+.graph-card{padding:14px}
+#bh-canvas{width:100%;display:block;border-radius:16px;background:#fff;min-height:280px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:46px;padding:12px 16px;border-radius:14px;border:1px solid var(--color-border-secondary);background:#fff;color:var(--color-text-primary);font-size:.94rem;font-weight:800;cursor:pointer}
+.btn.primary{background:linear-gradient(135deg,#1f4f9b,#2d71d1);color:#fff;border-color:transparent;box-shadow:0 12px 28px rgba(31,79,155,.2)}
+.steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;padding:14px;border-radius:16px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease}
+.step.vis{opacity:1;transform:none}
+.step-n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-background-info);color:var(--color-text-info);font-size:.8rem;font-weight:800}
+.step__expr{font-family:var(--font-mono);font-size:.94rem;line-height:1.45;word-break:break-word}
+.step__comment{margin-top:4px;color:var(--color-text-secondary);font-size:.84rem;line-height:1.5}
+.summary{display:grid;gap:10px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(239,246,255,.92),rgba(255,255,255,.96));border:1px solid rgba(37,99,235,.12)}
+.summary__row{display:grid;gap:4px}
+.label{font-size:.73rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary)}
+.summary__value{color:var(--color-text-primary);line-height:1.55}
+.formula{font-family:var(--font-mono);font-size:1rem;word-break:break-word}
+@media (max-width:860px){.hero,.legend-grid,.control-grid,.status-grid{grid-template-columns:1fr}}
+@media (max-width:640px){.card{padding:16px}.pill-grid{grid-template-columns:1fr}.toolbar{flex-direction:column}.btn{width:100%}}
 </style>
-<div id="bh">
-<div class="bcard">
-  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.5rem">Equação: <span id="bh-eq" style="font-family:var(--font-mono);color:var(--color-text-primary);font-weight:500"></span></div>
-  <div class="brow">
-    <span class="blbl">a</span>
-    <input type="range" id="bha" min="-3" max="3" value="1" step="1" style="flex:1;max-width:180px" oninput="bupd()">
-    <span class="bval" id="bhav">1</span>
-    <span class="blbl" style="margin-left:10px">b</span>
-    <input type="range" id="bhb" min="-8" max="8" value="-5" step="1" style="flex:1;max-width:180px" oninput="bupd()">
-    <span class="bval" id="bhbv">-5</span>
-    <span class="blbl" style="margin-left:10px">c</span>
-    <input type="range" id="bhc" min="-8" max="8" value="6" step="1" style="flex:1;max-width:180px" oninput="bupd()">
-    <span class="bval" id="bhcv">6</span>
-  </div>
-  <button class="bbtn" onclick="solve()" style="margin-top:.5rem">Resolver passo a passo →</button>
-</div>
-<canvas id="bh-canvas" height="200"></canvas>
-<div id="bh-steps" style="margin-top:.75rem"></div>
-</div>
-<script>
-function fmtN(n){return Number.isInteger(n)?n.toString():n.toFixed(3);}
-function fmtCoef(a,v,first){
-  if(a===0)return'';
-  if(v===''){if(a===1&&!first)return'+1';if(a===-1&&!first)return'−1';if(a>0&&!first)return'+'+a;if(a<0)return'−'+Math.abs(a);return''+a;}
-  let s='';
-  if(a===1)s=first?'':'+';
-  else if(a===-1)s='−';
-  else if(a>0)s=(first?'':'+')+''+a;
-  else s='−'+Math.abs(a);
-  return s+v;
-}
-function makeEq(a,b,c){
-  let s=fmtCoef(a,'x²',true)||'0';
-  if(b!==0)s+=' '+(b>0?'+':'')+(b===1?'x':b===-1?'−x':b+'x');
-  if(c!==0)s+=' '+(c>0?'+':'')+c;
-  return s+' = 0';
-}
 
-function bupd(){
+<div id="artifact-mount">
+  <div class="shell">
+    <section class="card hero">
+      <div>
+        <p class="eyebrow">Bhaskara animado</p>
+        <h1>O grafo, o discriminante e as raizes no mesmo lugar</h1>
+        <p class="lead">Em vez de mostrar so a curva, este artefato conecta <span class="formula">a</span>, <span class="formula">b</span> e <span class="formula">c</span> com o formato da parabola, a leitura do discriminante e o que acontece em cada caso.</p>
+      </div>
+      <div class="pill-grid">
+        <span class="pill">2 raizes reais</span>
+        <span class="pill">1 raiz real</span>
+        <span class="pill">Sem raizes reais</span>
+        <span class="pill">Mostra o eixo de simetria</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="legend-grid">
+        <div class="legend"><span>O que ensina</span><strong>Como ler a equacao do 2º grau</strong><p>O valor de <span class="formula">a</span> abre a parabola, <span class="formula">b</span> move o eixo e <span class="formula">c</span> mostra onde ela cruza o eixo y.</p></div>
+        <div class="legend"><span>Quando usar</span><strong>Antes de resolver ou para conferir a resposta</strong><p>O passo a passo mostra o por que da formula, nao so o resultado.</p></div>
+        <div class="legend"><span>O que observar</span><strong>Discriminante, vertices e interceptos</strong><p>Os casos mudam a leitura do grafico e a interpretacao das raizes.</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="control-grid">
+        <div class="control"><label>a</label><input type="range" id="bha" min="-4" max="4" value="1" step="1" oninput="bupd()"><div class="value" id="bhav">1</div></div>
+        <div class="control"><label>b</label><input type="range" id="bhb" min="-10" max="10" value="-5" step="1" oninput="bupd()"><div class="value" id="bhbv">-5</div></div>
+        <div class="control"><label>c</label><input type="range" id="bhc" min="-10" max="10" value="6" step="1" oninput="bupd()"><div class="value" id="bhcv">6</div></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn primary" type="button" onclick="solve()">Atualizar analise</button>
+      </div>
+    </section>
+
+    <section class="status-grid" id="bh-status">
+      <div class="status status--info"><span>Equacao</span><strong id="bh-eq"></strong><small>Leitura direta da parabola.</small></div>
+      <div class="status status--success"><span>Vertice</span><strong id="bh-vertex"></strong><small>Mostra o ponto de virada do grafico.</small></div>
+      <div class="status status--warning"><span>Casos</span><strong id="bh-case"></strong><small id="bh-case-note">O discriminante ainda sera calculado.</small></div>
+    </section>
+
+    <section class="card graph-shell">
+      <div class="summary">
+        <div class="summary__row"><span class="label">O que esta acontecendo</span><span class="summary__value" id="bh-summary">Desloque os controles para ver a relação entre coeficientes, raízes e formato da parabola.</span></div>
+        <div class="summary__row"><span class="label">Leitura do grafico</span><span class="summary__value" id="bh-root-read"></span></div>
+      </div>
+      <div class="graph-card"><canvas id="bh-canvas" height="280"></canvas></div>
+    </section>
+
+    <section class="steps" id="bh-steps" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+function fmtN(n){return Number.isInteger(n)?String(n):n.toFixed(3)}
+function makeEq(a,b,c){const parts=[];if(a===0)return 'Não é equação do 2º grau';parts.push(`${a===1?'':a===-1?'-':a}x²`);if(b!==0)parts.push(`${b>0?'+':'-'} ${Math.abs(b)}x`);if(c!==0)parts.push(`${c>0?'+':'-'} ${Math.abs(c)}`);return `${parts.join(' ')} = 0`}
+function f(a,b,c,x){return a*x*x+b*x+c}
+function rootMessage(delta){if(delta>0)return 'duas raizes reais e graficamente a parabola corta o eixo x em dois pontos';if(Math.abs(delta)<1e-9)return 'uma raiz real dupla e a parabola toca o eixo x em um unico ponto';return 'nenhuma raiz real e a parabola nao intercepta o eixo x'}
+function roleMessage(a,b,c){const dir=a>0?'abre para cima':'abre para baixo';return `a = ${a} ${dir}; b = ${b} desloca o eixo de simetria; c = ${c} e o intercepto em y`}
+function drawGraph(a,b,c,roots){
+  const canvas=document.getElementById('bh-canvas');
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const width=canvas.clientWidth||520;
+  const height=280;
+  canvas.width=Math.round(width*dpr);
+  canvas.height=Math.round(height*dpr);
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,width,height);
+  const pad=34,xMin=-6,xMax=6;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*(width-pad*2);
+  const toY=y=>height/2-y*(height/2-pad)/10;
+  ctx.strokeStyle='rgba(20,32,48,.09)';
+  ctx.lineWidth=1;
+  for(let x=xMin;x<=xMax;x++){ctx.beginPath();ctx.moveTo(toX(x),0);ctx.lineTo(toX(x),height);ctx.stroke()}
+  ctx.strokeStyle='rgba(20,32,48,.25)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad,height/2);ctx.lineTo(width-pad,height/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(toX(0),pad);ctx.lineTo(toX(0),height-pad);ctx.stroke();
+  ctx.beginPath();
+  let started=false;
+  for(let i=0;i<=240;i++){
+    const x=xMin+(xMax-xMin)*i/240;
+    const y=f(a,b,c,x);
+    const py=toY(y);
+    if(py<0||py>height){started=false;continue}
+    if(!started){ctx.moveTo(toX(x),py);started=true}else ctx.lineTo(toX(x),py)
+  }
+  ctx.strokeStyle='#2d71d1';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#56606d';ctx.font='11px sans-serif';ctx.textAlign='center';
+  for(let x=xMin;x<=xMax;x++){ctx.fillText(x,toX(x),height/2+16)}
+  if(roots.length){
+    roots.forEach(r=>{
+      if(r<xMin||r>xMax)return;
+      ctx.beginPath();ctx.arc(toX(r),height/2,7,0,Math.PI*2);
+      ctx.fillStyle='#e24b4a';ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#e24b4a';ctx.font='bold 12px sans-serif';
+      ctx.fillText(fmtN(r),toX(r),height/2-14);
+    })
+  }
+}
+function renderSteps(a,b,c,delta,roots,vertexX,vertexY){
+  const area=document.getElementById('bh-steps');
+  const steps=[
+    {expr:`${makeEq(a,b,c)}`,comment:'Equacao original.'},
+    {expr:`a = ${a}, b = ${b}, c = ${c}`,comment:roleMessage(a,b,c)},
+    {expr:`Δ = b² - 4ac = (${b})² - 4·(${a})·(${c}) = ${fmtN(delta)}`,comment:'Calculamos o discriminante para saber quantas raizes reais existem.'},
+    {expr:delta>0?'Δ > 0: duas raizes reais distintas':Math.abs(delta)<1e-9?'Δ = 0: raiz real dupla':'Δ < 0: sem raizes reais',comment:rootMessage(delta)},
+    {expr:`Eixo de simetria: x = -b/(2a) = ${fmtN(vertexX)}`,comment:`O vertice fica em (${fmtN(vertexX)}, ${fmtN(vertexY)})`},
+  ];
+  if(roots.length===2) steps.push({expr:`x₁ = ${fmtN(roots[0])} e x₂ = ${fmtN(roots[1])}`,comment:'A parabola cruza o eixo x em dois pontos.'});
+  else if(roots.length===1) steps.push({expr:`x = ${fmtN(roots[0])}`,comment:'A parabola encosta no eixo x em um unico ponto.'});
+  else steps.push({expr:'Sem interseccao real com o eixo x',comment:'As raizes reais nao existem, mas o grafico ainda mostra a forma da curva.'});
+  area.innerHTML='';
+  steps.forEach((step,i)=>{
+    const node=document.createElement('div');
+    node.className='step';
+    node.innerHTML=`<div class="step-n">${i+1}</div><div><div class="step__expr">${step.expr}</div><div class="step__comment">${step.comment}</div></div>`;
+    area.appendChild(node);
+    setTimeout(()=>node.classList.add('vis'),i*140);
+  });
+}
+function solve(){
   const a=+document.getElementById('bha').value;
   const b=+document.getElementById('bhb').value;
   const c=+document.getElementById('bhc').value;
@@ -60,108 +207,29 @@ function bupd(){
   document.getElementById('bhbv').textContent=b;
   document.getElementById('bhcv').textContent=c;
   document.getElementById('bh-eq').textContent=makeEq(a,b,c);
-  document.getElementById('bh-steps').innerHTML='';
-  drawGraph(a,b,c,[]);
-}
-
-function drawGraph(a,b,c,roots){
-  const canvas=document.getElementById('bh-canvas');
-  const W=canvas.clientWidth||520;canvas.width=W;
-  const H=200,ctx=canvas.getContext('2d');
-  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-  ctx.clearRect(0,0,W,H);
-  const PAD=30;
-  const xMin=-6,xMax=6;
-  const toX=v=>PAD+(v-xMin)/(xMax-xMin)*(W-PAD*2);
-  const toY=v=>H/2-v*(H/2-PAD)/8;
-
-  ctx.strokeStyle=isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.1)';
-  ctx.lineWidth=1;
-  for(let x=xMin;x<=xMax;x++){
-    ctx.beginPath();ctx.moveTo(toX(x),0);ctx.lineTo(toX(x),H);ctx.stroke();
-  }
-
-  ctx.strokeStyle=isDark?'rgba(255,255,255,.2)':'rgba(0,0,0,.2)';
-  ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(PAD,H/2);ctx.lineTo(W-PAD,H/2);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(toX(0),PAD);ctx.lineTo(toX(0),H-PAD);ctx.stroke();
-
-  const N=200;
-  ctx.beginPath();
-  let started=false;
-  for(let i=0;i<=N;i++){
-    const x=xMin+(xMax-xMin)*i/N;
-    const y=a*x*x+b*x+c;
-    const py=toY(y);
-    if(py<0||py>H){started=false;continue;}
-    if(!started){ctx.moveTo(toX(x),py);started=true;}
-    else ctx.lineTo(toX(x),py);
-  }
-  ctx.strokeStyle='#378ADD';ctx.lineWidth=2.5;ctx.stroke();
-
-  ctx.strokeStyle=isDark?'rgba(255,255,255,.3)':'rgba(0,0,0,.25)';
-  ctx.lineWidth=1;ctx.setLineDash([]);
-  for(let x=xMin;x<=xMax;x++){
-    ctx.fillStyle=isDark?'#666':'#aaa';ctx.font='10px sans-serif';ctx.textAlign='center';
-    ctx.fillText(x,toX(x),H/2+14);
-  }
-
-  roots.forEach(r=>{
-    if(r<xMin||r>xMax)return;
-    ctx.beginPath();ctx.arc(toX(r),H/2,7,0,Math.PI*2);
-    ctx.fillStyle='#E24B4A';ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.fillStyle='#E24B4A';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
-    ctx.fillText(fmtN(r),toX(r),H/2-14);
-  });
-}
-
-function solve(){
-  const a=+document.getElementById('bha').value;
-  const b=+document.getElementById('bhb').value;
-  const c=+document.getElementById('bhc').value;
   if(a===0){
-    document.getElementById('bh-steps').innerHTML='<div class="bstep vis">a = 0 → não é equação de 2º grau<span class="bc">Use a fórmula de 1º grau: x = −c/b</span></div>';return;
+    document.getElementById('bh-summary').textContent='a = 0 desmonta o caso de 2º grau; o artefato avisa isso em vez de fingir uma solução.';
+    document.getElementById('bh-case').textContent='Nao e 2º grau';
+    document.getElementById('bh-case-note').textContent='Use a equacao linear correspondente.';
+    document.getElementById('bh-vertex').textContent='-';
+    document.getElementById('bh-root-read').textContent='Sem parabola valida quando a = 0.';
+    document.getElementById('bh-steps').innerHTML='<div class="step vis"><div class="step-n">!</div><div><div class="step__expr">a = 0</div><div class="step__comment">Isso nao e uma equacao do 2º grau. O grafo nao deve ser interpretado como Bhaskara.</div></div></div>';
+    drawGraph(a,b,c,[]);
+    return;
   }
-  const steps=[
-    {expr:`${makeEq(a,b,c)}`, comment:'Equação original'},
-    {expr:`Δ = b² − 4ac = (${b})² − 4·(${a})·(${c})`, comment:'Cálculo do discriminante'},
-    {expr:`Δ = ${b*b} − ${4*a*c} = ${b*b-4*a*c}`, comment:'Valor de Δ'},
-  ];
-  const disc=b*b-4*a*c;
-  const roots=[];
-  if(disc>0.0001){
-    const r1=(-b+Math.sqrt(disc))/(2*a);
-    const r2=(-b-Math.sqrt(disc))/(2*a);
-    roots.push(r1,r2);
-    steps.push({expr:`Δ > 0 → 2 raízes reais distintas`, comment:'Interpretação do discriminante'});
-    steps.push({expr:`x = (−b ± √Δ) / (2a) = (${-b} ± √${disc}) / ${2*a}`, comment:'Fórmula de Bhaskara'});
-    steps.push({expr:`x₁ = (${-b} + ${fmtN(Math.sqrt(disc))}) / ${2*a} = ${fmtN(r1)}`, comment:'Primeira raiz'});
-    steps.push({expr:`x₂ = (${-b} − ${fmtN(Math.sqrt(disc))}) / ${2*a} = ${fmtN(r2)}`, comment:'Segunda raiz'});
-    steps.push({expr:`Forma fatorada: ${a===1?'':(a===-1?'−':a+'·')}(x − ${fmtN(r1)})(x − ${fmtN(r2)})`, comment:'Produto dos fatores lineares'});
-  } else if(Math.abs(disc)<0.0001){
-    const r=-b/(2*a);roots.push(r);
-    steps.push({expr:`Δ = 0 → raiz dupla (parábola tangente ao eixo x)`, comment:''});
-    steps.push({expr:`x = −b/(2a) = ${-b}/${2*a} = ${fmtN(r)}`, comment:'Raiz dupla'});
-    steps.push({expr:`Forma fatorada: ${a}(x − ${fmtN(r)})²`, comment:''});
-  } else {
-    steps.push({expr:`Δ = ${disc} < 0 → sem raízes reais`, comment:'Parábola não toca o eixo x'});
-    steps.push({expr:`Raízes complexas: x = (${-b} ± √(${disc})) / ${2*a}`, comment:'Existem apenas no conjunto ℂ'});
-  }
+  const delta=b*b-4*a*c;
+  const xV=-b/(2*a);
+  const yV=f(a,b,c,xV);
+  const roots=delta>0?[(-b+Math.sqrt(delta))/(2*a),(-b-Math.sqrt(delta))/(2*a)]:Math.abs(delta)<1e-9?[xV]:[];
+  document.getElementById('bh-summary').textContent=delta>0?'A parabola cruza o eixo x em dois pontos. Isso indica duas raizes reais distintas.':Math.abs(delta)<1e-9?'A parabola toca o eixo x em um unico ponto. Isso indica raiz dupla.':'A parabola nao cruza o eixo x. Nao ha raizes reais.';
+  document.getElementById('bh-case').textContent=delta>0?'2 raizes reais':Math.abs(delta)<1e-9?'1 raiz real dupla':'Sem raizes reais';
+  document.getElementById('bh-case-note').textContent=rootMessage(delta);
+  document.getElementById('bh-vertex').textContent=`(${fmtN(xV)}, ${fmtN(yV)})`;
+  document.getElementById('bh-root-read').textContent=delta>0?`Duas interseccoes: x1 = ${fmtN(roots[0])}, x2 = ${fmtN(roots[1])}.`:Math.abs(delta)<1e-9?`Uma interseccao tangente em x = ${fmtN(xV)}.`:'O grafico nao intercepta o eixo x em numeros reais.';
   drawGraph(a,b,c,roots);
-  const area=document.getElementById('bh-steps');area.innerHTML='';
-  steps.forEach((s,i)=>{
-    const d=document.createElement('div');d.className='bstep';
-    d.innerHTML=`${s.expr}${s.comment?`<span class="bc">${s.comment}</span>`:''}`;
-    area.appendChild(d);
-    setTimeout(()=>d.classList.add('vis'),i*180);
-  });
+  renderSteps(a,b,c,delta,roots,xV,yV);
 }
 bupd();
-window.addEventListener('resize',()=>{
-  const a=+document.getElementById('bha').value;
-  const b=+document.getElementById('bhb').value;
-  const c=+document.getElementById('bhc').value;
-  drawGraph(a,b,c,[]);
-});
+window.addEventListener('resize',()=>solve());
+function bupd(){solve()}
 </script>

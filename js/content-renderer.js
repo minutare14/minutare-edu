@@ -913,11 +913,59 @@
     }
 
     function renderArtifactContextBox(label, value) {
+        if (!value) {
+            return '';
+        }
+
         return `
             <div class="artifact-context-box">
                 <span class="artifact-context-box__label">${escapeHtml(label)}</span>
                 <p>${escapeHtml(value)}</p>
             </div>
+        `;
+    }
+
+    function getArtifactPedagogy(artifact) {
+        const override = artifactsLibrary.pedagogyBySlug?.[artifact.slug] || {};
+
+        return {
+            teaches: artifact.teaches || override.teaches || artifact.summary || '',
+            whyHere: override.whyHere || artifact.whenToUse || '',
+            whenToUse: artifact.whenToUse || '',
+            observe: artifact.observe || '',
+            examBridge: override.examBridge || '',
+            gain: override.gain || '',
+            hint: artifact.hint || '',
+        };
+    }
+
+    function renderArtifactDidacticGrid(artifact) {
+        const pedagogy = getArtifactPedagogy(artifact);
+        const boxes = [
+            renderArtifactContextBox('O que ensina', pedagogy.teaches),
+            renderArtifactContextBox('Por que esta aqui', pedagogy.whyHere),
+            renderArtifactContextBox('Quando usar', pedagogy.whenToUse),
+            renderArtifactContextBox('Na prova', pedagogy.examBridge),
+        ].filter(Boolean);
+
+        if (!boxes.length) {
+            return '';
+        }
+
+        return `
+            <div class="artifact-context-grid">
+                ${boxes.join('')}
+            </div>
+            ${
+                pedagogy.observe || pedagogy.gain
+                    ? `
+                <div class="artifact-context-grid" style="margin-top: 12px;">
+                    ${renderArtifactContextBox('O que observar', pedagogy.observe)}
+                    ${renderArtifactContextBox('Ganho de entendimento', pedagogy.gain)}
+                </div>
+            `
+                    : ''
+            }
         `;
     }
 
@@ -934,6 +982,7 @@
     function renderArtifactCard(artifact, { scopeId = 'lab', moduleLabelMap = new Map() } = {}) {
         const category = getArtifactCategory(artifact);
         const priorityLabel = PRIORITY_LABELS[artifact.priority] || PRIORITY_LABELS.medium;
+        const pedagogy = getArtifactPedagogy(artifact);
 
         return `
             <article class="artifact-card" data-artifact-id="${escapeAttribute(artifact.slug || '')}" onclick="window.appOpenLaboratoryExperience(this.dataset.artifactId)">
@@ -946,6 +995,17 @@
                 </div>
 
                 <p class="artifact-card__summary">${escapeHtml(artifact.summary)}</p>
+                <div class="artifact-chip-row" style="margin-bottom: 6px;">
+                    ${renderArtifactModulePills(artifact, moduleLabelMap)}
+                </div>
+
+                ${renderArtifactDidacticGrid(artifact)}
+
+                ${
+                    pedagogy.hint
+                        ? `<p class="artifact-card__summary" style="margin: 2px 0 0; color: var(--text-muted);">${escapeHtml(`Como explorar: ${pedagogy.hint}`)}</p>`
+                        : ''
+                }
 
                 <div class="artifact-card__meta" style="margin-top:auto">
                     <button class="btn btn--secondary" type="button" style="pointer-events:none;">
@@ -967,9 +1027,14 @@
                     <div>
                         <span class="topic-label">Aprendizado visual</span>
                         <h3>Artefatos interativos do modulo</h3>
-                        <p>Explore o assunto com visualizacoes, construtores e miniambientes que reforcam o raciocinio por tras da teoria.</p>
+                        <p>Use estes artefatos para transformar teoria em observacao guiada: cada recurso reforca um conceito, mostra um padrao e liga o conteudo a exercicios e prova.</p>
                     </div>
                     <button class="btn btn--secondary" data-nav="page-laboratorio">Ver laboratorio completo</button>
+                </div>
+                <div class="artifact-context-grid" style="margin-bottom: 18px;">
+                    ${renderArtifactContextBox('Como estudar', 'Leia o texto-base, abra o artefato e tente prever o que vai acontecer antes de mexer nos controles.')}
+                    ${renderArtifactContextBox('O que observar', 'Procure a relacao entre simbolo, figura, caso limite e resposta final.')}
+                    ${renderArtifactContextBox('Na prova', 'Use o artefato para reconhecer padroes rapidamente e evitar erros de leitura.')}
                 </div>
                 <div class="artifact-grid">
                     ${module.artifacts.map((artifact) => renderArtifactCard(artifact, { scopeId: module.slug, moduleLabelMap })).join('')}
@@ -1012,6 +1077,11 @@
                             <span>frentes tematicas</span>
                         </div>
                     </div>
+                </div>
+                <div class="artifact-context-grid" style="margin: 0 0 22px;">
+                    ${renderArtifactContextBox('Como usar o laboratorio', 'Escolha um artefato com objetivo claro, explore os controles e volte ao texto para consolidar a ideia.')}
+                    ${renderArtifactContextBox('Quando abrir', 'Use depois de estudar a base teorica ou na revisao, quando voce quiser fixar um padrao visual.')}
+                    ${renderArtifactContextBox('O que vale levar', 'Leve a relacao entre conceito, figura e prova para nao transformar o artefato em mero enfeite.')}
                 </div>
 
                 <section class="home-section">

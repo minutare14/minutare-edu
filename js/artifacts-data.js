@@ -287,4 +287,86 @@ window.ARTIFACTS_LIBRARY = {
             height: 620,
         },
     ],
+    pedagogyBySlug: {
+        'diagrama-venn-interativo': {
+            whyHere: 'Este artefato entra no modulo de conjuntos para transformar uniao, intersecao e diferenca em leitura visual imediata.',
+            examBridge: 'Ajuda a reconhecer operacoes entre conjuntos mesmo quando a prova troca simbolos por regioes sombreadas.',
+            gain: 'O aluno para de decorar nomes isolados e passa a enxergar o efeito de cada operacao no desenho.',
+        },
+        'conjuntos-3d-esferas': {
+            whyHere: 'Mostra a inclusao N c Z c Q c R como camadas, reforcando a ideia de conjunto maior contendo o menor.',
+            examBridge: 'Bom para itens de classificacao e hierarquia dos conjuntos numericos.',
+            gain: 'Cria uma imagem mental de contenicao e abrangencia que reduz confusao entre elemento e subconjunto.',
+        },
+        'conjuntos-e-numeros': {
+            whyHere: 'Faz a ponte entre teoria de conjuntos e classificacao de numeros concretos.',
+            examBridge: 'Treina o aluno a escolher o conjunto mais especifico em questoes de alternativa.',
+            gain: 'A leitura fica mais rapida porque cada exemplo passa a ser comparado por familia e nao por chute.',
+        },
+        'mapa-mental-numeros': {
+            whyHere: 'O mapa entra aqui para dar panorama antes dos exercicios e reduzir a dependencia de memorizacao solta.',
+            examBridge: 'Funciona bem na revisao de vespera para lembrar a cadeia N c Z c Q c R e os irracionais.',
+            gain: 'Organiza os conjuntos em uma hierarquia visual simples, facil de revisar no celular.',
+        },
+        'quiz-conjuntos-numericos': {
+            whyHere: 'O quiz reforca a passagem da teoria para a recuperacao rapida da resposta.',
+            examBridge: 'Serve como aquecimento antes do quiz principal e antes de questoes de classificacao em prova.',
+            gain: 'Mostra imediatamente onde a classificacao ainda falha e o que precisa ser retomado.',
+        },
+        'intervalos-reta-real': {
+            whyHere: 'Intervalos so ficam claros quando a notacao e a reta aparecem juntas.',
+            examBridge: 'Treina leitura de desigualdades e da notacao aberta, fechada e semiaberta.',
+            gain: 'Reduz erro em colchetes, parenteses e no sentido dos extremos.',
+        },
+        'reta-real-construtor': {
+            whyHere: 'Leva o aluno do simbolo para a manipulacao concreta da reta real.',
+            examBridge: 'Bom para itens que pedem pertencimento de valores e leitura fina de extremos.',
+            gain: 'Conecta simbolo, grafico e teste de valores sem depender de decoracao.',
+        },
+        'reta-real-3d': {
+            whyHere: 'Este aprofundamento visual reforca a mesma ideia por outro angulo espacial.',
+            examBridge: 'Ajuda a interpretar intervalos e semirretas em itens conceituais e graficos.',
+            gain: 'Cria uma segunda rota mental para a mesma ideia, o que melhora a fixacao.',
+        },
+        'algebra-3d-superficie': {
+            whyHere: 'A visualizacao em superficie liga expressao algebrica e comportamento geometrico.',
+            examBridge: 'Apoia a leitura de mudancas em expressoes quadraticas e cubicas.',
+            gain: 'A algebra deixa de parecer simbolo abstrato e passa a ter forma e resposta visual.',
+        },
+        'algebra-produtos-fatoracao': {
+            whyHere: 'Este mapa combinado mostra que expandir e fatorar sao operacoes espelho.',
+            examBridge: 'Excelente para revisao porque junta propriedades, produtos notaveis e fatoracao em um unico quadro.',
+            gain: 'O aluno passa a ver a relacao entre estruturas em vez de estudar cada tema isolado.',
+        },
+        'expansor-produtos-notaveis': {
+            whyHere: 'Explicita a origem de cada termo dos produtos notaveis.',
+            examBridge: 'Reforca o desenvolvimento rapido de expressoes que aparece com frequencia em prova.',
+            gain: 'Mostra de onde sai o termo do meio e por que o padrao se repete.',
+        },
+        'cubo-soma-3d': {
+            whyHere: 'A versao 3D ajuda a dar corpo ao cubo da soma e a justificar os coeficientes repetidos.',
+            examBridge: 'Bom para itens que pedem reconhecimento do padrao de (a+b)^3.',
+            gain: 'Troca uma formula pesada por uma imagem de partes encaixadas que fica mais facil de recordar.',
+        },
+        'area-model-fatoracao': {
+            whyHere: 'A area e a ponte concreta entre distributiva, expansao e fatoracao.',
+            examBridge: 'Muito util para justificar quadrado da soma e diferenca de quadrados em prova.',
+            gain: 'Mostra visualmente por que os termos aparecem e onde o 2ab nasce.',
+        },
+        'fatorador-visual': {
+            whyHere: 'O foco aqui e ensinar a escolher a tecnica de fatoracao, nao so mostrar o resultado final.',
+            examBridge: 'Treina fator comum, agrupamento e identidades em questoes de reconhecimento de padrao.',
+            gain: 'Ajuda o aluno a decidir a estrategia antes de aplicar mecanicamente a conta.',
+        },
+        'bhaskara-animado': {
+            whyHere: 'Une discriminante, raizes e leitura da parabola em uma so experiencia.',
+            examBridge: 'Relaciona o calculo de Delta com o numero de raizes reais, algo muito cobrado em prova.',
+            gain: 'Liga a formula ao grafico e aos tres casos principais de forma visual e memoravel.',
+        },
+        'parabola-raizes-3d': {
+            whyHere: 'Aprofunda a intuicao grafica depois do Bhaskara animado e fecha a ponte com o eixo x.',
+            examBridge: 'Ajuda a interpretar quando a curva toca, cruza ou nao cruza o eixo das raizes.',
+            gain: 'Fixa o comportamento da funcao conforme os coeficientes mudam.',
+        },
+    },
 };

@@ -12,6 +12,7 @@
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-soft);
   z-index: 50;
+  isolation: isolate;
 }
 
 .header__title {
@@ -135,9 +136,19 @@
   padding: 98px 0 72px;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 104px;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 .page {
   display: none;
   animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  scroll-margin-top: 104px;
 }
 
 .page.active {
@@ -168,19 +179,46 @@
 
 @media (max-width: 720px) {
   .header {
-    height: 68px;
+    height: auto;
+    min-height: 68px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 12px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "back actions"
+      "title title";
+    justify-content: stretch;
+    align-items: center;
+    gap: 8px 10px;
   }
 
   .header__title {
-    max-width: min(100vw - 204px, 100%);
-    padding: 0 10px;
-    font-size: 0.64rem;
-    letter-spacing: 0.12em;
+    grid-area: title;
+    max-width: none;
+    padding: 0;
+    text-align: left;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
   }
 
   .header__actions {
-    right: 12px;
+    position: static;
+    grid-area: actions;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 6px;
+    max-width: calc(100vw - 118px);
+  }
+
+  .btn-back {
+    position: static;
+    grid-area: back;
+    margin-left: 0;
+    padding: 8px 10px;
+    font-size: 1.25rem;
   }
 
   .auth-badge {
@@ -207,8 +245,23 @@
   }
 
   .app-container {
-    width: min(100% - 20px, 1200px);
-    padding-top: 86px;
+    width: min(100% - 18px, 1200px);
+    padding-top: 104px;
     padding-bottom: 56px;
+  }
+}
+
+@media (max-width: 420px) {
+  .header__title {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+  }
+
+  .header__actions {
+    max-width: calc(100vw - 92px);
+  }
+
+  .session-status {
+    max-width: 100%;
   }
 }

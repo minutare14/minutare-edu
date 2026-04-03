@@ -5,22 +5,24 @@
   --surface-container: #eaeff1;
   --surface-container-highest: #dbe4e7;
   --surface-container-lowest: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.94);
   
   /* Text & Accents - Muted, Academic */
-  --text-main: #2b3437;
-  --text-muted: #586064;
-  --primary: #39608e;
-  --primary-dim: #2c5481;
+  --text-main: #243036;
+  --text-muted: #4f5a60;
+  --primary: #234f7b;
+  --primary-dim: #1d3f61;
   --primary-container: #d3e4ff;
   --on-primary: #ffffff;
-  --secondary-container: #d1e6f0;
-  --on-secondary-container: #41545d;
+  --secondary-container: #c9e5ef;
+  --on-secondary-container: #31454e;
   --error: #9f403d;
   
   /* Borders & Shadows - The "No-Line" Rule fallback */
-  --outline-variant: #abb3b7;
-  --border-soft: rgba(171, 179, 183, 0.15); /* Ghost Border */
-  --shadow-soft: 0 10px 40px rgba(43, 52, 55, 0.06); /* Ambient depth */
+  --outline-variant: #95a0a5;
+  --border-soft: rgba(149, 160, 165, 0.18); /* Ghost Border */
+  --shadow-soft: 0 10px 40px rgba(43, 52, 55, 0.07); /* Ambient depth */
+  --focus-ring: 0 0 0 3px rgba(35, 79, 123, 0.16);
 
   /* Typography Scale */
   --font-display: 'Space Grotesk', sans-serif;
@@ -36,6 +38,9 @@
   --space-xl: 32px;
   --space-2xl: 48px;
   --space-3xl: 72px;
+
+  /* Control sizing */
+  --control-touch-size: 44px;
 
   /* Corner Shape */
   --radius-box: 16px; /* Soft minimalist lg */

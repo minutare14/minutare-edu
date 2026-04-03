@@ -1,159 +1,364 @@
-
 <style>
 *{box-sizing:border-box}
-#mm{padding:1rem 0}
-#mm-canvas{width:100%;display:block}
-.mm-info{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:.75rem 1rem;margin-top:.75rem;font-size:13px;color:var(--color-text-primary);min-height:56px;transition:all .2s}
-.mm-title{font-weight:500;font-size:14px;margin-bottom:.25rem}
-.mm-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;margin-top:.5rem}
-.mm-btn:hover{background:var(--color-background-secondary)}
+:root{
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --panel-2:#f7f9fc;
+  --ink:#162235;
+  --muted:#5f6b7f;
+  --line:rgba(22,34,53,.12);
+  --blue:#2563eb;
+  --green:#047857;
+  --amber:#b45309;
+  --red:#b91c1c;
+  --shadow:0 18px 40px rgba(22,34,53,.08);
+  --radius:18px;
+}
+html,body{margin:0;padding:0;background:transparent;color:var(--ink);font-family:var(--font-sans),system-ui,sans-serif}
+#mm{padding:clamp(12px,2vw,20px)}
+.mm-shell{display:grid;gap:16px}
+.mm-hero,.mm-map,.mm-info{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.mm-hero{padding:18px}
+.mm-hero__top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.mm-kicker{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(37,99,235,.08);color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.mm-title{margin:10px 0 8px;font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.06}
+.mm-lead{margin:0;max-width:64ch;color:var(--muted);line-height:1.65}
+.mm-path{display:grid;gap:4px;min-width:min(100%,240px);padding:14px 16px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.mm-path strong{font-size:1.05rem;letter-spacing:.02em}
+.mm-path span{color:var(--muted);font-size:.92rem}
+.mm-guides{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.mm-guide{display:grid;gap:6px;padding:14px 15px;border-radius:16px;background:linear-gradient(180deg,#fff,var(--panel-2));border:1px solid var(--line)}
+.mm-guide__label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mm-guide p{margin:0;line-height:1.55;color:var(--ink);font-size:.95rem}
+.mm-map{display:grid;gap:12px;padding:14px}
+.mm-flow{padding:12px 14px;border-radius:14px;background:rgba(37,99,235,.06);color:var(--blue);font-size:.92rem;font-weight:700;line-height:1.5}
+.mm-node-row{display:grid;gap:12px}
+.mm-node-row--two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mm-node-row--chips{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mm-node{appearance:none;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,var(--panel-2));padding:16px;text-align:left;color:var(--ink);box-shadow:0 8px 20px rgba(22,34,53,.05);cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.mm-node:hover,.mm-node:focus-visible{transform:translateY(-2px);border-color:rgba(37,99,235,.28);box-shadow:0 14px 26px rgba(22,34,53,.1);outline:none}
+.mm-node--selected{border-color:rgba(37,99,235,.45);box-shadow:0 0 0 3px rgba(37,99,235,.08),0 16px 28px rgba(22,34,53,.11)}
+.mm-node__eyebrow{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(16,32,53,.06);color:var(--muted);margin-bottom:8px}
+.mm-node__title{display:block;font-size:1.2rem;font-weight:800;line-height:1.1}
+.mm-node__subtitle{display:block;margin-top:4px;color:var(--muted);font-size:.92rem;line-height:1.45}
+.mm-node__meta{display:block;margin-top:10px;font-size:.85rem;color:var(--muted);line-height:1.45}
+.mm-node--root{min-height:116px;background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(255,255,255,.96))}
+.mm-node--root .mm-node__eyebrow{background:rgba(37,99,235,.1);color:var(--blue)}
+.mm-node--q .mm-node__eyebrow,.mm-node--z .mm-node__eyebrow{background:rgba(4,120,87,.1);color:var(--green)}
+.mm-node--i .mm-node__eyebrow,.mm-node--pi .mm-node__eyebrow,.mm-node--e .mm-node__eyebrow,.mm-node--sqrt2 .mm-node__eyebrow{background:rgba(185,28,28,.1);color:var(--red)}
+.mm-node--n .mm-node__eyebrow,.mm-node--zero .mm-node__eyebrow,.mm-node--primes .mm-node__eyebrow{background:rgba(180,83,9,.1);color:var(--amber)}
+.mm-info{padding:18px}
+.mm-info__title{margin:0 0 8px;font-size:1.15rem;line-height:1.2}
+.mm-info__subtitle{margin:0 0 14px;color:var(--muted);line-height:1.6}
+.mm-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mm-info-card{padding:14px 15px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.mm-info-card__label{display:block;margin-bottom:6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mm-info-card p{margin:0;line-height:1.55}
+.mm-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.mm-btn{appearance:none;border:1px solid rgba(37,99,235,.18);background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(255,255,255,.96));color:var(--blue);border-radius:999px;padding:12px 16px;font-size:.92rem;font-weight:800;cursor:pointer;min-height:44px}
+.mm-btn:hover{border-color:rgba(37,99,235,.32)}
+.mm-btn--secondary{background:var(--panel);color:var(--ink);border-color:var(--line)}
+@media (max-width:720px){
+  .mm-guides,.mm-info-grid,.mm-node-row--two,.mm-node-row--chips{grid-template-columns:1fr}
+  .mm-hero{padding:16px}
+  .mm-node{padding:15px}
+  .mm-node--root{min-height:auto}
+  .mm-actions,.mm-hero__top{flex-direction:column}
+  .mm-path{width:100%}
+}
 </style>
-<div id="mm">
-<canvas id="mm-canvas" height="480"></canvas>
-<div class="mm-info" id="mm-info">
-  <div class="mm-title">Clique em qualquer nó para explorar</div>
-  <div>Mapa completo dos números reais — da contagem ao contínuo</div>
+<div id="mm" class="mm-shell">
+  <section class="mm-hero" aria-labelledby="mm-title">
+    <div class="mm-hero__top">
+      <div>
+        <span class="mm-kicker">Conjuntos numericos</span>
+        <h1 id="mm-title" class="mm-title">Mapa mental dos numeros</h1>
+        <p class="mm-lead">Clique em um bloco para ver a ideia central, exemplos e a conexao com prova. O objetivo e enxergar a inclusao N &subset; Z &subset; Q &subset; R sem perder os irracionais pelo caminho.</p>
+      </div>
+      <div class="mm-path">
+        <strong>N &subset; Z &subset; Q &subset; R</strong>
+        <span>Irracionais tambem pertencem a R</span>
+      </div>
+    </div>
+
+    <div class="mm-guides">
+      <div class="mm-guide">
+        <span class="mm-guide__label">O que observar</span>
+        <p>Quem contem quem, quais numeros entram em cada conjunto e quais exemplos costumam confundir.</p>
+      </div>
+      <div class="mm-guide">
+        <span class="mm-guide__label">Como usar</span>
+        <p>Toque em um bloco, leia a definicao e volte para o quadro maior para comparar os subconjuntos.</p>
+      </div>
+      <div class="mm-guide">
+        <span class="mm-guide__label">Na prova</span>
+        <p>Use o mapa para classificar numeros e evitar erros entre racional, irracional, inteiro e natural.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mm-map" aria-label="Mapa interativo dos conjuntos numericos">
+    <div class="mm-flow">Leitura guiada: comece por R, depois compare Q e I, e feche a cadeia com Z e N.</div>
+
+    <button class="mm-node mm-node--root mm-node--selected" type="button" data-node="R">
+      <span class="mm-node__eyebrow">Conjunto maior</span>
+      <span class="mm-node__title">R</span>
+      <span class="mm-node__subtitle">Reais</span>
+      <span class="mm-node__meta">Contem todos os racionais e irracionais da reta numerica.</span>
+    </button>
+
+    <div class="mm-node-row mm-node-row--two">
+      <button class="mm-node mm-node--q" type="button" data-node="Q">
+        <span class="mm-node__eyebrow">Frações e decimais</span>
+        <span class="mm-node__title">Q</span>
+        <span class="mm-node__subtitle">Racionais</span>
+        <span class="mm-node__meta">Tudo o que pode ser escrito como p/q, incluindo dizimas periodicas.</span>
+      </button>
+      <button class="mm-node mm-node--i" type="button" data-node="I">
+        <span class="mm-node__eyebrow">Nao fecham em fração</span>
+        <span class="mm-node__title">I</span>
+        <span class="mm-node__subtitle">Irracionais</span>
+        <span class="mm-node__meta">Decimais infinitos nao periodicos, como pi, e e raiz de 2.</span>
+      </button>
+    </div>
+
+    <div class="mm-node-row mm-node-row--two">
+      <button class="mm-node mm-node--z" type="button" data-node="Z">
+        <span class="mm-node__eyebrow">Inteiros</span>
+        <span class="mm-node__title">Z</span>
+        <span class="mm-node__subtitle">Inteiros</span>
+        <span class="mm-node__meta">Inclui negativos, zero e positivos sem parte decimal.</span>
+      </button>
+      <button class="mm-node mm-node--n" type="button" data-node="N">
+        <span class="mm-node__eyebrow">Contagem</span>
+        <span class="mm-node__title">N</span>
+        <span class="mm-node__subtitle">Naturais</span>
+        <span class="mm-node__meta">Os numeros usados para contar, ordenar e criar sequencias simples.</span>
+      </button>
+    </div>
+
+    <div class="mm-node-row mm-node-row--chips">
+      <button class="mm-node mm-node--zero" type="button" data-node="zero">
+        <span class="mm-node__eyebrow">Neutro</span>
+        <span class="mm-node__title">0</span>
+        <span class="mm-node__subtitle">Zero</span>
+      </button>
+      <button class="mm-node mm-node--primes" type="button" data-node="primes">
+        <span class="mm-node__eyebrow">Base da aritmetica</span>
+        <span class="mm-node__title">P</span>
+        <span class="mm-node__subtitle">Primos</span>
+      </button>
+      <button class="mm-node mm-node--pi" type="button" data-node="pi">
+        <span class="mm-node__eyebrow">Exemplo classico</span>
+        <span class="mm-node__title">pi</span>
+        <span class="mm-node__subtitle">Irracional</span>
+      </button>
+      <button class="mm-node mm-node--e" type="button" data-node="e">
+        <span class="mm-node__eyebrow">Crescimento</span>
+        <span class="mm-node__title">e</span>
+        <span class="mm-node__subtitle">Irracional</span>
+      </button>
+      <button class="mm-node mm-node--sqrt2" type="button" data-node="sqrt2">
+        <span class="mm-node__eyebrow">Raiz nao exata</span>
+        <span class="mm-node__title">sqrt(2)</span>
+        <span class="mm-node__subtitle">Irracional</span>
+      </button>
+      <button class="mm-node mm-node--z" type="button" data-node="zpos">
+        <span class="mm-node__eyebrow">Parte positiva</span>
+        <span class="mm-node__title">Z+</span>
+        <span class="mm-node__subtitle">Inteiros positivos</span>
+      </button>
+      <button class="mm-node mm-node--z" type="button" data-node="zneg">
+        <span class="mm-node__eyebrow">Parte negativa</span>
+        <span class="mm-node__title">Z-</span>
+        <span class="mm-node__subtitle">Inteiros negativos</span>
+      </button>
+      <button class="mm-node mm-node--n" type="button" data-node="zero">
+        <span class="mm-node__eyebrow">Ponto de partida</span>
+        <span class="mm-node__title">0/1</span>
+        <span class="mm-node__subtitle">Tambem pertence a Q e R</span>
+      </button>
+    </div>
+  </section>
+
+  <section id="mm-info" class="mm-info" aria-live="polite">
+    <h2 class="mm-info__title">Clique em qualquer bloco para explorar</h2>
+    <p class="mm-info__subtitle">O painel abaixo explica a ideia do conjunto, o que observar e como ele aparece em questoes de prova.</p>
+    <div class="mm-info-grid" id="mm-info-grid"></div>
+    <div class="mm-actions">
+      <button class="mm-btn" id="mm-prompt-btn" type="button">Abrir explicacao no Tutor IA</button>
+      <button class="mm-btn mm-btn--secondary" id="mm-reset-btn" type="button">Voltar ao conjunto R</button>
+    </div>
+  </section>
 </div>
-</div>
+
 <script>
-const canvas=document.getElementById('mm-canvas');
-let W=canvas.clientWidth||560,H=480;
-canvas.width=W;canvas.height=H;
-const ctx=canvas.getContext('2d');
-const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-const bg=isDark?'#1a1a18':'#ffffff';
-const textPri=isDark?'#e8e6dc':'#2c2c2a';
-const textSec=isDark?'#888780':'#5f5e5a';
+(function () {
+  const data = {
+    R: {
+      eyebrow: 'Conjunto maior',
+      title: 'R',
+      subtitle: 'Reais',
+      summary: 'R junta os racionais e os irracionais. Ele cobre toda a reta numerica, entao qualquer numero estudado nesta trilha precisa caber aqui.',
+      observe: 'Perceba que todo racional e todo irracional aparece dentro de R, mas eles nao sao a mesma coisa.',
+      exam: 'Questões de classificacao quase sempre acabam pedindo se um numero pertence a R, Q, Z ou N.',
+      example: 'Exemplos: -3, 0, 1/2, 0,25, pi, e, sqrt(2).',
+      prompt: 'Explique o conjunto R com definicao, exemplos, inclusao dos subconjuntos e como ele aparece em classificacao de numeros.',
+    },
+    Q: {
+      eyebrow: 'Frações e decimais',
+      title: 'Q',
+      subtitle: 'Racionais',
+      summary: 'Q e o conjunto dos numeros que podem ser escritos como p/q, com p e q inteiros e q diferente de zero.',
+      observe: 'Dizima periodica entra aqui. Se o decimal repete, vale procurar a fracao correspondente.',
+      exam: 'Muito cobrado em classificacao: identificar se um decimal finito ou periodico e racional.',
+      example: 'Exemplos: 1/3, -7, 0,25, 2, 0,111...',
+      prompt: 'Explique o conjunto Q com definicao formal, exemplos e criterio para reconhecer dizimas periodicas.',
+    },
+    I: {
+      eyebrow: 'Nao fecham em fração',
+      title: 'I',
+      subtitle: 'Irracionais',
+      summary: 'Irracionais nao podem ser escritos como p/q. Eles aparecem como decimais infinitos nao periodicos.',
+      observe: 'Raizes nao exatas, pi e e sao os exemplos mais classicos para nao confundir com racionais.',
+      exam: 'A prova costuma usar sqrt(2) ou pi para testar se o aluno reconhece um decimal nao periodico.',
+      example: 'Exemplos: sqrt(2), sqrt(3), pi, e, phi.',
+      prompt: 'Explique o conjunto dos irracionais com exemplos, propriedades e diferenca para os racionais.',
+    },
+    Z: {
+      eyebrow: 'Inteiros',
+      title: 'Z',
+      subtitle: 'Inteiros',
+      summary: 'Z inclui negativos, zero e positivos sem parte decimal. E a casa dos numeros opostos em torno do zero.',
+      observe: 'Use Z quando houver temperatura, saldo, deslocamento ou qualquer situacao com valores negativos.',
+      exam: 'Questões misturam Z com Q para ver se o aluno percebe que todo inteiro tambem e racional.',
+      example: 'Exemplos: -100, -3, 0, 7, 42.',
+      prompt: 'Explique o conjunto Z, sua relacao com N e Q, e exemplos de uso no cotidiano.',
+    },
+    N: {
+      eyebrow: 'Contagem',
+      title: 'N',
+      subtitle: 'Naturais',
+      summary: 'N e o conjunto dos numeros usados para contar e organizar sequencias simples.',
+      observe: 'Dependendo da definicao adotada, o zero pode ou nao aparecer em N. Aqui ele aparece como ponto de referencia.',
+      exam: 'A prova costuma verificar se o aluno entende que N esta contido em Z, Q e R.',
+      example: 'Exemplos: 0, 1, 2, 3, 10, 100.',
+      prompt: 'Explique o conjunto N, suas definicoes mais comuns e como ele se relaciona com Z, Q e R.',
+    },
+    zero: {
+      eyebrow: 'Neutro',
+      title: '0',
+      subtitle: 'Zero',
+      summary: 'O zero e o ponto neutro da adicao e tambem pertence a Z, Q e R.',
+      observe: 'Ele ajuda a marcar origem, ausencia de quantidade e equilibrio entre positivos e negativos.',
+      exam: 'Pode aparecer em itens de inclusao e em perguntas que pedem a classificacao do numero zero.',
+      example: '0 = 0/1 = 0/7.',
+      prompt: 'Explique por que o zero pertence a varios conjuntos numericos e qual e sua funcao matematica.',
+    },
+    primes: {
+      eyebrow: 'Base da aritmetica',
+      title: 'P',
+      subtitle: 'Primos',
+      summary: 'Os primos sao naturais maiores que 1 com exatamente dois divisores: 1 e ele mesmo.',
+      observe: 'Eles sao a base da fatoracao de inteiros e aparecem em decomposicao de numeros compostos.',
+      exam: 'Questões podem usar fatoracao e divisores para cobrar o reconhecimento de numeros primos.',
+      example: 'Exemplos: 2, 3, 5, 7, 11, 13.',
+      prompt: 'Explique os numeros primos, seus criterios e a relacao com fatoracao e divisibilidade.',
+    },
+    pi: {
+      eyebrow: 'Exemplo classico',
+      title: 'pi',
+      subtitle: 'Irracional',
+      summary: 'Pi e um irracional classico, ligado a circunferencia e a relacao entre comprimento e diametro.',
+      observe: 'Ele e um dos exemplos mais seguros para lembrar que nem todo numero importante e racional.',
+      exam: 'A prova usa pi para testar se o aluno reconhece decimal infinito nao periodico.',
+      example: 'pi aprox. 3,14159...',
+      prompt: 'Explique por que pi e irracional e como ele aparece em geometria.',
+    },
+    e: {
+      eyebrow: 'Crescimento',
+      title: 'e',
+      subtitle: 'Irracional',
+      summary: 'e e a base do logaritmo natural e tambem e irracional.',
+      observe: 'Ele aparece em crescimento exponencial, juros e modelos de variacao continua.',
+      exam: 'Pode surgir como exemplo de irracional ou em situacoes de crescimento continuo.',
+      example: 'e aprox. 2,71828...',
+      prompt: 'Explique o numero e, sua natureza irracional e onde ele aparece em crescimento exponencial.',
+    },
+    sqrt2: {
+      eyebrow: 'Raiz nao exata',
+      title: 'sqrt(2)',
+      subtitle: 'Irracional',
+      summary: 'sqrt(2) e o exemplo classico de raiz nao exata: nao vira fracao e gera decimal infinito nao periodico.',
+      observe: 'E um bom teste para nao confundir raiz exata com raiz aproximada.',
+      exam: 'Aparece muito em classificacao de numeros e em questoes sobre irracionalidade.',
+      example: 'sqrt(2) aprox. 1,41421...',
+      prompt: 'Explique por que sqrt(2) e irracional e como essa ideia aparece em provas.',
+    },
+    zpos: {
+      eyebrow: 'Parte positiva',
+      title: 'Z+',
+      subtitle: 'Inteiros positivos',
+      summary: 'Z+ e a parte positiva dos inteiros, sem incluir valores negativos.',
+      observe: 'Ajuda a entender a divisao entre positivos, negativos e o zero no eixo numerico.',
+      exam: 'A prova pode pedir a diferenca entre Z+, N e Z.',
+      example: 'Exemplos: 1, 2, 3, 4, 5.',
+      prompt: 'Explique o subconjunto Z+ e sua relacao com N e Z.',
+    },
+    zneg: {
+      eyebrow: 'Parte negativa',
+      title: 'Z-',
+      subtitle: 'Inteiros negativos',
+      summary: 'Z- representa os inteiros negativos, usados para valores abaixo de zero.',
+      observe: 'E muito util para leitura de temperatura, saldo devedor e deslocamentos.',
+      exam: 'Pode aparecer em itens de reta numerica e em comparacao de valores negativos.',
+      example: 'Exemplos: -1, -5, -100.',
+      prompt: 'Explique o subconjunto Z- e como ele ajuda a interpretar valores negativos.',
+    },
+  };
 
-const nodes=[
-  {id:'R',x:.5,y:.08,r:38,color:'#378ADD',textColor:'#0C447C',label:'ℝ',sub:'Reais',
-   info:'ℝ reúne todos os números da reta numérica: racionais e irracionais. Preenche o contínuo sem lacunas.',
-   examples:'Ex: −√3, 0, ½, π, e, √5'},
-  {id:'Q',x:.28,y:.28,r:32,color:'#1D9E75',textColor:'#085041',label:'ℚ',sub:'Racionais',
-   info:'ℚ = {p/q | p,q ∈ ℤ, q≠0}. Todo número que pode ser escrito como fração. Dízimas periódicas são racionais!',
-   examples:'Ex: −½, 0, ¾, 1, 0.333…, −7'},
-  {id:'Irr',x:.72,y:.28,r:30,color:'#D85A30',textColor:'#4A1B0C',label:'𝕀',sub:'Irracionais',
-   info:'Números que não podem ser escritos como p/q. Expansão decimal infinita e não periódica.',
-   examples:'Ex: √2, √3, π≈3.14159…, e≈2.71828…, φ'},
-  {id:'Z',x:.22,y:.52,r:28,color:'#7F77DD',textColor:'#26215C',label:'ℤ',sub:'Inteiros',
-   info:'ℤ = {…,−2,−1,0,1,2,…}. Inclui negativos, zero e positivos.',
-   examples:'Ex: −100, −3, 0, 7, 42'},
-  {id:'Zpos',x:.42,y:.52,r:22,color:'#EF9F27',textColor:'#412402',label:'ℤ⁺',sub:'Int. positivos',
-   info:'Inteiros positivos: {1, 2, 3, …}. Diferentes de ℕ pois não incluem o zero (em algumas definições).',
-   examples:'Ex: 1, 2, 3, 100, 999'},
-  {id:'Zneg',x:.12,y:.52,r:22,color:'#E24B4A',textColor:'#501313',label:'ℤ⁻',sub:'Int. negativos',
-   info:'Inteiros negativos: {…,−3,−2,−1}. Surgiram da necessidade de representar dívidas e temperaturas abaixo de zero.',
-   examples:'Ex: −1, −5, −100'},
-  {id:'N',x:.22,y:.76,r:26,color:'#D85A30',textColor:'#4A1B0C',label:'ℕ',sub:'Naturais',
-   info:'ℕ = {0,1,2,3,…}. Os primeiros números inventados pela humanidade. Usados para contar.',
-   examples:'Ex: 0, 1, 2, 3, 100'},
-  {id:'primes',x:.38,y:.88,r:20,color:'#993356',textColor:'#4B1528',label:'ℙ',sub:'Primos',
-   info:'Subconjunto de ℕ: números com exatamente 2 divisores (1 e ele mesmo). Bloco fundamental da aritmética.',
-   examples:'Ex: 2, 3, 5, 7, 11, 13, 17…'},
-  {id:'zero',x:.12,y:.88,r:18,color:'#5F5E5A',textColor:'#2C2C2A',label:'0',sub:'Zero',
-   info:'O zero é natural (ℕ), inteiro (ℤ), racional (ℚ) e real (ℝ). Elemento neutro da adição.',
-   examples:'0 = 0/1 = 0/7 = …'},
-  {id:'pi',x:.82,y:.48,r:22,color:'#D85A30',textColor:'#4A1B0C',label:'π',sub:'Pi',
-   info:'π ≈ 3.14159265… Razão entre circunferência e diâmetro. Irracional e transcendente — não é raiz de nenhum polinômio com coef. inteiros.',
-   examples:'Transcendente: não satisfaz a·x²+b·x+c=0 com a,b,c ∈ ℤ'},
-  {id:'e',x:.9,y:.68,r:20,color:'#D85A30',textColor:'#4A1B0C',label:'e',sub:'Euler',
-   info:'e ≈ 2.71828… Base do logaritmo natural. Irracional e transcendente. Aparece em crescimento exponencial.',
-   examples:'e = lim(1+1/n)ⁿ quando n→∞'},
-  {id:'sqrt2',x:.72,y:.7,r:20,color:'#D85A30',textColor:'#4A1B0C',label:'√2',sub:'Irracional',
-   info:'√2 ≈ 1.41421… Diagonal do quadrado de lado 1. Primeiro irracional descoberto pelos pitagóricos.',
-   examples:'Algébrico: satisfaz x²−2=0'},
-];
+  const info = document.getElementById('mm-info');
+  const infoGrid = document.getElementById('mm-info-grid');
+  const promptButton = document.getElementById('mm-prompt-btn');
+  const resetButton = document.getElementById('mm-reset-btn');
+  function renderInfo(key) {
+    const entry = data[key] || data.R;
 
-const edges=[
-  ['R','Q'],['R','Irr'],['Q','Z'],['Q','Zpos'],['Z','N'],['Z','Zneg'],['N','primes'],['N','zero'],
-  ['Irr','pi'],['Irr','e'],['Irr','sqrt2'],
-];
+    document.querySelectorAll('[data-node]').forEach((button) => {
+      button.classList.toggle('mm-node--selected', button.dataset.node === key);
+    });
 
-let hovered=null;
+    if (info) {
+      info.querySelector('.mm-info__title').textContent = `${entry.title} - ${entry.subtitle}`;
+      info.querySelector('.mm-info__subtitle').textContent = entry.summary;
+    }
 
-function px(v){return v*W;}
-function py(v){return v*H;}
+    infoGrid.innerHTML = [
+      ['O que observar', entry.observe],
+      ['Conexao com a prova', entry.exam],
+      ['Exemplo rapido', entry.example],
+    ]
+      .map(([label, value]) => `
+        <div class="mm-info-card">
+          <span class="mm-info-card__label">${label}</span>
+          <p>${value}</p>
+        </div>
+      `)
+      .join('');
 
-function draw(hover){
-  ctx.clearRect(0,0,W,H);
-
-  edges.forEach(([a,b])=>{
-    const na=nodes.find(n=>n.id===a),nb=nodes.find(n=>n.id===b);
-    const dx=px(nb.x)-px(na.x),dy=py(nb.y)-py(na.y);
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    const sx=px(na.x)+dx/dist*na.r,sy=py(na.y)+dy/dist*na.r;
-    const ex=px(nb.x)-dx/dist*nb.r,ey=py(nb.y)-dy/dist*nb.r;
-    ctx.strokeStyle=isDark?'rgba(200,200,200,.12)':'rgba(0,0,0,.1)';
-    ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-    ctx.setLineDash([]);
-  });
-
-  nodes.forEach(n=>{
-    const x=px(n.x),y=py(n.y),r=n.r;
-    const isHov=hover&&hover.id===n.id;
-    ctx.beginPath();ctx.arc(x,y,r+(isHov?4:0),0,Math.PI*2);
-    ctx.fillStyle=n.color+'28';ctx.fill();
-    ctx.strokeStyle=n.color;ctx.lineWidth=isHov?2.5:1.5;ctx.stroke();
-    ctx.fillStyle=isDark?n.color+'dd':n.textColor;
-    ctx.font=`bold ${r*.7+4}px sans-serif`;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(n.label,x,y-(r>.24*W?5:3));
-    ctx.font=`${Math.max(9,r*.3+5)}px sans-serif`;
-    ctx.fillStyle=isDark?n.color+'99':n.textColor+'aa';
-    ctx.fillText(n.sub,x,y+r*.45+(r>25?4:2));
-  });
-}
-
-function getNode(mx,my){
-  return nodes.find(n=>{
-    const dx=mx-px(n.x),dy=my-py(n.y);
-    return Math.sqrt(dx*dx+dy*dy)<n.r+8;
-  });
-}
-
-canvas.addEventListener('mousemove',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const scaleX=W/rect.width,scaleY=H/rect.height;
-  const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
-  const n=getNode(mx,my);
-  canvas.style.cursor=n?'pointer':'default';
-  if(n!==hovered){hovered=n;draw(n);}
-});
-
-canvas.addEventListener('click',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const scaleX=W/rect.width,scaleY=H/rect.height;
-  const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
-  const n=getNode(mx,my);
-  if(n){
-    document.getElementById('mm-info').innerHTML=`
-      <div class="mm-title" style="color:${n.color}">${n.label} — ${n.sub}</div>
-      <div>${n.info}</div>
-      <div style="margin-top:.35rem;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)">${n.examples}</div>
-      <button class="mm-btn" onclick="sendPrompt('Me explique ${n.sub} (${n.label}) com definição formal, exemplos e onde aparece na matemática.')">Aprofundar em ${n.sub} ↗</button>
-    `;
+    promptButton.onclick = () => {
+      if (typeof window.sendPrompt === 'function') {
+        window.sendPrompt(entry.prompt);
+      }
+    };
   }
-});
 
-canvas.addEventListener('touchstart',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const scaleX=W/rect.width,scaleY=H/rect.height;
-  const mx=(e.touches[0].clientX-rect.left)*scaleX,my=(e.touches[0].clientY-rect.top)*scaleY;
-  const n=getNode(mx,my);
-  if(n){
-    document.getElementById('mm-info').innerHTML=`
-      <div class="mm-title" style="color:${n.color}">${n.label} — ${n.sub}</div>
-      <div>${n.info}</div>
-      <div style="margin-top:.35rem;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary)">${n.examples}</div>
-      <button class="mm-btn" onclick="sendPrompt('Me explique ${n.sub} (${n.label}) com definição formal, exemplos e onde aparece na matemática.')">Aprofundar em ${n.sub} ↗</button>
-    `;
-  }
-  e.preventDefault();
-},{passive:false});
+  document.querySelectorAll('[data-node]').forEach((button) => {
+    button.addEventListener('click', () => renderInfo(button.dataset.node));
+  });
 
-draw(null);
-window.addEventListener('resize',()=>{
-  W=canvas.clientWidth||560;canvas.width=W;draw(hovered);
-});
+  resetButton.addEventListener('click', () => renderInfo('R'));
+
+  renderInfo('R');
+})();
 </script>

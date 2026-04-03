@@ -465,4 +465,86 @@ window.MODULES_DATA = [
     },
 ];
 
+function normalizeQuizLookup(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function cloneQuizQuestion(question, module) {
+    const options = Array.isArray(question?.options)
+        ? question.options.map((option) => String(option))
+        : [];
+
+    return {
+        question: String(question?.question || '').trim(),
+        options,
+        correctAnswer: Number.isInteger(question?.correctAnswer) ? question.correctAnswer : 0,
+        explanation: String(question?.explanation || '').trim(),
+        difficulty: String(question?.difficulty || 'medio').trim(),
+        moduleSlug: module.slug,
+        moduleTitle: module.title,
+        topic: module.quizTopic || module.title,
+        bankSource: 'local',
+    };
+}
+
+function buildModuleQuestionBank(module) {
+    return (module.fallbackQuiz || [])
+        .map((question) => cloneQuizQuestion(question, module))
+        .filter((question) => question.question && question.options.length >= 2);
+}
+
+const moduleBanks = Object.fromEntries(
+    window.MODULES_DATA.map((module) => [module.slug, buildModuleQuestionBank(module)]),
+);
+
+const topicMap = Object.fromEntries(
+    window.MODULES_DATA.flatMap((module) => [
+        [normalizeQuizLookup(module.slug), module.slug],
+        [normalizeQuizLookup(module.title), module.slug],
+        [normalizeQuizLookup(module.quizTopic), module.slug],
+        [normalizeQuizLookup(module.subtitle), module.slug],
+    ]),
+);
+
+window.QUIZ_LIBRARY = {
+    moduleBanks,
+    topicMap,
+    collections: {
+        core: ['conjuntos', 'conjuntos-numericos', 'ordem-e-intervalos'],
+        algebraic: ['algebra', 'produtos-notaveis', 'fatoracao'],
+        full: window.MODULES_DATA.map((module) => module.slug),
+    },
+    relatedModules: {
+        conjuntos: ['conjuntos-numericos'],
+        'conjuntos-numericos': ['conjuntos', 'ordem-e-intervalos'],
+        'ordem-e-intervalos': ['conjuntos-numericos', 'algebra'],
+        algebra: ['produtos-notaveis', 'fatoracao'],
+        'produtos-notaveis': ['algebra', 'fatoracao'],
+        fatoracao: ['algebra', 'produtos-notaveis'],
+    },
+    examBlueprints: {
+        default: [
+            { slug: 'conjuntos', count: 2 },
+            { slug: 'conjuntos-numericos', count: 2 },
+            { slug: 'ordem-e-intervalos', count: 2 },
+            { slug: 'algebra', count: 1 },
+            { slug: 'produtos-notaveis', count: 1 },
+            { slug: 'fatoracao', count: 2 },
+        ],
+        balanced: [
+            { slug: 'conjuntos', count: 2 },
+            { slug: 'conjuntos-numericos', count: 2 },
+            { slug: 'ordem-e-intervalos', count: 1 },
+            { slug: 'algebra', count: 2 },
+            { slug: 'produtos-notaveis', count: 1 },
+            { slug: 'fatoracao', count: 2 },
+        ],
+    },
+    moduleOrder: window.MODULES_DATA.map((module) => module.slug),
+};
+
 

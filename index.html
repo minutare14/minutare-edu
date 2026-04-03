@@ -236,21 +236,22 @@
     <div class="feynman-modal__header">
         <div>
             <span class="feynman-modal__eyebrow">Modo Feynman</span>
-            <h3 id="feynman-modal-title">Testar compreensão</h3>
+            <h3 id="feynman-modal-title">Testar se aprendi</h3>
             <p>Se você consegue explicar com suas palavras, você aprendeu de verdade.</p>
         </div>
         <button id="feynman-close" type="button" aria-label="Fechar Modo Feynman">×</button>
     </div>
-    <p id="feynman-modal-description" class="feynman-modal__description">Explique o tema com suas palavras, receba uma avaliacao estruturada e compare com uma resposta ideal.</p>
+    <p id="feynman-modal-description" class="feynman-modal__description">Explique com suas proprias palavras o que voce entendeu sobre este tema. Primeiro avaliamos sua resposta; depois, se fizer sentido, voce compara com uma explicacao ideal.</p>
     <div id="feynman-input-phase" class="feynman-phase">
-        <label class="feynman-label" id="feynman-question-label">Explique com suas palavras:</label>
+        <label class="feynman-label" id="feynman-question-label">Explique com suas palavras o que voce entendeu sobre este tema:</label>
         <textarea
             id="feynman-input"
             class="feynman-textarea"
             rows="6"
-            placeholder="Escreva sua explicação aqui..."
+            placeholder="Escreva a sua resposta do seu jeito. Vale resumir a ideia principal, citar um exemplo e mostrar o que voce realmente entendeu."
             aria-labelledby="feynman-question-label"
         ></textarea>
+        <p class="feynman-helper">Nao copie o texto do modulo. Tente explicar do seu jeito, como se estivesse ensinando outra pessoa.</p>
         <p id="feynman-inline-error" class="feynman-inline-error hidden" role="alert"></p>
         <div class="feynman-actions">
             <button id="feynman-submit" class="btn btn--primary" type="button">Avaliar explicação</button>
@@ -263,6 +264,7 @@
         </div>
     </div>
     <div id="feynman-result-phase" class="feynman-phase hidden">
+        <p class="feynman-result-note">Avaliacao da sua explicacao. Use os pontos abaixo para revisar antes de abrir a explicacao ideal.</p>
         <div id="feynman-score-banner" class="feynman-score-banner"></div>
         <div id="feynman-feedback" class="feynman-feedback"></div>
         <div id="feynman-ideal-panel" class="feynman-ideal-panel hidden"></div>

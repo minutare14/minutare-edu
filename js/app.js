@@ -1342,7 +1342,7 @@ window.generateExercises = async function (topic, buttonElement) {
         currentTopic = topic;
         currentTitle = title || topic;
         modalTitle.textContent = currentTitle;
-        questionLabel.textContent = `Explique com suas palavras: "${currentTitle}"`;
+        questionLabel.textContent = `Explique com suas proprias palavras o que voce entendeu sobre "${currentTitle}".`;
         textarea.value = '';
         submitBtn.disabled = false;
         setInlineError('');
@@ -1429,7 +1429,7 @@ window.generateExercises = async function (topic, buttonElement) {
     async function submitExplanation() {
         const text = textarea.value.trim();
         if (!text) {
-            setInlineError('Escreva sua explicacao antes de enviar.');
+            setInlineError('Escreva sua resposta antes de enviar.');
             textarea.focus();
             return;
         }
@@ -1447,7 +1447,7 @@ window.generateExercises = async function (topic, buttonElement) {
         try {
             const data = await window.AppAPI.apiRequest('/api/feynman/evaluate', {
                 method: 'POST',
-                body: { tema: currentTopic, explicacao: text, nivel: 'iniciante' },
+                body: { tema: currentTopic, resposta: text, nivel: 'iniciante' },
                 feature: 'feynman-evaluate',
             });
             renderFeedback(data.result || data);

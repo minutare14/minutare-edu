@@ -1048,6 +1048,13 @@ body.chat-open .chat-toggle {
   color: var(--text-muted);
 }
 
+.feynman-helper {
+  margin: -2px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
 .feynman-modal__header > button {
   flex-shrink: 0;
   width: 32px;
@@ -1167,6 +1174,13 @@ body.chat-open .chat-toggle {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.feynman-result-note {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
 .feynman-ideal-panel {

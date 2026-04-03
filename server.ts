@@ -176,6 +176,7 @@ type FeynmanPayload = {
 
 type FeynmanEvaluateRequest = {
     tema: string;
+    resposta: string;
     explicacao: string;
     nivel: string;
 };
@@ -491,18 +492,24 @@ function validateFeynmanEvaluateRequest(value: unknown): FeynmanEvaluateRequest 
     }
 
     const tema = requireNonEmptyString(value.tema, 'tema');
-    const explicacao = requireNonEmptyString(value.explicacao, 'explicacao');
+    const respostaSource =
+        typeof value.resposta === 'string' && value.resposta.trim()
+            ? value.resposta
+            : typeof value.explicacao === 'string'
+              ? value.explicacao
+              : value.resposta;
+    const resposta = requireNonEmptyString(respostaSource, 'resposta');
     const nivel = typeof value.nivel === 'string' && value.nivel.trim() ? value.nivel.trim() : 'iniciante';
 
-    if (explicacao.length < 20) {
-        throw new Error('A explicacao precisa ter pelo menos 20 caracteres.');
+    if (resposta.length < 20) {
+        throw new Error('A resposta precisa ter pelo menos 20 caracteres.');
     }
 
-    if (explicacao.length > 4000) {
-        throw new Error('A explicacao ficou longa demais. Tente resumir em ate 4000 caracteres.');
+    if (resposta.length > 4000) {
+        throw new Error('A resposta ficou longa demais. Tente resumir em ate 4000 caracteres.');
     }
 
-    return { tema, explicacao, nivel };
+    return { tema, resposta, explicacao: resposta, nivel };
 }
 
 function evaluateFeynmanLocally(topic: string, explanation: string): FeynmanPayload {
@@ -1727,13 +1734,13 @@ app.post('/api/feynman/evaluate', async (req, res) => {
         }
 
         try {
-            const { tema, explicacao, nivel } = validateFeynmanEvaluateRequest(req.body);
+            const { tema, resposta, nivel } = validateFeynmanEvaluateRequest(req.body);
 
             const prompt =
                 `Voce e um professor avaliando a explicacao de um aluno brasileiro sobre "${tema}". ` +
                 `Nivel do aluno: ${nivel}. ` +
                 'Seja criterioso e objetivo. Nao elogie sem criterio. ' +
-                `Explicacao do aluno: "${explicacao}". ` +
+                `Resposta do aluno: "${resposta}". ` +
                 'Analise se o conceito central foi explicado, o que faltou, se ha erros conceituais e se a resposta mostra dominio real. ' +
                 'Responda em JSON valido sem markdown com os campos: ' +
                 'score (0-10 inteiro), acertos (array de strings), falhas (array de strings), erros (array de strings), recomendacao (string). ' +
@@ -1771,7 +1778,7 @@ app.post('/api/feynman/evaluate', async (req, res) => {
             } catch (error) {
                 const diagnostics = classifyAiError(error, route, requestId, primaryModel);
                 logAiFailure(diagnostics, error);
-                result = evaluateFeynmanLocally(tema, explicacao);
+                result = evaluateFeynmanLocally(tema, resposta);
                 attemptedModels = diagnostics.attemptedModels || [];
                 source = 'local';
             }
@@ -1787,7 +1794,7 @@ app.post('/api/feynman/evaluate', async (req, res) => {
                     attemptId,
                     user.id,
                     tema,
-                    explicacao,
+                    resposta,
                     result.score,
                     JSON.stringify(result.acertos),
                     JSON.stringify(result.falhas),
@@ -1799,6 +1806,8 @@ app.post('/api/feynman/evaluate', async (req, res) => {
             res.json({
                 ok: true,
                 attemptId,
+                tema,
+                resposta,
                 source,
                 result,
                 score: result.score,

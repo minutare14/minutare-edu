@@ -25,6 +25,8 @@ import {
     setSessionCookie,
 } from './server/auth.ts';
 import { closeDatabasePool, ensureDatabaseReady, getDatabaseStatus, query } from './server/database.ts';
+import { resolveModule, getAllModules } from './server/modules-registry.ts';
+import { buildContextualPrompt } from './server/prompt-builder.ts';
 
 dotenv.config({ path: '.env.local', override: true, quiet: true });
 dotenv.config({ path: '.env', override: false, quiet: true });
@@ -2178,6 +2180,57 @@ app.get('/api/feynman/attempts', async (req, res) => {
     }
 });
 
+app.post('/api/chat/ask', async (req, res) => {
+    const route = '/api/chat/ask';
+    const requestId = String(res.locals.requestId || 'unknown');
+    const requestedModel = parseModelKey(req.body?.model);
+    const primaryModel = MODEL_CANDIDATES[requestedModel][0];
+
+    try {
+        const question = requireNonEmptyString(req.body?.question ?? req.body?.message, 'question');
+        const moduleId = typeof req.body?.module_id === 'string' ? req.body.module_id.trim() : '';
+        const moduleSlug = typeof req.body?.module_slug === 'string' ? req.body.module_slug.trim() : '';
+        const sectionId = typeof req.body?.section_id === 'string' ? req.body.section_id.trim() : '';
+        const history = Array.isArray(req.body?.history) ? req.body.history : [];
+
+        const module = resolveModule(moduleId, moduleSlug);
+        const allModules = getAllModules();
+
+        const prompt = buildContextualPrompt(question, module, allModules, sectionId || undefined);
+
+        console.info(`[${requestId}] [${route}] mode=${prompt.mode} module=${prompt.moduleSlug || 'none'} relevance=${prompt.relevanceScore} sources=${prompt.sources.length}`);
+
+        const contents = [
+            ...history,
+            { role: 'user' as const, parts: [{ text: question }] },
+        ];
+
+        const { text, model, attemptedModels } = await generateText({
+            modelKey: requestedModel,
+            route,
+            requestId,
+            contents,
+            systemInstruction: prompt.systemInstruction,
+        });
+
+        res.json({
+            ok: true,
+            answer: buildTutorResponse(text, question),
+            text: buildTutorResponse(text, question),
+            mode: prompt.mode,
+            sources: prompt.sources,
+            moduleSlug: prompt.moduleSlug,
+            moduleTitle: prompt.moduleTitle,
+            relevanceScore: prompt.relevanceScore,
+            model,
+            requestedModel,
+            attemptedModels,
+        });
+    } catch (error) {
+        sendAiError(res, route, primaryModel, 'processar pergunta contextual', error);
+    }
+});
+
 app.post('/api/chat', async (req, res) => {
     const route = '/api/chat';
     const requestId = String(res.locals.requestId || 'unknown');
@@ -2188,15 +2241,32 @@ app.post('/api/chat', async (req, res) => {
         const message = requireNonEmptyString(req.body?.message, 'message');
         const history = Array.isArray(req.body?.history) ? req.body.history : [];
 
-        const systemInstruction =
-            'Você é um tutor de matemática paciente para estudantes brasileiros. ' +
-            'Responda sempre em português do Brasil com Markdown limpo, escaneável e didático. ' +
-            'Nunca escreva texto longo contínuo. ' +
-            'Use sempre esta estrutura e nesta ordem: "Resumo rápido", "Explicação", "O que observar", "Erros comuns" e "Exemplo". ' +
-            'Mantenha cada seção curta, com frases objetivas ou bullets curtos. ' +
-            'Se uma seção não fizer sentido, escreva exatamente: "Não se aplica neste pedido.". ' +
-            'Se estiver resolvendo uma questão, mostre o raciocínio em passos curtos sem pular etapas importantes. ' +
-            'Evite LaTeX bruto, a menos que o estudante peça explicitamente.';
+        // If module context is provided, redirect to contextual endpoint internally
+        const moduleSlug = typeof req.body?.module_slug === 'string' ? req.body.module_slug.trim() : '';
+        const module = moduleSlug ? resolveModule(undefined, moduleSlug) : null;
+        const allModules = getAllModules();
+
+        let systemInstruction: string;
+        let mode: string = 'general_fallback';
+        let sources: Array<{ file: string; section: string }> = [];
+
+        if (module) {
+            const prompt = buildContextualPrompt(message, module, allModules);
+            systemInstruction = prompt.systemInstruction;
+            mode = prompt.mode;
+            sources = prompt.sources;
+            console.info(`[${requestId}] [${route}] contextual mode=${mode} module=${module.slug} sources=${sources.length}`);
+        } else {
+            systemInstruction =
+                'Você é um tutor de matemática paciente para estudantes brasileiros. ' +
+                'Responda sempre em português do Brasil com Markdown limpo, escaneável e didático. ' +
+                'Nunca escreva texto longo contínuo. ' +
+                'Use sempre esta estrutura e nesta ordem: "Resumo rápido", "Explicação", "O que observar", "Erros comuns" e "Exemplo". ' +
+                'Mantenha cada seção curta, com frases objetivas ou bullets curtos. ' +
+                'Se uma seção não fizer sentido, escreva exatamente: "Não se aplica neste pedido.". ' +
+                'Se estiver resolvendo uma questão, mostre o raciocínio em passos curtos sem pular etapas importantes. ' +
+                'Evite LaTeX bruto, a menos que o estudante peça explicitamente.';
+        }
 
         const contents = [
             ...history,
@@ -2211,7 +2281,15 @@ app.post('/api/chat', async (req, res) => {
             systemInstruction,
         });
 
-        res.json({ ok: true, text: buildTutorResponse(text, message), model, requestedModel, attemptedModels });
+        res.json({
+            ok: true,
+            text: buildTutorResponse(text, message),
+            mode,
+            sources,
+            model,
+            requestedModel,
+            attemptedModels,
+        });
     } catch (error) {
         sendAiError(res, route, primaryModel, 'processar mensagem', error);
     }

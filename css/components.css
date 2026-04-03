@@ -495,6 +495,44 @@ body.chat-open .chat-toggle {
   line-height: 1.5;
 }
 
+.chat-context-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  margin-top: 4px;
+  width: fit-content;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.chat-context-badge--module {
+  background: var(--blue-100, #dbeafe);
+  color: var(--blue-700, #1d4ed8);
+}
+
+.chat-context-badge--general {
+  background: var(--gray-100, #f1f5f9);
+  color: var(--text-muted, #64748b);
+}
+
+.chat-context-badge__icon {
+  font-size: 0.5rem;
+  line-height: 1;
+}
+
+.chat-context-badge--module .chat-context-badge__icon {
+  color: var(--blue-500, #3b82f6);
+}
+
+.chat-context-badge--general .chat-context-badge__icon {
+  color: var(--text-muted, #94a3b8);
+}
+
 .chat-header__actions {
   display: flex;
   align-items: center;

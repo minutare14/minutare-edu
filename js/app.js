@@ -1944,6 +1944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentUser = null;
     let chatIsOpen = false;
     let chatRestoreFocusTarget = null;
+    let chatCurrentMode = null;
     const sessionState = {
         ttlMs: 30 * 60 * 1000,
         warningMs: 5 * 60 * 1000,
@@ -2294,6 +2295,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nextUrl = pageId === 'page-home' ? window.location.pathname : `${window.location.pathname}#${pageId}`;
         window.history.replaceState(null, '', nextUrl);
         window.scrollTo({ top: 0, behavior: 'auto' });
+
+        // Update chat toggle label with module context
+        const moduleCtx = getActiveModuleContext();
+        const toggleLabel = chatToggle?.querySelector('.chat-toggle__label');
+        if (toggleLabel) {
+            toggleLabel.textContent = moduleCtx ? `Tutor · ${moduleCtx.module_title}` : 'Abrir tutor';
+        }
     };
 
     function scrollToContentAnchor(anchorId) {
@@ -2380,6 +2388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         syncChatVisibility(true);
         ensureChatGreeting();
+        updateChatContextBadge(getActiveModuleContext());
         requestAnimationFrame(() => {
             chatInput?.focus({ preventScroll: true });
             if (chatInput?.value) {
@@ -2435,6 +2444,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         ].join('\n');
     }
 
+    function getActiveModuleContext() {
+        const activePage = document.querySelector('.page.active');
+        if (!activePage) return null;
+
+        const pageId = activePage.id || '';
+        if (!pageId.startsWith('page-modulo-')) return null;
+
+        const slug = pageId.replace('page-modulo-', '');
+        const modules = getCourseModules();
+        const mod = modules.find((m) => m.slug === slug);
+        if (!mod) return null;
+
+        return {
+            module_id: mod.id,
+            module_slug: mod.slug,
+            module_title: mod.title,
+        };
+    }
+
+    function updateChatContextBadge(moduleCtx) {
+        const badge = document.getElementById('chat-context-badge');
+        const label = document.getElementById('chat-context-label');
+        if (!badge || !label) return;
+
+        if (moduleCtx) {
+            label.textContent = moduleCtx.module_title;
+            badge.classList.remove('hidden');
+            badge.classList.remove('chat-context-badge--general');
+            badge.classList.add('chat-context-badge--module');
+        } else {
+            label.textContent = 'IA geral';
+            badge.classList.remove('hidden');
+            badge.classList.remove('chat-context-badge--module');
+            badge.classList.add('chat-context-badge--general');
+        }
+    }
+
+    function updateChatContextFromResponse(data) {
+        const badge = document.getElementById('chat-context-badge');
+        const label = document.getElementById('chat-context-label');
+        if (!badge || !label) return;
+
+        chatCurrentMode = data.mode || null;
+
+        if (data.mode === 'module_context' && data.moduleTitle) {
+            label.textContent = data.moduleTitle;
+            badge.classList.remove('hidden', 'chat-context-badge--general');
+            badge.classList.add('chat-context-badge--module');
+        } else if (data.mode === 'general_fallback') {
+            label.textContent = 'IA geral';
+            badge.classList.remove('hidden', 'chat-context-badge--module');
+            badge.classList.add('chat-context-badge--general');
+        }
+    }
+
     async function sendChatMessage() {
         const text = chatInput.value.trim();
         if (!text) return;
@@ -2442,19 +2506,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatInput.value = '';
         chatSend.disabled = true;
 
+        const moduleCtx = getActiveModuleContext();
+
         const loadingId = `chat-loading-${Date.now()}`;
         appendMessage('model', '<div class="loader" style="border-top-color:var(--blue-ink);"></div>', loadingId);
 
         try {
+            const body = {
+                history: chatHistory,
+                message: text,
+                model: chatModel.value,
+            };
+
+            if (moduleCtx) {
+                body.module_slug = moduleCtx.module_slug;
+                body.module_id = moduleCtx.module_id;
+            }
+
             const data = await window.AppAPI.apiRequest('/api/chat', {
                 method: 'POST',
-                body: { history: chatHistory, message: text, model: chatModel.value },
+                body,
                 feature: 'chat',
             });
             document.getElementById(loadingId)?.remove();
             appendMessage('model', data.text);
             chatHistory.push({ role: 'user', parts: [{ text }] });
             chatHistory.push({ role: 'model', parts: [{ text: data.text }] });
+
+            updateChatContextFromResponse(data);
         } catch (error) {
             document.getElementById(loadingId)?.remove();
             logApiDiagnostics('chat', error);

@@ -1390,6 +1390,14 @@
                             >
                                 Gerar exercícios adicionais
                             </button>
+                            <button
+                                class="btn btn--primary feynman-btn"
+                                data-ai-action="feynman"
+                                data-ai-topic="${escapeAttribute(module.aiTopic)}"
+                                data-feynman-title="${escapeAttribute(module.title)}"
+                            >
+                                🧠 Testar se aprendi (Modo Feynman)
+                            </button>
                             <div class="ai-response-box hidden"></div>
                         </div>
                     </div>

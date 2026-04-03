@@ -1266,6 +1266,165 @@ window.generateExercises = async function (topic, buttonElement) {
     }
 };
 
+// ── Feynman Mode ──────────────────────────────────────────────────────────────
+
+(function initFeynmanMode() {
+    const backdrop = document.getElementById('feynman-backdrop');
+    const modal = document.getElementById('feynman-modal');
+    const modalTitle = document.getElementById('feynman-modal-title');
+    const questionLabel = document.getElementById('feynman-question-label');
+    const inputPhase = document.getElementById('feynman-input-phase');
+    const loadingPhase = document.getElementById('feynman-loading-phase');
+    const resultPhase = document.getElementById('feynman-result-phase');
+    const textarea = document.getElementById('feynman-input');
+    const submitBtn = document.getElementById('feynman-submit');
+    const retryBtn = document.getElementById('feynman-retry');
+    const idealBtn = document.getElementById('feynman-ideal');
+    const closeBtn = document.getElementById('feynman-close');
+    const scoreBanner = document.getElementById('feynman-score-banner');
+    const feedbackBox = document.getElementById('feynman-feedback');
+
+    if (!modal) return;
+
+    let currentTopic = '';
+    let currentTitle = '';
+
+    function showPhase(phase) {
+        inputPhase.classList.toggle('hidden', phase !== 'input');
+        loadingPhase.classList.toggle('hidden', phase !== 'loading');
+        resultPhase.classList.toggle('hidden', phase !== 'result');
+    }
+
+    function openModal(topic, title) {
+        currentTopic = topic;
+        currentTitle = title || topic;
+        modalTitle.textContent = currentTitle;
+        questionLabel.textContent = `Explique com suas palavras: "${currentTitle}"`;
+        textarea.value = '';
+        submitBtn.disabled = false;
+        showPhase('input');
+        modal.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+        backdrop.removeAttribute('aria-hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => textarea.focus(), 60);
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        backdrop.classList.add('hidden');
+        backdrop.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function getScoreLabel(score) {
+        if (score <= 4) return { label: 'Não entendeu ainda', cls: 'feynman-score--low' };
+        if (score <= 7) return { label: 'Entendimento parcial', cls: 'feynman-score--mid' };
+        return { label: 'Dominou o conteúdo!', cls: 'feynman-score--high' };
+    }
+
+    function renderList(items, emptyText) {
+        if (!items || !items.length) return `<span class="feynman-empty">${escapeHtml(emptyText)}</span>`;
+        return `<ul>${items.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
+    }
+
+    function renderFeedback(result) {
+        const { score, acertos, falhas, erros, recomendacao } = result;
+        const { label, cls } = getScoreLabel(score);
+
+        scoreBanner.className = `feynman-score-banner ${cls}`;
+        scoreBanner.innerHTML = `
+            <span class="feynman-score-number">${score}<span>/10</span></span>
+            <span class="feynman-score-label">${escapeHtml(label)}</span>
+        `;
+
+        feedbackBox.innerHTML = `
+            <div class="feynman-feedback-section feynman-feedback-section--ok">
+                <h4>✔ Acertos</h4>
+                ${renderList(acertos, 'Nenhum acerto identificado.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--warn">
+                <h4>⚠ Falhas</h4>
+                ${renderList(falhas, 'Nenhuma falha identificada.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--err">
+                <h4>✕ Erros conceituais</h4>
+                ${renderList(erros, 'Nenhum erro conceitual encontrado.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--tip">
+                <h4>Recomendação</h4>
+                <p>${escapeHtml(recomendacao)}</p>
+            </div>
+        `;
+    }
+
+    async function submitExplanation() {
+        const text = textarea.value.trim();
+        if (!text) {
+            textarea.focus();
+            return;
+        }
+
+        submitBtn.disabled = true;
+        showPhase('loading');
+
+        try {
+            const data = await window.AppAPI.apiRequest('/api/feynman/evaluate', {
+                method: 'POST',
+                body: { tema: currentTopic, explicacao: text, nivel: 'iniciante' },
+                feature: 'feynman-evaluate',
+            });
+            renderFeedback(data.result);
+            showPhase('result');
+        } catch (error) {
+            logApiDiagnostics('feynman-evaluate', error);
+            scoreBanner.className = 'feynman-score-banner feynman-score--low';
+            scoreBanner.innerHTML = '<span class="feynman-score-label">Não foi possível avaliar. Tente novamente.</span>';
+            feedbackBox.innerHTML = '';
+            showPhase('result');
+        }
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+    submitBtn.addEventListener('click', submitExplanation);
+
+    retryBtn.addEventListener('click', () => {
+        showPhase('input');
+        textarea.value = '';
+        submitBtn.disabled = false;
+        setTimeout(() => textarea.focus(), 60);
+    });
+
+    idealBtn.addEventListener('click', () => {
+        closeModal();
+        if (window.ChatWidget) {
+            window.ChatWidget.openWithPrompt(
+                `Dê a explicação ideal e completa sobre: "${currentTitle}". Seja didático e estruturado.`,
+            );
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !modal.classList.contains('hidden')) {
+            if (!submitBtn.disabled && !inputPhase.classList.contains('hidden')) {
+                void submitExplanation();
+            }
+        }
+    });
+
+    window.FeynmanMode = {
+        open(topic, title) {
+            openModal(topic, title);
+        },
+    };
+})();
+
+// ── End Feynman Mode ──────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', async () => {
     repairTextNodes(document.body);
 
@@ -1925,9 +2084,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const aiButton = event.target.closest('[data-ai-action]');
         if (aiButton) {
-            closeChatWindow();
             const action = aiButton.dataset.aiAction;
             const topic = aiButton.dataset.aiTopic;
+            if (action === 'feynman') {
+                const title = aiButton.dataset.feynmanTitle || topic;
+                window.FeynmanMode?.open(topic, title);
+                return;
+            }
+            closeChatWindow();
             if (action === 'explain') window.explainTopic(topic, aiButton);
             if (action === 'exercises') window.generateExercises(topic, aiButton);
             return;

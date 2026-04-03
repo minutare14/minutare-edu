@@ -166,6 +166,14 @@ async function requireAssetAuth(req: express.Request, res: express.Response, nex
     }
 }
 
+type FeynmanPayload = {
+    score: number;
+    acertos: string[];
+    falhas: string[];
+    erros: string[];
+    recomendacao: string;
+};
+
 type ExplainPayload = {
     title: string;
     summary: string;
@@ -637,6 +645,25 @@ function validateExercisesPayload(value: unknown): ExercisePayload {
     return {
         intro: requireNonEmptyString(value.intro, 'intro'),
         exercises,
+    };
+}
+
+function validateFeynmanPayload(value: unknown): FeynmanPayload {
+    if (!isRecord(value)) {
+        throw new Error('Invalid feynman payload.');
+    }
+
+    const score = Number(value.score);
+    if (!Number.isFinite(score) || score < 0 || score > 10) {
+        throw new Error('Invalid field "score".');
+    }
+
+    return {
+        score: Math.round(score),
+        acertos: requireStringArray(value.acertos, 'acertos', 0),
+        falhas: requireStringArray(value.falhas, 'falhas', 0),
+        erros: requireStringArray(value.erros, 'erros', 0),
+        recomendacao: requireNonEmptyString(value.recomendacao, 'recomendacao'),
     };
 }
 
@@ -1487,6 +1514,53 @@ app.post('/api/generate-exercises', async (req, res) => {
         res.json({ ok: true, exercises, model, requestedModel: modelKey, attemptedModels });
     } catch (error) {
         sendAiError(res, route, primaryModel, 'gerar exercicios', error);
+    }
+});
+
+app.post('/api/feynman/evaluate', async (req, res) => {
+    const route = '/api/feynman/evaluate';
+    const modelKey: ModelKey = 'flash';
+    const requestId = String(res.locals.requestId || 'unknown');
+    const primaryModel = MODEL_CANDIDATES[modelKey][0];
+
+    try {
+        const tema = requireNonEmptyString(req.body?.tema, 'tema');
+        const explicacao = requireNonEmptyString(req.body?.explicacao, 'explicacao');
+        const nivel = typeof req.body?.nivel === 'string' ? req.body.nivel : 'iniciante';
+
+        const prompt =
+            `Você é um professor avaliando a explicação de um aluno brasileiro sobre "${tema}". ` +
+            `Nível do aluno: ${nivel}. ` +
+            `Seja criterioso: não elogie sem critério, aponte falhas reais. ` +
+            `Explicação do aluno: "${explicacao}". ` +
+            'Analise: 1) O aluno explicou corretamente? 2) O que faltou? 3) Há erros conceituais? 4) O nível está adequado? ' +
+            'Responda em JSON válido sem markdown com os campos: ' +
+            'score (0-10 inteiro), acertos (array de strings), falhas (array de strings), erros (array de strings), recomendacao (string). ' +
+            'Se não houver acertos/falhas/erros, retorne array vazio. ' +
+            'score 0-4 = não entendeu, 5-7 = parcial, 8-10 = dominou.';
+
+        const { data: result, model, attemptedModels } = await generateJson<FeynmanPayload>({
+            modelKey,
+            route,
+            requestId,
+            contents: prompt,
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    score: { type: Type.INTEGER },
+                    acertos: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    falhas: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    erros: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    recomendacao: { type: Type.STRING },
+                },
+                required: ['score', 'acertos', 'falhas', 'erros', 'recomendacao'],
+            },
+            validator: validateFeynmanPayload,
+        });
+
+        res.json({ ok: true, result, model, requestedModel: modelKey, attemptedModels });
+    } catch (error) {
+        sendAiError(res, route, primaryModel, 'avaliar explicação Feynman', error);
     }
 });
 

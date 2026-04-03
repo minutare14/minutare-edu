@@ -231,6 +231,45 @@
     </div>
 </div>
 
+<div id="feynman-backdrop" class="feynman-backdrop hidden" aria-hidden="true"></div>
+<div id="feynman-modal" class="feynman-modal hidden" role="dialog" aria-modal="true" aria-label="Modo Feynman">
+    <div class="feynman-modal__header">
+        <div>
+            <span class="feynman-modal__eyebrow">Modo Feynman</span>
+            <h3 id="feynman-modal-title">Testar compreensão</h3>
+            <p>Se você consegue explicar com suas palavras, você aprendeu de verdade.</p>
+        </div>
+        <button id="feynman-close" type="button" aria-label="Fechar Modo Feynman">×</button>
+    </div>
+    <div id="feynman-input-phase" class="feynman-phase">
+        <label class="feynman-label" id="feynman-question-label">Explique com suas palavras:</label>
+        <textarea
+            id="feynman-input"
+            class="feynman-textarea"
+            rows="6"
+            placeholder="Escreva sua explicação aqui..."
+            aria-labelledby="feynman-question-label"
+        ></textarea>
+        <div class="feynman-actions">
+            <button id="feynman-submit" class="btn btn--primary" type="button">Avaliar explicação</button>
+        </div>
+    </div>
+    <div id="feynman-loading-phase" class="feynman-phase hidden">
+        <div class="feynman-loading">
+            <div class="loader" style="border-top-color:var(--blue-ink);"></div>
+            <p>A IA está avaliando sua explicação...</p>
+        </div>
+    </div>
+    <div id="feynman-result-phase" class="feynman-phase hidden">
+        <div id="feynman-score-banner" class="feynman-score-banner"></div>
+        <div id="feynman-feedback" class="feynman-feedback"></div>
+        <div class="feynman-actions feynman-actions--result">
+            <button id="feynman-retry" class="btn btn--secondary" type="button">Tentar novamente</button>
+            <button id="feynman-ideal" class="btn btn--ghost" type="button">Ver explicação ideal</button>
+        </div>
+    </div>
+</div>
+
 <footer class="app-footer">
     <span>MINUTARE - EDUCATION DIVISION</span>
     <span class="dev-credit">Conteúdo integrado a partir dos arquivos Markdown locais com renderização matemática via KaTeX e laboratório de artefatos interativos.</span>

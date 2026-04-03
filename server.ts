@@ -24,7 +24,7 @@ import {
     saveLearningState,
     setSessionCookie,
 } from './server/auth.ts';
-import { closeDatabasePool, ensureDatabaseReady, getDatabaseStatus } from './server/database.ts';
+import { closeDatabasePool, ensureDatabaseReady, getDatabaseStatus, query } from './server/database.ts';
 
 dotenv.config({ path: '.env.local', override: true, quiet: true });
 dotenv.config({ path: '.env', override: false, quiet: true });
@@ -172,6 +172,25 @@ type FeynmanPayload = {
     falhas: string[];
     erros: string[];
     recomendacao: string;
+};
+
+type FeynmanEvaluateRequest = {
+    tema: string;
+    explicacao: string;
+    nivel: string;
+};
+
+type FeynmanTopicBlueprint = {
+    matchers: string[];
+    requiredConcepts: Array<{
+        label: string;
+        keywords: string[];
+    }>;
+    errorPatterns: Array<{
+        pattern: RegExp;
+        message: string;
+    }>;
+    recommendation: string;
 };
 
 type ExplainPayload = {
@@ -360,6 +379,183 @@ function requireStringArray(value: unknown, field: string, minLength = 1): strin
     }
 
     return items;
+}
+
+function normalizeLookupText(value: string): string {
+    return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function clipListItems(items: string[], maxItems = 4): string[] {
+    return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).slice(0, maxItems);
+}
+
+const FEYNMAN_BLUEPRINTS: FeynmanTopicBlueprint[] = [
+    {
+        matchers: ['conjunto', 'operacoes entre conjuntos', 'propriedades dos conjuntos'],
+        requiredConcepts: [
+            { label: 'o que e conjunto e elemento', keywords: ['conjunto', 'elemento', 'pertence', 'pertinencia', 'conjunto de elementos'] },
+            { label: 'a diferenca entre uniao e intersecao', keywords: ['uniao', 'intersecao', 'em comum'] },
+            { label: 'a ideia de diferenca entre conjuntos', keywords: ['diferenca', 'retira', 'apenas em a', 'apenas em b'] },
+        ],
+        errorPatterns: [
+            { pattern: /\buniao\b[\s\S]{0,60}\bem comum\b/, message: 'Voce aproximou a uniao da ideia de elementos em comum, que pertence a intersecao.' },
+            { pattern: /\bintersecao\b[\s\S]{0,60}\btodos os elementos\b/, message: 'Voce misturou intersecao com o conjunto de todos os elementos, que corresponde a uniao.' },
+        ],
+        recommendation: 'Retome a diferenca entre pertencer, estar contido, unir conjuntos e pegar apenas a parte comum.',
+    },
+    {
+        matchers: ['conjuntos numericos', 'naturais', 'inteiros', 'racionais', 'irracionais', 'reais'],
+        requiredConcepts: [
+            { label: 'a hierarquia N, Z, Q e R', keywords: ['naturais', 'inteiros', 'racionais', 'reais', 'subconjunto', 'contido'] },
+            { label: 'como reconhecer numeros racionais', keywords: ['fracao', 'decimal exato', 'dizima periodica', 'racional'] },
+            { label: 'o que torna um numero irracional', keywords: ['irracional', 'nao pode ser escrito como fracao', 'raiz nao exata', 'pi'] },
+        ],
+        errorPatterns: [
+            { pattern: /\birracionais?\b[\s\S]{0,60}\bfracao\b/, message: 'Voce sugeriu que numero irracional pode ser escrito como fracao, o que contradiz a definicao.' },
+            { pattern: /\bdizima periodica\b[\s\S]{0,60}\birracional\b/, message: 'Voce classificou dizima periodica como irracional, mas ela e racional.' },
+        ],
+        recommendation: 'Classifique sempre pelo conjunto mais especifico e use a pergunta "pode virar fracao?" para separar racionais de irracionais.',
+    },
+    {
+        matchers: ['ordem e intervalos', 'relacao de ordem', 'intervalos numericos', 'reta real', 'desigualdade'],
+        requiredConcepts: [
+            { label: 'a leitura da reta real e das desigualdades', keywords: ['reta real', 'maior', 'menor', 'desigualdade'] },
+            { label: 'a diferenca entre extremos abertos e fechados', keywords: ['intervalo aberto', 'intervalo fechado', 'parentese', 'colchete'] },
+            { label: 'que infinito nunca fecha intervalo', keywords: ['infinito', 'nunca fecha', 'parentese'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bcolchete\b[\s\S]{0,30}\baberto\b/, message: 'Voce associou colchete a extremo aberto, mas colchete indica extremo fechado.' },
+            { pattern: /\bparentese\b[\s\S]{0,30}\bfechado\b/, message: 'Voce associou parenteses a extremo fechado, mas parenteses indicam extremo aberto.' },
+        ],
+        recommendation: 'Leia cada extremo separadamente e confira se o numero entra ou nao entra no intervalo antes de escrever a notacao.',
+    },
+    {
+        matchers: ['algebra', 'distributiva', 'propriedades basicas da algebra'],
+        requiredConcepts: [
+            { label: 'a ideia de distributiva', keywords: ['distributiva', 'multiplicar cada termo', 'distribuir'] },
+            { label: 'a organizacao de termos semelhantes', keywords: ['termos semelhantes', 'somar coeficientes', 'mesma parte literal'] },
+            { label: 'o cuidado com sinais e parenteses', keywords: ['sinal', 'parenteses', 'troca de sinal'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bdistributiva\b[\s\S]{0,60}\bsomar expoentes\b/, message: 'Voce descreveu distributiva como soma de expoentes, mas isso nao corresponde a propriedade distributiva.' },
+        ],
+        recommendation: 'Explique a distributiva como abertura de parenteses e confira sempre o sinal de cada termo ao simplificar.',
+    },
+    {
+        matchers: ['produtos notaveis', 'quadrado da soma', 'quadrado da diferenca', 'soma pela diferenca'],
+        requiredConcepts: [
+            { label: 'o padrao do quadrado da soma ou da diferenca', keywords: ['quadrado da soma', 'quadrado da diferenca', 'a2', 'b2', '2ab'] },
+            { label: 'o termo do meio nos quadrados notaveis', keywords: ['termo do meio', '2ab', 'dobro do produto'] },
+            { label: 'o produto da soma pela diferenca', keywords: ['soma pela diferenca', 'diferenca de quadrados', 'a2 menos b2'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bquadrado da soma\b[\s\S]{0,80}\ba2\b[\s\S]{0,20}\+\s*b2\b/, message: 'Voce descreveu o quadrado da soma sem o termo do meio 2ab.' },
+            { pattern: /\bquadrado da diferenca\b[\s\S]{0,80}\ba2\b[\s\S]{0,20}\+\s*2ab\b/, message: 'No quadrado da diferenca, o termo do meio vem com sinal negativo.' },
+        ],
+        recommendation: 'Recupere cada produto notavel pelo desenho do padrao: extremos ao quadrado e termo do meio vindo do dobro do produto.',
+    },
+    {
+        matchers: ['fatoracao', 'fator comum', 'diferenca de quadrados', 'trinomio quadrado perfeito'],
+        requiredConcepts: [
+            { label: 'a ideia de colocar fator comum em evidencia', keywords: ['fator comum', 'evidencia', 'colocar em evidencia'] },
+            { label: 'quando usar diferenca de quadrados', keywords: ['diferenca de quadrados', 'a2 menos b2', 'quadrados perfeitos'] },
+            { label: 'como reconhecer trinomio quadrado perfeito', keywords: ['trinomio quadrado perfeito', 'primeiro e ultimo quadrados', 'dobro do produto'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bdiferenca de quadrados\b[\s\S]{0,80}\ba2\s*\+\s*b2\b/, message: 'Voce tratou diferenca de quadrados como soma, mas o padrao correto envolve subtracao.' },
+            { pattern: /\btrinomio quadrado perfeito\b[\s\S]{0,100}\bsem\b[\s\S]{0,40}\b2ab\b/, message: 'Faltou o termo do meio compatível com o dobro do produto para justificar um trinomio quadrado perfeito.' },
+        ],
+        recommendation: 'Antes de fatorar, identifique o padrao: fator comum, diferenca de quadrados ou trinomio quadrado perfeito.',
+    },
+];
+
+function findFeynmanBlueprint(topic: string): FeynmanTopicBlueprint | null {
+    const normalizedTopic = normalizeLookupText(topic);
+    return FEYNMAN_BLUEPRINTS.find((blueprint) =>
+        blueprint.matchers.some((matcher) => {
+            const normalizedMatcher = normalizeLookupText(matcher);
+            return normalizedTopic.includes(normalizedMatcher) || normalizedMatcher.includes(normalizedTopic);
+        }),
+    ) || null;
+}
+
+function validateFeynmanEvaluateRequest(value: unknown): FeynmanEvaluateRequest {
+    if (!isRecord(value)) {
+        throw new Error('Invalid feynman request.');
+    }
+
+    const tema = requireNonEmptyString(value.tema, 'tema');
+    const explicacao = requireNonEmptyString(value.explicacao, 'explicacao');
+    const nivel = typeof value.nivel === 'string' && value.nivel.trim() ? value.nivel.trim() : 'iniciante';
+
+    if (explicacao.length < 20) {
+        throw new Error('A explicacao precisa ter pelo menos 20 caracteres.');
+    }
+
+    if (explicacao.length > 4000) {
+        throw new Error('A explicacao ficou longa demais. Tente resumir em ate 4000 caracteres.');
+    }
+
+    return { tema, explicacao, nivel };
+}
+
+function evaluateFeynmanLocally(topic: string, explanation: string): FeynmanPayload {
+    const normalizedText = normalizeLookupText(explanation);
+    const blueprint = findFeynmanBlueprint(topic);
+
+    if (!blueprint) {
+        const hasDefinition = /\be\b|\bsignifica\b|\bporque\b|\bou seja\b/.test(normalizedText);
+        const hasExample = /\bexemplo\b|\bpor exemplo\b|\bcomo\b/.test(normalizedText);
+        const score = Math.max(1, Math.min(10, 3 + (hasDefinition ? 2 : 0) + (hasExample ? 2 : 0) + Math.min(3, Math.floor(explanation.trim().length / 140))));
+
+        return {
+            score,
+            acertos: clipListItems(hasDefinition ? ['Voce tentou definir a ideia com suas proprias palavras.'] : []),
+            falhas: clipListItems([
+                !hasDefinition ? 'Faltou apresentar a definicao central do tema.' : '',
+                !hasExample ? 'Faltou um exemplo curto para provar que voce realmente entendeu.' : '',
+            ]),
+            erros: [],
+            recomendacao: 'Explique a definicao principal do tema, acrescente um exemplo curto e destaque onde os alunos mais se confundem.',
+        };
+    }
+
+    const acertos = blueprint.requiredConcepts
+        .filter((concept) => concept.keywords.some((keyword) => normalizedText.includes(normalizeLookupText(keyword))))
+        .map((concept) => `Voce mencionou ${concept.label}.`);
+
+    const falhas = blueprint.requiredConcepts
+        .filter((concept) => !concept.keywords.some((keyword) => normalizedText.includes(normalizeLookupText(keyword))))
+        .map((concept) => `Faltou explicar ${concept.label}.`);
+
+    const erros = blueprint.errorPatterns
+        .filter((item) => item.pattern.test(normalizedText))
+        .map((item) => item.message);
+
+    const hasExample = /\bexemplo\b|\bpor exemplo\b/.test(normalizedText);
+    const hasCauseEffect = /\bporque\b|\bportanto\b|\blogo\b|\bou seja\b/.test(normalizedText);
+    const coverageScore = blueprint.requiredConcepts.length ? Math.round((acertos.length / blueprint.requiredConcepts.length) * 6) : 0;
+    const lengthScore = explanation.trim().length >= 120 ? 1 : 0;
+    const structureScore = (hasExample ? 1 : 0) + (hasCauseEffect ? 1 : 0);
+    const penalty = Math.min(4, erros.length * 2 + (falhas.length >= 2 ? 1 : 0));
+    const score = Math.max(0, Math.min(10, 2 + coverageScore + lengthScore + structureScore - penalty));
+
+    return {
+        score,
+        acertos: clipListItems(acertos, 4),
+        falhas: clipListItems(falhas, 4),
+        erros: clipListItems(erros, 3),
+        recomendacao:
+            falhas.length || erros.length
+                ? `${blueprint.recommendation} Reescreva a resposta cobrindo primeiro a definicao, depois o padrao e por fim um exemplo curto.`
+                : 'Boa explicacao. Agora tente reescrever com um exemplo ainda mais curto e direto, como se estivesse ensinando um colega em 30 segundos.',
+    };
 }
 
 type TutorSectionKey = 'summary' | 'explanation' | 'observe' | 'mistakes' | 'example';
@@ -1524,9 +1720,113 @@ app.post('/api/feynman/evaluate', async (req, res) => {
     const primaryModel = MODEL_CANDIDATES[modelKey][0];
 
     try {
-        const tema = requireNonEmptyString(req.body?.tema, 'tema');
-        const explicacao = requireNonEmptyString(req.body?.explicacao, 'explicacao');
-        const nivel = typeof req.body?.nivel === 'string' ? req.body.nivel : 'iniciante';
+        const user = req.authUser;
+        if (!user) {
+            res.status(401).json({ ok: false, error: 'Authentication required.' });
+            return;
+        }
+
+        try {
+            const { tema, explicacao, nivel } = validateFeynmanEvaluateRequest(req.body);
+
+            const prompt =
+                `Voce e um professor avaliando a explicacao de um aluno brasileiro sobre "${tema}". ` +
+                `Nivel do aluno: ${nivel}. ` +
+                'Seja criterioso e objetivo. Nao elogie sem criterio. ' +
+                `Explicacao do aluno: "${explicacao}". ` +
+                'Analise se o conceito central foi explicado, o que faltou, se ha erros conceituais e se a resposta mostra dominio real. ' +
+                'Responda em JSON valido sem markdown com os campos: ' +
+                'score (0-10 inteiro), acertos (array de strings), falhas (array de strings), erros (array de strings), recomendacao (string). ' +
+                'Se nao houver acertos, falhas ou erros, retorne array vazio. ' +
+                'Mantenha score 0-4 para nao entendeu, 5-7 para entendimento parcial e 8-10 para dominio consistente.';
+
+            let result: FeynmanPayload;
+            let model: string | null = null;
+            let attemptedModels: string[] = [];
+            let source: 'ai' | 'local' = 'ai';
+
+            try {
+                const aiResult = await generateJson<FeynmanPayload>({
+                    modelKey,
+                    route,
+                    requestId,
+                    contents: prompt,
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            score: { type: Type.INTEGER },
+                            acertos: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            falhas: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            erros: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            recomendacao: { type: Type.STRING },
+                        },
+                        required: ['score', 'acertos', 'falhas', 'erros', 'recomendacao'],
+                    },
+                    validator: validateFeynmanPayload,
+                });
+
+                result = aiResult.data;
+                model = aiResult.model;
+                attemptedModels = aiResult.attemptedModels;
+            } catch (error) {
+                const diagnostics = classifyAiError(error, route, requestId, primaryModel);
+                logAiFailure(diagnostics, error);
+                result = evaluateFeynmanLocally(tema, explicacao);
+                attemptedModels = diagnostics.attemptedModels || [];
+                source = 'local';
+            }
+
+            const attemptId = randomUUID();
+            await query(
+                `INSERT INTO feynman_attempts (
+                    id, user_id, tema, resposta, score, acertos, falhas, erros, recomendacao
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9
+                )`,
+                [
+                    attemptId,
+                    user.id,
+                    tema,
+                    explicacao,
+                    result.score,
+                    JSON.stringify(result.acertos),
+                    JSON.stringify(result.falhas),
+                    JSON.stringify(result.erros),
+                    result.recomendacao,
+                ],
+            );
+
+            res.json({
+                ok: true,
+                attemptId,
+                source,
+                result,
+                score: result.score,
+                acertos: result.acertos,
+                falhas: result.falhas,
+                erros: result.erros,
+                recomendacao: result.recomendacao,
+                model,
+                requestedModel: modelKey,
+                attemptedModels,
+            });
+            return;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Falha ao avaliar explicacao Feynman.';
+            const statusCode =
+                /Invalid field|Invalid feynman request|precisa ter pelo menos|ficou longa demais/i.test(message)
+                    ? 400
+                    : 500;
+
+            console.error(`[${requestId}] [${route}] feynman evaluation failure`, error);
+            res.status(statusCode).json({
+                ok: false,
+                error: message,
+            });
+            return;
+        }
+
+        const { tema, explicacao, nivel } = validateFeynmanEvaluateRequest(req.body);
 
         const prompt =
             `Você é um professor avaliando a explicação de um aluno brasileiro sobre "${tema}". ` +
@@ -1561,6 +1861,64 @@ app.post('/api/feynman/evaluate', async (req, res) => {
         res.json({ ok: true, result, model, requestedModel: modelKey, attemptedModels });
     } catch (error) {
         sendAiError(res, route, primaryModel, 'avaliar explicação Feynman', error);
+    }
+});
+
+app.get('/api/feynman/attempts', async (req, res) => {
+    const route = '/api/feynman/attempts';
+    const user = req.authUser;
+
+    if (!user) {
+        res.status(401).json({ ok: false, error: 'Authentication required.' });
+        return;
+    }
+
+    const rawLimit = typeof req.query?.limit === 'string' ? Number.parseInt(req.query.limit, 10) : 10;
+    const limit = Number.isFinite(rawLimit) ? Math.min(20, Math.max(1, rawLimit)) : 10;
+
+    try {
+        const attempts = await query<{
+            id: string;
+            tema: string;
+            resposta: string;
+            score: number;
+            acertos: string[] | null;
+            falhas: string[] | null;
+            erros: string[] | null;
+            recomendacao: string;
+            created_at: Date;
+        }>(
+            `
+                SELECT id, tema, resposta, score, acertos, falhas, erros, recomendacao, created_at
+                FROM feynman_attempts
+                WHERE user_id = $1
+                ORDER BY created_at DESC
+                LIMIT $2
+            `,
+            [user.id, limit],
+        );
+
+        res.json({
+            ok: true,
+            attempts: attempts.rows.map((attempt) => ({
+                id: attempt.id,
+                tema: attempt.tema,
+                resposta: attempt.resposta,
+                score: attempt.score,
+                acertos: Array.isArray(attempt.acertos) ? attempt.acertos : [],
+                falhas: Array.isArray(attempt.falhas) ? attempt.falhas : [],
+                erros: Array.isArray(attempt.erros) ? attempt.erros : [],
+                recomendacao: attempt.recomendacao,
+                createdAt:
+                    attempt.created_at instanceof Date ? attempt.created_at.toISOString() : String(attempt.created_at || ''),
+            })),
+        });
+    } catch (error) {
+        console.error(`[${String(res.locals.requestId || 'unknown')}] [${route}] failed to list attempts`, error);
+        res.status(500).json({
+            ok: false,
+            error: 'Falha ao carregar historico Feynman.',
+        });
     }
 });
 

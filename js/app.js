@@ -302,6 +302,29 @@ function createApiError(message, meta = {}) {
     return error;
 }
 
+function withApiTimeout(promise, { ms, feature }) {
+    let timerId = 0;
+
+    const timeoutPromise = new Promise((_, reject) => {
+        timerId = window.setTimeout(() => {
+            reject(
+                createApiError(`Request timed out for ${feature}.`, {
+                    diagnostics: {
+                        errorType: 'timeout',
+                        detail: `A resposta excedeu ${ms}ms.`,
+                    },
+                }),
+            );
+        }, ms);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+        if (timerId) {
+            window.clearTimeout(timerId);
+        }
+    });
+}
+
 function logApiDiagnostics(feature, error) {
     console.group(`[AI] ${feature} failed`);
     console.error(error);
@@ -875,6 +898,8 @@ function buildFallbackReason(error) {
             return 'A IA respondeu em formato invalido. Mostrando uma versao local.';
         case 'network':
             return 'O frontend nao conseguiu alcancar o backend ou o provider. Mostrando uma versao local.';
+        case 'timeout':
+            return 'A IA demorou demais para responder. Mostrando uma versao local confiavel.';
         default:
             return 'A IA nao respondeu corretamente agora. Mostrando uma versao local.';
     }
@@ -1279,15 +1304,18 @@ window.generateExercises = async function (topic, buttonElement) {
     const textarea = document.getElementById('feynman-input');
     const submitBtn = document.getElementById('feynman-submit');
     const retryBtn = document.getElementById('feynman-retry');
-    const idealBtn = document.getElementById('feynman-ideal');
+    let idealBtn = document.getElementById('feynman-ideal');
     const closeBtn = document.getElementById('feynman-close');
     const scoreBanner = document.getElementById('feynman-score-banner');
     const feedbackBox = document.getElementById('feynman-feedback');
+    const inlineError = document.getElementById('feynman-inline-error');
+    const idealPanel = document.getElementById('feynman-ideal-panel');
 
     if (!modal) return;
 
     let currentTopic = '';
     let currentTitle = '';
+    let restoreFocusTarget = null;
 
     function showPhase(phase) {
         inputPhase.classList.toggle('hidden', phase !== 'input');
@@ -1295,26 +1323,48 @@ window.generateExercises = async function (topic, buttonElement) {
         resultPhase.classList.toggle('hidden', phase !== 'result');
     }
 
+    function setInlineError(message = '') {
+        if (!inlineError) return;
+        inlineError.textContent = message;
+        inlineError.classList.toggle('hidden', !message);
+    }
+
+    function resetIdealPanel() {
+        if (!idealPanel) return;
+        idealPanel.classList.add('hidden');
+        idealPanel.innerHTML = '';
+        idealBtn.textContent = 'Ver explicacao ideal';
+        idealBtn.disabled = false;
+    }
+
     function openModal(topic, title) {
+        restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         currentTopic = topic;
         currentTitle = title || topic;
         modalTitle.textContent = currentTitle;
         questionLabel.textContent = `Explique com suas palavras: "${currentTitle}"`;
         textarea.value = '';
         submitBtn.disabled = false;
+        setInlineError('');
+        resetIdealPanel();
         showPhase('input');
         modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
         backdrop.classList.remove('hidden');
         backdrop.removeAttribute('aria-hidden');
         document.body.style.overflow = 'hidden';
-        setTimeout(() => textarea.focus(), 60);
+        setTimeout(() => textarea.focus({ preventScroll: true }), 60);
     }
 
     function closeModal() {
         modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
         backdrop.classList.add('hidden');
         backdrop.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (restoreFocusTarget instanceof HTMLElement && document.contains(restoreFocusTarget)) {
+            setTimeout(() => restoreFocusTarget.focus({ preventScroll: true }), 40);
+        }
     }
 
     function getScoreLabel(score) {
@@ -1358,13 +1408,39 @@ window.generateExercises = async function (topic, buttonElement) {
         `;
     }
 
+    function renderIdealExplanation(payload, note = '') {
+        if (!idealPanel) return;
+        idealPanel.classList.remove('hidden');
+        idealPanel.innerHTML = `
+            <div class="feynman-ideal-card">
+                <div class="feynman-ideal-card__header">
+                    <span class="feynman-ideal-card__eyebrow">Explicacao ideal</span>
+                    <h4>${escapeHtml(payload.title || currentTitle)}</h4>
+                </div>
+                <div class="feynman-ideal-card__body">
+                    ${renderExplainHtml(payload, note)}
+                </div>
+            </div>
+        `;
+        idealBtn.textContent = 'Ocultar explicacao ideal';
+        if (window.ContentRenderer?.renderMathIn) window.ContentRenderer.renderMathIn(idealPanel);
+    }
+
     async function submitExplanation() {
         const text = textarea.value.trim();
         if (!text) {
+            setInlineError('Escreva sua explicacao antes de enviar.');
+            textarea.focus();
+            return;
+        }
+        if (text.length < 20) {
+            setInlineError('Escreva pelo menos 20 caracteres para a avaliacao fazer sentido.');
             textarea.focus();
             return;
         }
 
+        setInlineError('');
+        resetIdealPanel();
         submitBtn.disabled = true;
         showPhase('loading');
 
@@ -1374,15 +1450,21 @@ window.generateExercises = async function (topic, buttonElement) {
                 body: { tema: currentTopic, explicacao: text, nivel: 'iniciante' },
                 feature: 'feynman-evaluate',
             });
-            renderFeedback(data.result);
+            renderFeedback(data.result || data);
             showPhase('result');
         } catch (error) {
             logApiDiagnostics('feynman-evaluate', error);
             scoreBanner.className = 'feynman-score-banner feynman-score--low';
             scoreBanner.innerHTML = '<span class="feynman-score-label">Não foi possível avaliar. Tente novamente.</span>';
-            feedbackBox.innerHTML = '';
+            feedbackBox.innerHTML = `
+                <div class="feynman-feedback-section feynman-feedback-section--err">
+                    <h4>Erro na avaliacao</h4>
+                    <p>${escapeHtml(error?.message || 'Tente novamente em instantes.')}</p>
+                </div>
+            `;
             showPhase('result');
         }
+        submitBtn.disabled = false;
     }
 
     closeBtn.addEventListener('click', closeModal);
@@ -1392,7 +1474,9 @@ window.generateExercises = async function (topic, buttonElement) {
     retryBtn.addEventListener('click', () => {
         showPhase('input');
         textarea.value = '';
+        setInlineError('');
         submitBtn.disabled = false;
+        resetIdealPanel();
         setTimeout(() => textarea.focus(), 60);
     });
 
@@ -1402,6 +1486,39 @@ window.generateExercises = async function (topic, buttonElement) {
             window.ChatWidget.openWithPrompt(
                 `Dê a explicação ideal e completa sobre: "${currentTitle}". Seja didático e estruturado.`,
             );
+        }
+    });
+
+    idealBtn.replaceWith(idealBtn.cloneNode(true));
+    idealBtn = document.getElementById('feynman-ideal');
+    idealBtn.addEventListener('click', async () => {
+        if (idealPanel && !idealPanel.classList.contains('hidden')) {
+            resetIdealPanel();
+            return;
+        }
+
+        if (!idealPanel) return;
+
+        idealBtn.disabled = true;
+        idealBtn.textContent = 'Carregando...';
+        idealPanel.classList.remove('hidden');
+        idealPanel.innerHTML = '<div class="feynman-ideal-loading"><div class="loader"></div><span>Montando explicacao ideal...</span></div>';
+
+        try {
+            const data = await withApiTimeout(
+                window.AppAPI.apiRequest('/api/explain-topic', {
+                    method: 'POST',
+                    body: { topic: currentTopic },
+                    feature: 'feynman-ideal-explanation',
+                }),
+                { ms: 9000, feature: 'feynman-ideal-explanation' },
+            );
+            renderIdealExplanation(data.explanation, 'Gerado a partir do fluxo de explicacao contextual.');
+        } catch (error) {
+            logApiDiagnostics('feynman-ideal-explanation', error);
+            renderIdealExplanation(buildLocalExplainPayload(currentTopic), buildFallbackReason(error));
+        } finally {
+            idealBtn.disabled = false;
         }
     });
 

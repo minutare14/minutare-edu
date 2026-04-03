@@ -1041,6 +1041,13 @@ body.chat-open .chat-toggle {
   color: var(--on-surface-secondary, #8892a4);
 }
 
+.feynman-modal__description {
+  margin: -6px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
 .feynman-modal__header > button {
   flex-shrink: 0;
   width: 32px;
@@ -1076,6 +1083,17 @@ body.chat-open .chat-toggle {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--on-surface);
+}
+
+.feynman-inline-error {
+  margin: -4px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #b42318;
+}
+
+.feynman-inline-error.hidden {
+  display: none !important;
 }
 
 .feynman-textarea {
@@ -1149,6 +1167,62 @@ body.chat-open .chat-toggle {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.feynman-ideal-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.feynman-ideal-panel.hidden {
+  display: none !important;
+}
+
+.feynman-ideal-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--text-muted);
+}
+
+.feynman-ideal-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.94), rgba(255, 255, 255, 0.98));
+}
+
+.feynman-ideal-card__header {
+  display: grid;
+  gap: 6px;
+}
+
+.feynman-ideal-card__header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.feynman-ideal-card__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.feynman-ideal-card__body {
+  display: grid;
+  gap: 10px;
 }
 
 .feynman-feedback-section {

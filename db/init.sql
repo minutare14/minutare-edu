@@ -23,7 +23,7 @@ CREATE INDEX IF NOT EXISTS idx_app_sessions_user_id ON app_sessions (user_id);
 CREATE INDEX IF NOT EXISTS idx_app_sessions_expires_at ON app_sessions (expires_at);
 
 CREATE TABLE IF NOT EXISTS feynman_attempts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     tema TEXT NOT NULL,
     resposta TEXT NOT NULL,

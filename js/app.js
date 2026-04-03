@@ -276,10 +276,7 @@ function resolveApiBaseUrl() {
     const explicitBase = typeof window.__APP_API_BASE__ === 'string' ? window.__APP_API_BASE__.trim() : '';
     if (explicitBase) return explicitBase.replace(/\/$/, '');
     if (window.location.protocol === 'file:') return 'http://127.0.0.1:3000';
-
-    const { protocol, hostname, port, origin } = window.location;
-    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-    return isLocalHost && port && port !== '3000' ? `${protocol}//${hostname}:3000` : origin.replace(/\/$/, '');
+    return window.location.origin.replace(/\/$/, '');
 }
 
 function buildApiUrl(path) {
@@ -1312,6 +1309,8 @@ window.generateExercises = async function (topic, buttonElement) {
     const idealPanel = document.getElementById('feynman-ideal-panel');
 
     if (!modal) return;
+    window.__disableLegacyFeynman = true;
+    if (window.__disableLegacyFeynman) return;
 
     let currentTopic = '';
     let currentTitle = '';
@@ -1536,6 +1535,381 @@ window.generateExercises = async function (topic, buttonElement) {
     window.FeynmanMode = {
         open(topic, title) {
             openModal(topic, title);
+        },
+    };
+})();
+
+(function initFeynmanWorkspace() {
+    const backdrop = document.getElementById('feynman-backdrop');
+    const modal = document.getElementById('feynman-modal');
+    const modalTitle = document.getElementById('feynman-modal-title');
+    const modalDescription = document.getElementById('feynman-modal-description');
+    const topicTitle = document.getElementById('feynman-topic-title');
+    const topicSummary = document.getElementById('feynman-topic-summary');
+    const topicKeywords = document.getElementById('feynman-topic-keywords');
+    const questionLabel = document.getElementById('feynman-question-label');
+    const charCount = document.getElementById('feynman-char-count');
+    const inputPhase = document.getElementById('feynman-input-phase');
+    const loadingPhase = document.getElementById('feynman-loading-phase');
+    const resultPhase = document.getElementById('feynman-result-phase');
+    const textarea = document.getElementById('feynman-input');
+    const submitBtn = document.getElementById('feynman-submit');
+    const cancelBtn = document.getElementById('feynman-cancel');
+    const retryBtn = document.getElementById('feynman-retry');
+    const idealBtn = document.getElementById('feynman-ideal');
+    const closeBtn = document.getElementById('feynman-close');
+    const scoreBanner = document.getElementById('feynman-score-banner');
+    const feedbackBox = document.getElementById('feynman-feedback');
+    const inlineError = document.getElementById('feynman-inline-error');
+    const idealPanel = document.getElementById('feynman-ideal-panel');
+    const stepItems = Array.from(document.querySelectorAll('[data-feynman-step]'));
+
+    if (!modal || !backdrop || !textarea || !submitBtn || !retryBtn || !idealBtn || !closeBtn) return;
+
+    const UI_CONTEXT_BY_SLUG = {
+        conjuntos: {
+            summary: 'Explique o que e conjunto, como funcionam pertinencia e inclusao e o papel de uniao, intersecao e diferenca.',
+            keywords: ['conjunto', 'elemento', 'pertence', 'subconjunto', 'uniao', 'intersecao'],
+        },
+        'conjuntos-numericos': {
+            summary: 'Mostre como voce classifica numeros em N, Z, Q, I e R e como separa racionais de irracionais.',
+            keywords: ['naturais', 'inteiros', 'racionais', 'irracionais', 'reais', 'fracao'],
+        },
+        'ordem-e-intervalos': {
+            summary: 'Explique a leitura da reta real, das desigualdades e a diferenca entre extremos abertos e fechados.',
+            keywords: ['reta real', 'desigualdade', 'intervalo aberto', 'intervalo fechado', 'parentese', 'colchete'],
+        },
+        algebra: {
+            summary: 'Explique como a distributiva funciona, como reconhecer termos semelhantes e como os sinais interferem na conta.',
+            keywords: ['distributiva', 'termos semelhantes', 'sinal', 'parenteses', 'coeficiente'],
+        },
+        'produtos-notaveis': {
+            summary: 'Mostre que voce entende os padroes do quadrado da soma, quadrado da diferenca e produto da soma pela diferenca.',
+            keywords: ['quadrado da soma', 'quadrado da diferenca', '2ab', 'dobro do produto', 'diferenca de quadrados'],
+        },
+        fatoracao: {
+            summary: 'Explique como identificar fator comum, diferenca de quadrados e trinomio quadrado perfeito antes de fatorar.',
+            keywords: ['fator comum', 'evidencia', 'diferenca de quadrados', 'trinomio quadrado perfeito', 'produto'],
+        },
+    };
+
+    const state = {
+        topic: '',
+        title: '',
+        moduleId: '',
+        moduleSlug: '',
+        moduleName: '',
+        summary: '',
+        keywords: [],
+        currentPhase: 'input',
+        restoreFocusTarget: null,
+    };
+
+    function findModuleByIdentity(moduleId, moduleSlug, topic) {
+        const modules = getCourseModules();
+        return (
+            modules.find((module) => (moduleSlug && module.slug === moduleSlug) || (moduleId && module.id === moduleId)) ||
+            findModuleByTopic(topic)
+        );
+    }
+
+    function resolveContext(input, title) {
+        const payload = typeof input === 'string' ? { topic: input, title } : { ...(input || {}) };
+        const module = findModuleByIdentity(payload.moduleId, payload.moduleSlug, payload.topic || payload.tema || payload.title || '');
+        const resolvedSlug = payload.moduleSlug || module?.slug || '';
+        const uiContext = UI_CONTEXT_BY_SLUG[resolvedSlug] || null;
+
+        return {
+            topic: payload.topic || payload.tema || module?.aiTopic || module?.title || payload.title || '',
+            title: payload.title || payload.moduleName || module?.title || payload.topic || '',
+            moduleId: payload.moduleId || module?.id || '',
+            moduleSlug: resolvedSlug,
+            moduleName: payload.moduleName || module?.title || payload.title || payload.topic || '',
+            summary: uiContext?.summary || module?.description || 'Explique a ideia central do tema, o que ela significa e como voce usaria isso em um exemplo simples.',
+            keywords:
+                Array.isArray(uiContext?.keywords) && uiContext.keywords.length
+                    ? uiContext.keywords
+                    : Array.isArray(module?.reviewHighlights)
+                      ? module.reviewHighlights.slice(0, 5)
+                      : [],
+        };
+    }
+
+    function setBackgroundLock(nextLocked) {
+        document.body.classList.toggle('feynman-open', nextLocked);
+    }
+
+    function updateStepper(phase = state.currentPhase, supportVisible = false) {
+        const flags = {
+            explain: phase === 'input' ? 'active' : 'done',
+            evaluate: phase === 'loading' || phase === 'result' ? 'active' : '',
+            support: supportVisible ? 'active' : '',
+        };
+
+        stepItems.forEach((item) => {
+            const step = item.getAttribute('data-feynman-step');
+            item.classList.remove('is-active', 'is-done');
+            if (flags[step] === 'active') item.classList.add('is-active');
+            if (flags[step] === 'done') item.classList.add('is-done');
+        });
+    }
+
+    function updateCharCount() {
+        if (!charCount) return;
+        charCount.textContent = `${textarea.value.length} / 4000`;
+    }
+
+    function showPhase(phase) {
+        state.currentPhase = phase;
+        inputPhase.classList.toggle('hidden', phase !== 'input');
+        loadingPhase.classList.toggle('hidden', phase !== 'loading');
+        resultPhase.classList.toggle('hidden', phase !== 'result');
+        updateStepper(phase, idealPanel && !idealPanel.classList.contains('hidden'));
+    }
+
+    function setInlineError(message = '') {
+        if (!inlineError) return;
+        inlineError.textContent = message;
+        inlineError.classList.toggle('hidden', !message);
+    }
+
+    function renderTopicContext() {
+        if (modalTitle) modalTitle.textContent = state.title;
+        if (modalDescription) {
+            modalDescription.textContent = `Explique com suas palavras o que voce entendeu sobre ${state.title}. A IA vai avaliar sua compreensao neste modulo antes de mostrar uma explicacao ideal.`;
+        }
+        if (questionLabel) {
+            questionLabel.textContent = `Explique com suas palavras o que voce entendeu sobre "${state.title}".`;
+        }
+        if (topicTitle) topicTitle.textContent = state.moduleName || state.title;
+        if (topicSummary) topicSummary.textContent = state.summary;
+        if (topicKeywords) {
+            topicKeywords.innerHTML = state.keywords.length
+                ? state.keywords.map((item) => `<span class="feynman-chip">${escapeHtml(item)}</span>`).join('')
+                : '<span class="feynman-empty-chip">A avaliacao vai focar na ideia central, nos conceitos principais e na clareza da sua explicacao.</span>';
+        }
+    }
+
+    function resetIdealPanel() {
+        if (!idealPanel) return;
+        idealPanel.classList.add('hidden');
+        idealPanel.innerHTML = '';
+        idealBtn.textContent = 'Ver explicacao ideal';
+        idealBtn.disabled = false;
+        updateStepper(state.currentPhase, false);
+    }
+
+    function openModal(input, title) {
+        state.restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        Object.assign(state, resolveContext(input, title));
+        renderTopicContext();
+        textarea.value = '';
+        updateCharCount();
+        setInlineError('');
+        resetIdealPanel();
+        submitBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        showPhase('input');
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        backdrop.classList.remove('hidden');
+        backdrop.setAttribute('aria-hidden', 'false');
+        setBackgroundLock(true);
+        setTimeout(() => textarea.focus({ preventScroll: true }), 60);
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        backdrop.classList.add('hidden');
+        backdrop.setAttribute('aria-hidden', 'true');
+        setBackgroundLock(false);
+        if (state.restoreFocusTarget instanceof HTMLElement && document.contains(state.restoreFocusTarget)) {
+            setTimeout(() => state.restoreFocusTarget.focus({ preventScroll: true }), 40);
+        }
+    }
+
+    function getScoreLabel(score) {
+        if (score <= 4) return { label: 'Nao entendeu ainda', cls: 'feynman-score--low' };
+        if (score <= 7) return { label: 'Entendimento parcial', cls: 'feynman-score--mid' };
+        return { label: 'Dominou o conteudo', cls: 'feynman-score--high' };
+    }
+
+    function renderList(items, emptyText) {
+        if (!items || !items.length) return `<span class="feynman-empty">${escapeHtml(emptyText)}</span>`;
+        return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+    }
+
+    function renderFeedback(result) {
+        const { score, acertos, falhas, erros, recomendacao } = result;
+        const { label, cls } = getScoreLabel(score);
+
+        scoreBanner.className = `feynman-score-banner ${cls}`;
+        scoreBanner.innerHTML = `
+            <span class="feynman-score-number">${score}<span>/10</span></span>
+            <span class="feynman-score-label">${escapeHtml(label)}</span>
+        `;
+
+        feedbackBox.innerHTML = `
+            <div class="feynman-feedback-section feynman-feedback-section--ok">
+                <h4>Acertos</h4>
+                ${renderList(acertos, 'Nenhum acerto identificado.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--warn">
+                <h4>Falhas</h4>
+                ${renderList(falhas, 'Nenhuma falha identificada.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--err">
+                <h4>Erros conceituais</h4>
+                ${renderList(erros, 'Nenhum erro conceitual encontrado.')}
+            </div>
+            <div class="feynman-feedback-section feynman-feedback-section--tip">
+                <h4>Recomendacao</h4>
+                <p>${escapeHtml(recomendacao)}</p>
+            </div>
+        `;
+    }
+
+    function renderIdealExplanation(payload, note = '') {
+        if (!idealPanel) return;
+        idealPanel.classList.remove('hidden');
+        idealPanel.innerHTML = `
+            <div class="feynman-ideal-card">
+                <div class="feynman-ideal-card__header">
+                    <span class="feynman-ideal-card__eyebrow">Explicacao ideal</span>
+                    <h4>${escapeHtml(payload.title || state.title)}</h4>
+                </div>
+                <div class="feynman-ideal-card__body">
+                    ${renderExplainHtml(payload, note)}
+                </div>
+            </div>
+        `;
+        idealBtn.textContent = 'Ocultar explicacao ideal';
+        updateStepper('result', true);
+        if (window.ContentRenderer?.renderMathIn) window.ContentRenderer.renderMathIn(idealPanel);
+    }
+
+    async function submitExplanation() {
+        const text = textarea.value.trim();
+        if (!text) {
+            setInlineError('Escreva sua resposta antes de enviar.');
+            textarea.focus();
+            return;
+        }
+        if (text.length < 20) {
+            setInlineError('Escreva pelo menos 20 caracteres para a avaliacao fazer sentido.');
+            textarea.focus();
+            return;
+        }
+
+        setInlineError('');
+        resetIdealPanel();
+        submitBtn.disabled = true;
+        if (cancelBtn) cancelBtn.disabled = true;
+        showPhase('loading');
+
+        try {
+            const data = await window.AppAPI.apiRequest('/api/feynman/evaluate', {
+                method: 'POST',
+                body: {
+                    tema: state.topic,
+                    resposta: text,
+                    nivel: 'iniciante',
+                    moduleId: state.moduleId,
+                    moduleSlug: state.moduleSlug,
+                    moduleName: state.moduleName || state.title,
+                },
+                feature: 'feynman-evaluate',
+            });
+            renderFeedback(data.result || data);
+            showPhase('result');
+        } catch (error) {
+            logApiDiagnostics('feynman-evaluate', error);
+            scoreBanner.className = 'feynman-score-banner feynman-score--low';
+            scoreBanner.innerHTML = '<span class="feynman-score-label">Nao foi possivel avaliar. Tente novamente.</span>';
+            feedbackBox.innerHTML = `
+                <div class="feynman-feedback-section feynman-feedback-section--err">
+                    <h4>Erro na avaliacao</h4>
+                    <p>${escapeHtml(error?.message || 'Tente novamente em instantes.')}</p>
+                </div>
+            `;
+            showPhase('result');
+        } finally {
+            submitBtn.disabled = false;
+            if (cancelBtn) cancelBtn.disabled = false;
+        }
+    }
+
+    function resetToInput() {
+        showPhase('input');
+        textarea.value = '';
+        updateCharCount();
+        setInlineError('');
+        submitBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        resetIdealPanel();
+        setTimeout(() => textarea.focus({ preventScroll: true }), 60);
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+    submitBtn.addEventListener('click', () => void submitExplanation());
+    retryBtn.addEventListener('click', resetToInput);
+
+    textarea.addEventListener('input', () => {
+        updateCharCount();
+        if (textarea.value.trim().length >= 20) setInlineError('');
+    });
+
+    idealBtn.addEventListener('click', async () => {
+        if (idealPanel && !idealPanel.classList.contains('hidden')) {
+            resetIdealPanel();
+            return;
+        }
+
+        idealBtn.disabled = true;
+        idealBtn.textContent = 'Carregando...';
+        idealPanel.classList.remove('hidden');
+        idealPanel.innerHTML = '<div class="feynman-ideal-loading"><div class="loader"></div><span>Montando explicacao ideal...</span></div>';
+
+        try {
+            const data = await withApiTimeout(
+                window.AppAPI.apiRequest('/api/explain-topic', {
+                    method: 'POST',
+                    body: { topic: state.topic },
+                    feature: 'feynman-ideal-explanation',
+                }),
+                { ms: 9000, feature: 'feynman-ideal-explanation' },
+            );
+            renderIdealExplanation(data.explanation, 'Gerado a partir do fluxo de explicacao contextual.');
+        } catch (error) {
+            logApiDiagnostics('feynman-ideal-explanation', error);
+            renderIdealExplanation(buildLocalExplainPayload(state.topic), buildFallbackReason(error));
+        } finally {
+            idealBtn.disabled = false;
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !modal.classList.contains('hidden')) {
+            if (!submitBtn.disabled && !inputPhase.classList.contains('hidden')) {
+                void submitExplanation();
+            }
+        }
+    });
+
+    updateCharCount();
+
+    window.FeynmanMode = {
+        open(input, title) {
+            openModal(input, title);
+        },
+        close() {
+            closeModal();
         },
     };
 })();
@@ -2204,8 +2578,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const action = aiButton.dataset.aiAction;
             const topic = aiButton.dataset.aiTopic;
             if (action === 'feynman') {
-                const title = aiButton.dataset.feynmanTitle || topic;
-                window.FeynmanMode?.open(topic, title);
+                closeChatWindow();
+                window.FeynmanMode?.open({
+                    topic,
+                    title: aiButton.dataset.feynmanTitle || topic,
+                    moduleId: aiButton.dataset.feynmanModuleId || '',
+                    moduleSlug: aiButton.dataset.feynmanModuleSlug || '',
+                    moduleName: aiButton.dataset.feynmanModuleName || aiButton.dataset.feynmanTitle || topic,
+                });
                 return;
             }
             closeChatWindow();

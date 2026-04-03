@@ -1362,7 +1362,15 @@
                         <p class="module-hero__description">${escapeHtml(module.description)}</p>
                     </div>
                     <div class="module-hero__actions">
-                        <button class="btn btn--secondary feynman-btn" data-ai-action="feynman" data-ai-topic="${escapeAttribute(module.aiTopic)}" data-feynman-title="${escapeAttribute(module.title)}">🧠 Testar se aprendi (Modo Feynman)</button>
+                        <button
+                            class="btn btn--secondary feynman-btn"
+                            data-ai-action="feynman"
+                            data-ai-topic="${escapeAttribute(module.aiTopic)}"
+                            data-feynman-title="${escapeAttribute(module.title)}"
+                            data-feynman-module-id="${escapeAttribute(module.id)}"
+                            data-feynman-module-slug="${escapeAttribute(module.slug)}"
+                            data-feynman-module-name="${escapeAttribute(module.title)}"
+                        >🧠 Testar se aprendi (Modo Feynman)</button>
                         <button class="btn btn--primary" data-quiz-topic="${escapeAttribute(module.quizTopic)}">Quiz deste módulo</button>
                         <button class="btn btn--secondary" data-nav="page-revisao">Revisão de véspera</button>
                     </div>
@@ -1396,6 +1404,9 @@
                                 data-ai-action="feynman"
                                 data-ai-topic="${escapeAttribute(module.aiTopic)}"
                                 data-feynman-title="${escapeAttribute(module.title)}"
+                                data-feynman-module-id="${escapeAttribute(module.id)}"
+                                data-feynman-module-slug="${escapeAttribute(module.slug)}"
+                                data-feynman-module-name="${escapeAttribute(module.title)}"
                             >
                                 🧠 Testar se aprendi (Modo Feynman)
                             </button>

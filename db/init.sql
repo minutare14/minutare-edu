@@ -25,6 +25,9 @@ CREATE INDEX IF NOT EXISTS idx_app_sessions_expires_at ON app_sessions (expires_
 CREATE TABLE IF NOT EXISTS feynman_attempts (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    module_id TEXT,
+    module_slug TEXT,
+    module_name TEXT,
     tema TEXT NOT NULL,
     resposta TEXT NOT NULL,
     score INTEGER NOT NULL CHECK (score >= 0 AND score <= 10),
@@ -34,6 +37,10 @@ CREATE TABLE IF NOT EXISTS feynman_attempts (
     recomendacao TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE feynman_attempts ADD COLUMN IF NOT EXISTS module_id TEXT;
+ALTER TABLE feynman_attempts ADD COLUMN IF NOT EXISTS module_slug TEXT;
+ALTER TABLE feynman_attempts ADD COLUMN IF NOT EXISTS module_name TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_feynman_attempts_user_id ON feynman_attempts (user_id);
 CREATE INDEX IF NOT EXISTS idx_feynman_attempts_created_at ON feynman_attempts (created_at);

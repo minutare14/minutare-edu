@@ -179,18 +179,35 @@ type FeynmanEvaluateRequest = {
     resposta: string;
     explicacao: string;
     nivel: string;
+    moduleId: string;
+    moduleSlug: string;
+    moduleName: string;
+};
+
+type FeynmanConceptBlueprint = {
+    label: string;
+    keywords: string[];
+};
+
+type FeynmanErrorBlueprint = {
+    pattern: RegExp;
+    message: string;
 };
 
 type FeynmanTopicBlueprint = {
-    matchers: string[];
-    requiredConcepts: Array<{
-        label: string;
-        keywords: string[];
-    }>;
-    errorPatterns: Array<{
-        pattern: RegExp;
-        message: string;
-    }>;
+    matchers?: string[];
+    slug?: string;
+    moduleIds?: string[];
+    displayName?: string;
+    aliases?: string[];
+    evaluationObjective?: string;
+    expectedConcepts?: string[];
+    commonMistakes?: string[];
+    correctionInstruction?: string;
+    contextSummary?: string;
+    keyTerms?: string[];
+    requiredConcepts: FeynmanConceptBlueprint[];
+    errorPatterns: FeynmanErrorBlueprint[];
     recommendation: string;
 };
 
@@ -500,6 +517,9 @@ function validateFeynmanEvaluateRequest(value: unknown): FeynmanEvaluateRequest 
               : value.resposta;
     const resposta = requireNonEmptyString(respostaSource, 'resposta');
     const nivel = typeof value.nivel === 'string' && value.nivel.trim() ? value.nivel.trim() : 'iniciante';
+    const moduleId = typeof value.moduleId === 'string' ? value.moduleId.trim() : '';
+    const moduleSlug = typeof value.moduleSlug === 'string' ? value.moduleSlug.trim() : '';
+    const moduleName = typeof value.moduleName === 'string' && value.moduleName.trim() ? value.moduleName.trim() : tema;
 
     if (resposta.length < 20) {
         throw new Error('A resposta precisa ter pelo menos 20 caracteres.');
@@ -509,7 +529,7 @@ function validateFeynmanEvaluateRequest(value: unknown): FeynmanEvaluateRequest 
         throw new Error('A resposta ficou longa demais. Tente resumir em ate 4000 caracteres.');
     }
 
-    return { tema, resposta, explicacao: resposta, nivel };
+    return { tema, resposta, explicacao: resposta, nivel, moduleId, moduleSlug, moduleName };
 }
 
 function evaluateFeynmanLocally(topic: string, explanation: string): FeynmanPayload {
@@ -561,6 +581,209 @@ function evaluateFeynmanLocally(topic: string, explanation: string): FeynmanPayl
         recomendacao:
             falhas.length || erros.length
                 ? `${blueprint.recommendation} Reescreva a resposta cobrindo primeiro a definicao, depois o padrao e por fim um exemplo curto.`
+                : 'Boa explicacao. Agora tente reescrever com um exemplo ainda mais curto e direto, como se estivesse ensinando um colega em 30 segundos.',
+    };
+}
+
+const FEYNMAN_MODULE_BLUEPRINTS: Record<string, FeynmanTopicBlueprint> = {
+    conjuntos: {
+        slug: 'conjuntos',
+        moduleIds: ['page-modulo-conjuntos'],
+        displayName: 'Conjuntos',
+        aliases: ['conjunto', 'operacoes entre conjuntos', 'propriedades dos conjuntos'],
+        evaluationObjective: 'Verificar se o aluno distingue conjunto, elemento, pertinencia, inclusao e operacoes basicas entre conjuntos.',
+        expectedConcepts: ['definicao de conjunto', 'elemento e pertinencia', 'subconjunto e inclusao', 'uniao, intersecao e diferenca'],
+        commonMistakes: ['confundir pertinencia com inclusao', 'trocar uniao por intersecao', 'ignorar a ordem na diferenca entre conjuntos'],
+        correctionInstruction: 'Avalie se a resposta mostra nocao de conjunto, diferencia elemento de subconjunto e explica pelo menos uma operacao com significado correto.',
+        contextSummary: 'Este modulo avalia se o aluno sabe explicar o que e um conjunto, como ler relacoes de pertinencia e como funcionam uniao, intersecao e diferenca.',
+        keyTerms: ['conjunto', 'elemento', 'pertence', 'subconjunto', 'uniao', 'intersecao', 'diferenca'],
+        requiredConcepts: [
+            { label: 'o que e conjunto e elemento', keywords: ['conjunto', 'elemento', 'pertence', 'pertinencia', 'conjunto de elementos'] },
+            { label: 'a diferenca entre uniao e intersecao', keywords: ['uniao', 'intersecao', 'em comum'] },
+            { label: 'a ideia de diferenca entre conjuntos', keywords: ['diferenca', 'retira', 'apenas em a', 'apenas em b'] },
+        ],
+        errorPatterns: [
+            { pattern: /\buniao\b[\s\S]{0,60}\bem comum\b/, message: 'Voce aproximou a uniao da ideia de elementos em comum, que pertence a intersecao.' },
+            { pattern: /\bintersecao\b[\s\S]{0,60}\btodos os elementos\b/, message: 'Voce misturou intersecao com o conjunto de todos os elementos, que corresponde a uniao.' },
+        ],
+        recommendation: 'Retome a diferenca entre pertencer, estar contido, unir conjuntos e pegar apenas a parte comum.',
+    },
+    'conjuntos-numericos': {
+        slug: 'conjuntos-numericos',
+        moduleIds: ['page-modulo-conjuntos-numericos'],
+        displayName: 'Conjuntos Numericos',
+        aliases: ['conjuntos numericos', 'naturais', 'inteiros', 'racionais', 'irracionais', 'reais'],
+        evaluationObjective: 'Verificar se o aluno classifica numeros no conjunto mais especifico e explica a hierarquia entre N, Z, Q, I e R.',
+        expectedConcepts: ['hierarquia N, Z, Q, I e R', 'criterio para racional', 'criterio para irracional', 'classificacao pelo conjunto mais especifico'],
+        commonMistakes: ['tratar dizima periodica como irracional', 'dizer que irracional pode ser escrito como fracao', 'esquecer que todo irracional tambem e real'],
+        correctionInstruction: 'Avalie se a resposta separa racionais de irracionais com criterio e se a cadeia de inclusao entre os conjuntos numericos aparece corretamente.',
+        contextSummary: 'Este modulo mede se o aluno entende a inclusao entre os conjuntos numericos e sabe justificar por que um numero e racional ou irracional.',
+        keyTerms: ['naturais', 'inteiros', 'racionais', 'irracionais', 'reais', 'fracao', 'dizima periodica'],
+        requiredConcepts: [
+            { label: 'a hierarquia N, Z, Q, I e R', keywords: ['naturais', 'inteiros', 'racionais', 'irracionais', 'reais', 'subconjunto', 'contido'] },
+            { label: 'como reconhecer numeros racionais', keywords: ['fracao', 'decimal exato', 'dizima periodica', 'racional'] },
+            { label: 'o que torna um numero irracional', keywords: ['irracional', 'nao pode ser escrito como fracao', 'raiz nao exata', 'pi'] },
+        ],
+        errorPatterns: [
+            { pattern: /\birracionais?\b[\s\S]{0,60}\bfracao\b/, message: 'Voce sugeriu que numero irracional pode ser escrito como fracao, o que contradiz a definicao.' },
+            { pattern: /\bdizima periodica\b[\s\S]{0,60}\birracional\b/, message: 'Voce classificou dizima periodica como irracional, mas ela e racional.' },
+        ],
+        recommendation: 'Classifique sempre pelo conjunto mais especifico e use a pergunta "pode virar fracao?" para separar racionais de irracionais.',
+    },
+    'ordem-e-intervalos': {
+        slug: 'ordem-e-intervalos',
+        moduleIds: ['page-modulo-ordem-intervalos'],
+        displayName: 'Ordem e Intervalos',
+        aliases: ['ordem e intervalos', 'relacao de ordem', 'intervalos numericos', 'reta real', 'desigualdade'],
+        evaluationObjective: 'Verificar se o aluno sabe ler desigualdades, interpretar a reta real e diferenciar extremos abertos de fechados.',
+        expectedConcepts: ['comparacao na reta real', 'desigualdades', 'intervalo aberto e fechado', 'infinito nunca fecha intervalo'],
+        commonMistakes: ['trocar parenteses por colchetes', 'fechar intervalo com infinito', 'nao inverter desigualdade ao multiplicar por numero negativo'],
+        correctionInstruction: 'Avalie se a resposta explica a relacao entre desigualdade e notacao de intervalos e se trata corretamente extremos abertos, fechados e o uso do infinito.',
+        contextSummary: 'Este modulo verifica se o aluno traduz desigualdades para a reta real e para intervalos sem confundir o que entra e o que fica fora.',
+        keyTerms: ['reta real', 'desigualdade', 'intervalo aberto', 'intervalo fechado', 'parentese', 'colchete', 'infinito'],
+        requiredConcepts: [
+            { label: 'a leitura da reta real e das desigualdades', keywords: ['reta real', 'maior', 'menor', 'desigualdade'] },
+            { label: 'a diferenca entre extremos abertos e fechados', keywords: ['intervalo aberto', 'intervalo fechado', 'parentese', 'colchete'] },
+            { label: 'que infinito nunca fecha intervalo', keywords: ['infinito', 'nunca fecha', 'parentese'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bcolchete\b[\s\S]{0,30}\baberto\b/, message: 'Voce associou colchete a extremo aberto, mas colchete indica extremo fechado.' },
+            { pattern: /\bparentese\b[\s\S]{0,30}\bfechado\b/, message: 'Voce associou parenteses a extremo fechado, mas parenteses indicam extremo aberto.' },
+        ],
+        recommendation: 'Leia cada extremo separadamente e confira se o numero entra ou nao entra no intervalo antes de escrever a notacao.',
+    },
+    algebra: {
+        slug: 'algebra',
+        moduleIds: ['page-modulo-algebra'],
+        displayName: 'Algebra',
+        aliases: ['algebra', 'distributiva', 'propriedades basicas da algebra'],
+        evaluationObjective: 'Verificar se o aluno compreende distributiva, termos semelhantes e o efeito dos sinais ao manipular expressoes.',
+        expectedConcepts: ['distributiva', 'termos semelhantes', 'organizacao algebrica', 'cuidado com sinais e parenteses'],
+        commonMistakes: ['somar expoentes quando a tarefa era distribuir', 'ignorar troca de sinal ao abrir parenteses', 'somar termos nao semelhantes'],
+        correctionInstruction: 'Avalie se a resposta explica a distributiva como multiplicacao de todos os termos e se mostra cuidado com sinais e termos semelhantes.',
+        contextSummary: 'Este modulo mede se o aluno entende a logica da manipulacao algebrica, em especial a distributiva e a organizacao correta de termos semelhantes.',
+        keyTerms: ['distributiva', 'termos semelhantes', 'parenteses', 'sinal', 'coeficiente'],
+        requiredConcepts: [
+            { label: 'a ideia de distributiva', keywords: ['distributiva', 'multiplicar cada termo', 'distribuir'] },
+            { label: 'a organizacao de termos semelhantes', keywords: ['termos semelhantes', 'somar coeficientes', 'mesma parte literal'] },
+            { label: 'o cuidado com sinais e parenteses', keywords: ['sinal', 'parenteses', 'troca de sinal'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bdistributiva\b[\s\S]{0,60}\bsomar expoentes\b/, message: 'Voce descreveu distributiva como soma de expoentes, mas isso nao corresponde a propriedade distributiva.' },
+        ],
+        recommendation: 'Explique a distributiva como abertura de parenteses e confira sempre o sinal de cada termo ao simplificar.',
+    },
+    'produtos-notaveis': {
+        slug: 'produtos-notaveis',
+        moduleIds: ['page-modulo-produtos-notaveis'],
+        displayName: 'Produtos Notaveis',
+        aliases: ['produtos notaveis', 'quadrado da soma', 'quadrado da diferenca', 'soma pela diferenca'],
+        evaluationObjective: 'Verificar se o aluno reconhece os padroes dos produtos notaveis e sabe explicar o papel do termo do meio.',
+        expectedConcepts: ['quadrado da soma', 'quadrado da diferenca', 'termo do meio 2ab', 'produto da soma pela diferenca'],
+        commonMistakes: ['esquecer o termo 2ab', 'errar o sinal do termo do meio no quadrado da diferenca', 'nao reconhecer a diferenca de quadrados'],
+        correctionInstruction: 'Avalie se a resposta explica os padroes e se menciona explicitamente o termo do meio ou a estrutura a2, 2ab e b2 quando necessario.',
+        contextSummary: 'Este modulo verifica se o aluno usa os atalhos algebricos corretos para desenvolver expressoes sem perder o termo do meio ou o sinal.',
+        keyTerms: ['quadrado da soma', 'quadrado da diferenca', '2ab', 'dobro do produto', 'diferenca de quadrados'],
+        requiredConcepts: [
+            { label: 'o padrao do quadrado da soma ou da diferenca', keywords: ['quadrado da soma', 'quadrado da diferenca', 'a2', 'b2', '2ab'] },
+            { label: 'o termo do meio nos quadrados notaveis', keywords: ['termo do meio', '2ab', 'dobro do produto'] },
+            { label: 'o produto da soma pela diferenca', keywords: ['soma pela diferenca', 'diferenca de quadrados', 'a2 menos b2'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bquadrado da soma\b[\s\S]{0,80}\ba2\b[\s\S]{0,20}\+\s*b2\b/, message: 'Voce descreveu o quadrado da soma sem o termo do meio 2ab.' },
+            { pattern: /\bquadrado da diferenca\b[\s\S]{0,80}\ba2\b[\s\S]{0,20}\+\s*2ab\b/, message: 'No quadrado da diferenca, o termo do meio vem com sinal negativo.' },
+        ],
+        recommendation: 'Recupere cada produto notavel pelo desenho do padrao: extremos ao quadrado e termo do meio vindo do dobro do produto.',
+    },
+    fatoracao: {
+        slug: 'fatoracao',
+        moduleIds: ['page-modulo-fatoracao'],
+        displayName: 'Fatoracao',
+        aliases: ['fatoracao', 'fator comum', 'diferenca de quadrados', 'trinomio quadrado perfeito'],
+        evaluationObjective: 'Verificar se o aluno reconhece padroes de fatoracao e decide quando usar fator comum, diferenca de quadrados ou trinomio quadrado perfeito.',
+        expectedConcepts: ['fator comum em evidencia', 'diferenca de quadrados', 'trinomio quadrado perfeito', 'fatorar antes de simplificar'],
+        commonMistakes: ['tratar diferenca de quadrados como soma', 'chamar qualquer trinomio de quadrado perfeito', 'cortar termos sem fatorar antes'],
+        correctionInstruction: 'Avalie se a resposta identifica padroes de fatoracao e explica por que a expressao pode ser reescrita como produto.',
+        contextSummary: 'Este modulo mede se o aluno consegue olhar para a expressao e decidir qual padrao de fatoracao esta presente antes de manipular simbolos.',
+        keyTerms: ['fator comum', 'evidencia', 'diferenca de quadrados', 'trinomio quadrado perfeito', 'produto'],
+        requiredConcepts: [
+            { label: 'a ideia de colocar fator comum em evidencia', keywords: ['fator comum', 'evidencia', 'colocar em evidencia'] },
+            { label: 'quando usar diferenca de quadrados', keywords: ['diferenca de quadrados', 'a2 menos b2', 'quadrados perfeitos'] },
+            { label: 'como reconhecer trinomio quadrado perfeito', keywords: ['trinomio quadrado perfeito', 'primeiro e ultimo quadrados', 'dobro do produto'] },
+        ],
+        errorPatterns: [
+            { pattern: /\bdiferenca de quadrados\b[\s\S]{0,80}\ba2\s*\+\s*b2\b/, message: 'Voce tratou diferenca de quadrados como soma, mas o padrao correto envolve subtracao.' },
+            { pattern: /\btrinomio quadrado perfeito\b[\s\S]{0,100}\bsem\b[\s\S]{0,40}\b2ab\b/, message: 'Faltou o termo do meio compativel com o dobro do produto para justificar um trinomio quadrado perfeito.' },
+        ],
+        recommendation: 'Antes de fatorar, identifique o padrao: fator comum, diferenca de quadrados ou trinomio quadrado perfeito.',
+    },
+};
+
+function resolveModuleFeynmanBlueprint(request: Pick<FeynmanEvaluateRequest, 'tema' | 'moduleId' | 'moduleSlug' | 'moduleName'>): FeynmanTopicBlueprint | null {
+    if (request.moduleSlug && FEYNMAN_MODULE_BLUEPRINTS[request.moduleSlug]) {
+        return FEYNMAN_MODULE_BLUEPRINTS[request.moduleSlug];
+    }
+
+    const normalizedModuleId = normalizeLookupText(request.moduleId || '');
+    if (normalizedModuleId) {
+        const byModuleId = Object.values(FEYNMAN_MODULE_BLUEPRINTS).find((blueprint) =>
+            (blueprint.moduleIds || []).some((moduleId) => normalizeLookupText(moduleId) === normalizedModuleId),
+        );
+        if (byModuleId) return byModuleId;
+    }
+
+    const lookupCandidates = [request.tema, request.moduleName]
+        .map((value) => normalizeLookupText(value || ''))
+        .filter(Boolean);
+
+    for (const lookup of lookupCandidates) {
+        const byTopic = Object.values(FEYNMAN_MODULE_BLUEPRINTS).find((blueprint) =>
+            [blueprint.displayName || '', ...(blueprint.aliases || [])].some((item) => {
+                const normalizedItem = normalizeLookupText(item);
+                return lookup.includes(normalizedItem) || normalizedItem.includes(lookup);
+            }),
+        );
+        if (byTopic) return byTopic;
+    }
+
+    return null;
+}
+
+function evaluateFeynmanLocallyWithContext(request: FeynmanEvaluateRequest): FeynmanPayload {
+    const blueprint = resolveModuleFeynmanBlueprint(request);
+    if (!blueprint) {
+        return evaluateFeynmanLocally(request.tema, request.resposta);
+    }
+
+    const normalizedText = normalizeLookupText(request.resposta);
+    const acertos = blueprint.requiredConcepts
+        .filter((concept) => concept.keywords.some((keyword) => normalizedText.includes(normalizeLookupText(keyword))))
+        .map((concept) => `Voce mencionou ${concept.label}.`);
+
+    const falhas = blueprint.requiredConcepts
+        .filter((concept) => !concept.keywords.some((keyword) => normalizedText.includes(normalizeLookupText(keyword))))
+        .map((concept) => `Faltou explicar ${concept.label}.`);
+
+    const erros = blueprint.errorPatterns
+        .filter((item) => item.pattern.test(normalizedText))
+        .map((item) => item.message);
+
+    const hasExample = /\bexemplo\b|\bpor exemplo\b/.test(normalizedText);
+    const hasCauseEffect = /\bporque\b|\bportanto\b|\blogo\b|\bou seja\b/.test(normalizedText);
+    const coverageScore = blueprint.requiredConcepts.length ? Math.round((acertos.length / blueprint.requiredConcepts.length) * 6) : 0;
+    const lengthScore = request.resposta.trim().length >= 120 ? 1 : 0;
+    const structureScore = (hasExample ? 1 : 0) + (hasCauseEffect ? 1 : 0);
+    const penalty = Math.min(4, erros.length * 2 + (falhas.length >= 2 ? 1 : 0));
+    const score = Math.max(0, Math.min(10, 2 + coverageScore + lengthScore + structureScore - penalty));
+
+    return {
+        score,
+        acertos: clipListItems(acertos, 4),
+        falhas: clipListItems(falhas, 4),
+        erros: clipListItems(erros, 3),
+        recomendacao:
+            falhas.length || erros.length
+                ? `${blueprint.recommendation} Reescreva a resposta cobrindo primeiro a definicao, depois os conceitos esperados e por fim um exemplo curto.`
                 : 'Boa explicacao. Agora tente reescrever com um exemplo ainda mais curto e direto, como se estivesse ensinando um colega em 30 segundos.',
     };
 }
@@ -1734,14 +1957,26 @@ app.post('/api/feynman/evaluate', async (req, res) => {
         }
 
         try {
-            const { tema, resposta, nivel } = validateFeynmanEvaluateRequest(req.body);
+            const request = validateFeynmanEvaluateRequest(req.body);
+            const { tema, resposta, nivel, moduleId, moduleSlug, moduleName } = request;
+            const blueprint = resolveModuleFeynmanBlueprint(request);
+            const resolvedModuleName = blueprint?.displayName || moduleName || tema;
 
             const prompt =
-                `Voce e um professor avaliando a explicacao de um aluno brasileiro sobre "${tema}". ` +
+                `Voce e um professor avaliando a explicacao de um aluno brasileiro sobre o modulo "${resolvedModuleName}". ` +
+                `Tema informado: "${tema}". ` +
                 `Nivel do aluno: ${nivel}. ` +
-                'Seja criterioso e objetivo. Nao elogie sem criterio. ' +
+                'O seu papel e avaliar a explicacao do aluno, nao explicar o conteudo antes do diagnostico. ' +
+                'Seja criterioso, objetivo e pedagogico. Nao elogie sem criterio. ' +
+                (blueprint
+                    ? `Objetivo de avaliacao: ${blueprint.evaluationObjective}. ` +
+                      `Resumo do modulo: ${blueprint.contextSummary}. ` +
+                      `Conceitos esperados: ${blueprint.expectedConcepts.join('; ')}. ` +
+                      `Erros comuns deste modulo: ${blueprint.commonMistakes.join('; ')}. ` +
+                      `Instrucao de correcao: ${blueprint.correctionInstruction}. `
+                    : 'Se o modulo nao estiver claro, avalie se a resposta apresenta definicao, relacao entre ideias e um exemplo curto. ') +
                 `Resposta do aluno: "${resposta}". ` +
-                'Analise se o conceito central foi explicado, o que faltou, se ha erros conceituais e se a resposta mostra dominio real. ' +
+                'Analise se a explicacao demonstra entendimento real, o que esta correto, o que faltou e se ha erros conceituais. ' +
                 'Responda em JSON valido sem markdown com os campos: ' +
                 'score (0-10 inteiro), acertos (array de strings), falhas (array de strings), erros (array de strings), recomendacao (string). ' +
                 'Se nao houver acertos, falhas ou erros, retorne array vazio. ' +
@@ -1778,7 +2013,7 @@ app.post('/api/feynman/evaluate', async (req, res) => {
             } catch (error) {
                 const diagnostics = classifyAiError(error, route, requestId, primaryModel);
                 logAiFailure(diagnostics, error);
-                result = evaluateFeynmanLocally(tema, resposta);
+                result = evaluateFeynmanLocallyWithContext(request);
                 attemptedModels = diagnostics.attemptedModels || [];
                 source = 'local';
             }
@@ -1786,13 +2021,16 @@ app.post('/api/feynman/evaluate', async (req, res) => {
             const attemptId = randomUUID();
             await query(
                 `INSERT INTO feynman_attempts (
-                    id, user_id, tema, resposta, score, acertos, falhas, erros, recomendacao
+                    id, user_id, module_id, module_slug, module_name, tema, resposta, score, acertos, falhas, erros, recomendacao
                 ) VALUES (
-                    $1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12
                 )`,
                 [
                     attemptId,
                     user.id,
+                    moduleId || null,
+                    moduleSlug || blueprint?.slug || null,
+                    resolvedModuleName,
                     tema,
                     resposta,
                     result.score,
@@ -1807,6 +2045,9 @@ app.post('/api/feynman/evaluate', async (req, res) => {
                 ok: true,
                 attemptId,
                 tema,
+                moduleId: moduleId || null,
+                moduleSlug: moduleSlug || blueprint?.slug || null,
+                moduleName: resolvedModuleName,
                 resposta,
                 source,
                 result,
@@ -1888,6 +2129,9 @@ app.get('/api/feynman/attempts', async (req, res) => {
     try {
         const attempts = await query<{
             id: string;
+            module_id: string | null;
+            module_slug: string | null;
+            module_name: string | null;
             tema: string;
             resposta: string;
             score: number;
@@ -1898,7 +2142,7 @@ app.get('/api/feynman/attempts', async (req, res) => {
             created_at: Date;
         }>(
             `
-                SELECT id, tema, resposta, score, acertos, falhas, erros, recomendacao, created_at
+                SELECT id, module_id, module_slug, module_name, tema, resposta, score, acertos, falhas, erros, recomendacao, created_at
                 FROM feynman_attempts
                 WHERE user_id = $1
                 ORDER BY created_at DESC
@@ -1911,6 +2155,9 @@ app.get('/api/feynman/attempts', async (req, res) => {
             ok: true,
             attempts: attempts.rows.map((attempt) => ({
                 id: attempt.id,
+                moduleId: attempt.module_id,
+                moduleSlug: attempt.module_slug,
+                moduleName: attempt.module_name,
                 tema: attempt.tema,
                 resposta: attempt.resposta,
                 score: attempt.score,

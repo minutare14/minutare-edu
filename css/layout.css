@@ -151,7 +151,19 @@ body.chat-open {
   overscroll-behavior: none;
 }
 
+body.feynman-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body.chat-open .app-container {
+  pointer-events: none;
+  user-select: none;
+}
+
+body.feynman-open .header,
+body.feynman-open .app-container,
+body.feynman-open .app-footer {
   pointer-events: none;
   user-select: none;
 }

@@ -6,43 +6,43 @@ window.ARTIFACTS_LIBRARY = {
             slug: 'conjuntos',
             title: 'Conjuntos',
             accent: 'blue',
-            description: 'Modelos que ajudam a visualizar pertinencia, operacoes entre conjuntos e a ideia de agrupamento.',
+            description: 'Modelos visuais para ver pertinencia, operacoes entre conjuntos e a logica de agrupamento sem prender o estudo na abstracao.',
         },
         {
             slug: 'conjuntos-numericos',
             title: 'Conjuntos Numéricos',
             accent: 'green',
-            description: 'Ferramentas para classificar números, enxergar a hierarquia N-Z-Q-R e testar exemplos rapidamente.',
+            description: 'Ferramentas para classificar numeros, enxergar a hierarquia N-Z-Q-R e revisar exemplos com mais seguranca.',
         },
         {
             slug: 'ordem-e-intervalos',
             title: 'Ordem e Intervalos',
             accent: 'amber',
-            description: 'Visualizações para desigualdades, reta real e leitura correta de intervalos abertos, fechados e semiabertos.',
+            description: 'Visualizacoes para desigualdades, reta real e leitura clara de intervalos abertos, fechados e semiabertos.',
         },
         {
             slug: 'algebra',
             title: 'Álgebra',
             accent: 'blue',
-            description: 'Materiais visuais que aproximam propriedades algébricas de superfícies, padrões e organizadores de estudo.',
+            description: 'Materiais visuais que aproximam propriedades algébricas de padroes, superficies e organizadores de estudo.',
         },
         {
             slug: 'produtos-notaveis',
             title: 'Produtos Notáveis',
             accent: 'amber',
-            description: 'Explorações para entender de onde surgem os termos dos quadrados e cubos notáveis.',
+            description: 'Exploracoes para entender de onde surgem os termos dos quadrados e cubos notaveis e como reconhecer os padroes.',
         },
         {
             slug: 'fatoracao',
             title: 'Fatoração',
             accent: 'red',
-            description: 'Ferramentas para voltar da expressão expandida aos fatores e acompanhar passos de fatoração.',
+            description: 'Ferramentas para voltar da expressao expandida aos fatores e acompanhar a escolha da tecnica certa.',
         },
         {
             slug: 'bhaskara',
             title: 'Bhaskara e Parábolas',
             accent: 'red',
-            description: 'Explorações complementares de equação do 2º grau, discriminante e relação entre raízes e gráfico.',
+            description: 'Exploracoes complementares de equacao do 2º grau, discriminante e relacao entre raizes e grafico.',
         },
     ],
     items: [
@@ -289,14 +289,14 @@ window.ARTIFACTS_LIBRARY = {
     ],
     pedagogyBySlug: {
         'diagrama-venn-interativo': {
-            whyHere: 'Este artefato entra no modulo de conjuntos para transformar uniao, intersecao e diferenca em leitura visual imediata.',
-            examBridge: 'Ajuda a reconhecer operacoes entre conjuntos mesmo quando a prova troca simbolos por regioes sombreadas.',
-            gain: 'O aluno para de decorar nomes isolados e passa a enxergar o efeito de cada operacao no desenho.',
+            whyHere: 'Entra em conjuntos para transformar uniao, intersecao e diferenca em leitura visual imediata.',
+            examBridge: 'Ajuda a reconhecer operacoes mesmo quando a prova troca simbolos por regioes sombreadas.',
+            gain: 'O aluno passa a ver o efeito de cada operacao no desenho, sem depender so de memoria.',
         },
         'conjuntos-3d-esferas': {
-            whyHere: 'Mostra a inclusao N c Z c Q c R como camadas, reforcando a ideia de conjunto maior contendo o menor.',
+            whyHere: 'Mostra a inclusao N c Z c Q c R como camadas para reforcar a ideia de contencao.',
             examBridge: 'Bom para itens de classificacao e hierarquia dos conjuntos numericos.',
-            gain: 'Cria uma imagem mental de contenicao e abrangencia que reduz confusao entre elemento e subconjunto.',
+            gain: 'Cria uma imagem mental de contencao e abrangencia que reduz confusao entre elemento e subconjunto.',
         },
         'conjuntos-e-numeros': {
             whyHere: 'Faz a ponte entre teoria de conjuntos e classificacao de numeros concretos.',
@@ -304,7 +304,7 @@ window.ARTIFACTS_LIBRARY = {
             gain: 'A leitura fica mais rapida porque cada exemplo passa a ser comparado por familia e nao por chute.',
         },
         'mapa-mental-numeros': {
-            whyHere: 'O mapa entra aqui para dar panorama antes dos exercicios e reduzir a dependencia de memorizacao solta.',
+            whyHere: 'O mapa entra aqui para dar panorama antes dos exercicios e reduzir a dependencia de memorizar solto.',
             examBridge: 'Funciona bem na revisao de vespera para lembrar a cadeia N c Z c Q c R e os irracionais.',
             gain: 'Organiza os conjuntos em uma hierarquia visual simples, facil de revisar no celular.',
         },
@@ -314,7 +314,7 @@ window.ARTIFACTS_LIBRARY = {
             gain: 'Mostra imediatamente onde a classificacao ainda falha e o que precisa ser retomado.',
         },
         'intervalos-reta-real': {
-            whyHere: 'Intervalos so ficam claros quando a notacao e a reta aparecem juntas.',
+            whyHere: 'Intervalos ficam mais claros quando a notacao e a reta aparecem juntas.',
             examBridge: 'Treina leitura de desigualdades e da notacao aberta, fechada e semiaberta.',
             gain: 'Reduz erro em colchetes, parenteses e no sentido dos extremos.',
         },

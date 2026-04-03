@@ -354,6 +354,228 @@ function requireStringArray(value: unknown, field: string, minLength = 1): strin
     return items;
 }
 
+type TutorSectionKey = 'summary' | 'explanation' | 'observe' | 'mistakes' | 'example';
+
+const TUTOR_SECTION_ORDER: TutorSectionKey[] = ['summary', 'explanation', 'observe', 'mistakes', 'example'];
+
+const TUTOR_SECTION_LABELS: Record<TutorSectionKey, string[]> = {
+    summary: ['Resumo rápido', 'Resumo'],
+    explanation: ['Explicação'],
+    observe: ['O que observar', 'Observação', 'Observações'],
+    mistakes: ['Erros comuns', 'Erros'],
+    example: ['Exemplo', 'Exemplos'],
+};
+
+function escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeTutorText(raw: string): string {
+    return raw
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r\n/g, '\n')
+        .replace(/```(?:json|markdown|md)?/gi, '')
+        .replace(/```/g, '')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+function splitTutorSentences(text: string): string[] {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+
+    if (!normalized) {
+        return [];
+    }
+
+    return normalized
+        .match(/[^.!?]+[.!?]+|[^.!?]+$/gu)
+        ?.map((sentence) => sentence.trim())
+        .filter(Boolean) || [normalized];
+}
+
+function clipTutorText(text: string, limit: number): string {
+    const trimmed = text.trim();
+
+    if (trimmed.length <= limit) {
+        return trimmed;
+    }
+
+    return `${trimmed.slice(0, limit).replace(/[,:;.\-\s]+$/u, '')}...`;
+}
+
+function cleanTutorSectionText(text: string): string {
+    return normalizeTutorText(text)
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+function detectTutorSectionHeading(line: string): { key: TutorSectionKey; remainder: string } | null {
+    const heading = line.replace(/^#{1,6}\s*/, '').trim();
+
+    for (const key of TUTOR_SECTION_ORDER) {
+        for (const label of TUTOR_SECTION_LABELS[key]) {
+            const match = heading.match(new RegExp(`^${escapeRegex(label)}(?:\\s*[:\\-–—]\\s*|\\s+)?(.*)$`, 'i'));
+            if (match) {
+                return {
+                    key,
+                    remainder: match[1]?.trim() || '',
+                };
+            }
+        }
+    }
+
+    return null;
+}
+
+function extractTutorSections(rawText: string): Partial<Record<TutorSectionKey, string>> {
+    const sections: Record<TutorSectionKey, string[]> = {
+        summary: [],
+        explanation: [],
+        observe: [],
+        mistakes: [],
+        example: [],
+    };
+
+    let current: TutorSectionKey | null = null;
+
+    for (const line of normalizeTutorText(rawText).split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            if (current) {
+                sections[current].push('');
+            }
+            continue;
+        }
+
+        const heading = detectTutorSectionHeading(trimmed);
+        if (heading) {
+            current = heading.key;
+            if (heading.remainder) {
+                sections[current].push(heading.remainder);
+            }
+            continue;
+        }
+
+        if (current) {
+            sections[current].push(trimmed);
+        } else {
+            sections.explanation.push(trimmed);
+        }
+    }
+
+    return Object.fromEntries(
+        TUTOR_SECTION_ORDER.flatMap((key) => {
+            const value = cleanTutorSectionText(sections[key].join('\n').trim());
+            return value ? [[key, value]] : [];
+        }),
+    ) as Partial<Record<TutorSectionKey, string>>;
+}
+
+function formatTutorList(text: string, fallbackItems: string[]): string {
+    const normalized = cleanTutorSectionText(text);
+
+    if (!normalized) {
+        return fallbackItems.map((item) => `- ${item}`).join('\n');
+    }
+
+    if (/^\s*[-*•]\s+/m.test(normalized) || /^\s*\d+[.)]\s+/m.test(normalized)) {
+        return normalized;
+    }
+
+    const sentences = splitTutorSentences(normalized)
+        .map((sentence) => sentence.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+
+    if (!sentences.length) {
+        return fallbackItems.map((item) => `- ${item}`).join('\n');
+    }
+
+    return sentences
+        .slice(0, 3)
+        .map((sentence) => `- ${clipTutorText(sentence, 160)}`)
+        .join('\n');
+}
+
+function formatTutorParagraph(text: string, fallback: string, sentenceLimit = 2, maxLength = 260): string {
+    const normalized = cleanTutorSectionText(text);
+    if (!normalized) {
+        return fallback;
+    }
+
+    const sentences = splitTutorSentences(normalized);
+    const paragraph = (sentences.length ? sentences.slice(0, sentenceLimit).join(' ') : normalized).trim();
+    return clipTutorText(paragraph, maxLength);
+}
+
+function buildTutorResponse(rawText: string, userMessage: string): string {
+    const sections = extractTutorSections(rawText);
+    const normalized = cleanTutorSectionText(rawText);
+    const messageText = normalizeTutorText(userMessage);
+
+    const summary = formatTutorParagraph(
+        sections.summary || normalized,
+        'A resposta não trouxe um resumo claro.',
+        2,
+        300,
+    );
+
+    const explanationSource =
+        sections.explanation ||
+        normalized
+            .split(/\n{2,}/)
+            .filter(Boolean)
+            .slice(0, 3)
+            .join('\n');
+
+    const explanation = formatTutorList(explanationSource, [
+        'Leia a ideia principal com calma.',
+        'Depois, observe a regra ou o passo usado.',
+        'Feche a conta ou a conclusão no final.',
+    ]);
+
+    const observationSource = sections.observe || normalized;
+    const observe = formatTutorList(observationSource, [
+        'Separe o que o enunciado dá do que ele pede.',
+        'Confira sinais, unidades e substituições.',
+        'Veja se o resultado final conversa com a pergunta.',
+    ]);
+
+    const mistakesSource = sections.mistakes || normalized;
+    const mistakes = formatTutorList(mistakesSource, [
+        'Trocar sinal ou copiar dado errado.',
+        'Pular uma etapa importante do raciocínio.',
+        'Parar antes de responder exatamente o que foi pedido.',
+    ]);
+
+    const exampleSource = sections.example || '';
+    const hasUsefulExample =
+        Boolean(exampleSource.trim()) ||
+        /exemplo|por exemplo|considere|suponha|vamos testar|vamos usar/i.test(`${normalized}\n${messageText}`);
+
+    const example = hasUsefulExample
+        ? formatTutorParagraph(
+              exampleSource || normalized,
+              'Não se aplica neste pedido.',
+              2,
+              300,
+          )
+        : 'Não se aplica neste pedido.';
+
+    return [
+        '## Resumo rápido',
+        summary,
+        '## Explicação',
+        explanation,
+        '## O que observar',
+        observe,
+        '## Erros comuns',
+        mistakes,
+        '## Exemplo',
+        example,
+    ].join('\n\n');
+}
+
 function validateExplainPayload(value: unknown): ExplainPayload {
     if (!isRecord(value)) {
         throw new Error('Invalid explain payload.');
@@ -1279,11 +1501,14 @@ app.post('/api/chat', async (req, res) => {
         const history = Array.isArray(req.body?.history) ? req.body.history : [];
 
         const systemInstruction =
-            'You are a patient math tutor for Brazilian students. ' +
-            'Keep the explanation simple, structured and encouraging. ' +
-            'Show numbered steps when solving exercises. ' +
-            'Use plain text or short markdown lists only. ' +
-            'Avoid raw LaTeX unless the student explicitly asks for it.';
+            'Você é um tutor de matemática paciente para estudantes brasileiros. ' +
+            'Responda sempre em português do Brasil com Markdown limpo, escaneável e didático. ' +
+            'Nunca escreva texto longo contínuo. ' +
+            'Use sempre esta estrutura e nesta ordem: "Resumo rápido", "Explicação", "O que observar", "Erros comuns" e "Exemplo". ' +
+            'Mantenha cada seção curta, com frases objetivas ou bullets curtos. ' +
+            'Se uma seção não fizer sentido, escreva exatamente: "Não se aplica neste pedido.". ' +
+            'Se estiver resolvendo uma questão, mostre o raciocínio em passos curtos sem pular etapas importantes. ' +
+            'Evite LaTeX bruto, a menos que o estudante peça explicitamente.';
 
         const contents = [
             ...history,
@@ -1298,7 +1523,7 @@ app.post('/api/chat', async (req, res) => {
             systemInstruction,
         });
 
-        res.json({ ok: true, text, model, requestedModel, attemptedModels });
+        res.json({ ok: true, text: buildTutorResponse(text, message), model, requestedModel, attemptedModels });
     } catch (error) {
         sendAiError(res, route, primaryModel, 'processar mensagem', error);
     }

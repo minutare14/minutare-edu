@@ -755,6 +755,126 @@
         `;
     }
 
+    function buildModuleTutorPrompt(module, focus) {
+        return [
+            `Explique o modulo "${module.title}" em linguagem simples.`,
+            focus ? `Foque em: ${focus}.` : '',
+            'Quero resumo rapido, explicacao, o que observar, erros comuns e um exemplo curto.',
+        ]
+            .filter(Boolean)
+            .join(' ');
+    }
+
+    function buildModulePracticePrompt(module) {
+        return [
+            `Crie 3 exercicios graduais sobre ${module.quizTopic || module.title}.`,
+            'Quero enunciado curto, dica breve, erro comum e gabarito comentado.',
+        ].join(' ');
+    }
+
+    function renderModuleFlowCard(module) {
+        const artifactTarget = module.artifacts?.length ? `${module.slug}-artifacts` : '';
+
+        return `
+            <article class="content-sheet content-sheet--flow">
+                <header class="content-sheet__header">
+                    <div>
+                        <span class="content-sheet__kicker">Rota sugerida</span>
+                        <h3>Estude, observe, pratique e confira</h3>
+                    </div>
+                    <p>Use esta ordem para nao transformar o modulo em uma colecao de blocos soltos. A ideia e fechar um ciclo curto de entendimento.</p>
+                </header>
+                <div class="module-flow-card">
+                    <div class="module-flow-card__steps">
+                        <section class="module-flow-step">
+                            <span class="module-flow-step__index">1</span>
+                            <h4>Estude o bloco principal</h4>
+                            <p>Leia a explicacao com calma e anote a ideia central antes de correr para o exercicio.</p>
+                        </section>
+                        <section class="module-flow-step">
+                            <span class="module-flow-step__index">2</span>
+                            <h4>Observe no artefato</h4>
+                            <p>${escapeHtml(module.artifacts?.length ? 'Abra um recurso visual deste modulo para ver o conceito em movimento.' : 'Use o Tutor IA para pedir um exemplo curto e visual deste assunto.')}</p>
+                        </section>
+                        <section class="module-flow-step">
+                            <span class="module-flow-step__index">3</span>
+                            <h4>Faca pratica curta</h4>
+                            <p>Teste o padrao em uma pergunta simples antes de partir para uma bateria maior.</p>
+                        </section>
+                        <section class="module-flow-step">
+                            <span class="module-flow-step__index">4</span>
+                            <h4>Cheque com o tutor</h4>
+                            <p>Se restar duvida, abra o Tutor IA para revisar o erro comum ou pedir um exemplo guiado.</p>
+                        </section>
+                    </div>
+                    <div class="content-next-step__actions">
+                        ${
+                            artifactTarget
+                                ? `<button class="btn btn--primary" data-scroll-target="${escapeAttribute(artifactTarget)}">Ir para artefatos</button>`
+                                : `<button class="btn btn--primary" data-chat-launcher="${escapeAttribute(buildModuleTutorPrompt(module, 'um exemplo visual do conceito principal'))}">Abrir Tutor IA</button>`
+                        }
+                        <button class="btn btn--secondary" data-quiz-topic="${escapeAttribute(module.quizTopic || module.title)}">Fazer pratica curta</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderArticleNextStep(module, article, articleIndex) {
+        const nextArticle = module.articles[articleIndex + 1];
+        const artifactTarget = module.artifacts?.length ? `${module.slug}-artifacts` : '';
+        const tutorPrompt = buildModuleTutorPrompt(module, article.title);
+        const guidance = nextArticle
+            ? `Se este bloco ficou claro, avance para "${nextArticle.title}" ou leve a ideia para um artefato do modulo.`
+            : module.artifacts?.length
+                ? 'Agora leve esta leitura para um artefato e depois feche com uma pratica curta.'
+                : 'Agora feche com uma pratica curta ou abra o Tutor IA para revisar um exemplo do mesmo assunto.';
+
+        return `
+            <div class="content-next-step">
+                <span class="content-next-step__eyebrow">Depois deste bloco</span>
+                <h4>Feche a leitura com uma acao clara.</h4>
+                <p>${escapeHtml(guidance)}</p>
+                <div class="content-next-step__actions">
+                    ${
+                        artifactTarget
+                            ? `<button class="btn btn--primary" data-scroll-target="${escapeAttribute(artifactTarget)}">Ver artefato relacionado</button>`
+                            : `<button class="btn btn--primary" data-quiz-topic="${escapeAttribute(module.quizTopic || module.title)}">Fazer pratica curta</button>`
+                    }
+                    ${
+                        nextArticle
+                            ? `<button class="btn btn--secondary" data-scroll-target="${escapeAttribute(nextArticle.anchor)}">Ir para ${escapeHtml(nextArticle.title)}</button>`
+                            : `<button class="btn btn--secondary" data-chat-launcher="${escapeAttribute(buildModulePracticePrompt(module))}">Pedir exercicios ao Tutor IA</button>`
+                    }
+                    <button class="btn btn--secondary" data-chat-launcher="${escapeAttribute(tutorPrompt)}">Revisar com Tutor IA</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderModuleTutorLauncher(module) {
+        return `
+            <article class="content-sheet content-sheet--support">
+                <header class="content-sheet__header">
+                    <div>
+                        <span class="content-sheet__kicker">Tutor IA</span>
+                        <h3>Use o tutor como apoio, nao como bloco solto</h3>
+                    </div>
+                    <p>Em vez de responder dentro do modulo, o tutor abre no painel dedicado com leitura em blocos curtos. Escolha uma acao clara e continue estudando sem poluicao visual.</p>
+                </header>
+                <div class="module-tutor-card">
+                    <p class="module-tutor-card__lead">Escolha um pedido objetivo para receber resposta curta, organizada e facil de escanear.</p>
+                    <div class="module-tutor-card__actions">
+                        <button class="btn btn--primary" data-chat-launcher="${escapeAttribute(buildModuleTutorPrompt(module, module.aiTopic || module.title))}">Explicar este modulo</button>
+                        <button class="btn btn--secondary" data-chat-launcher="${escapeAttribute(buildModulePracticePrompt(module))}">Gerar exercicios</button>
+                        <button class="btn btn--secondary" data-chat-launcher="${escapeAttribute(`Quais sao os erros mais comuns em ${module.title} e como evita-los na prova?`)}">Erros comuns</button>
+                    </div>
+                    <p class="module-tutor-card__note">Dica: cite o bloco ou o artefato que voce acabou de estudar para receber uma resposta mais precisa.</p>
+                </div>
+            </article>
+        `;
+    }
+
     async function fetchMarkdown(path) {
         if (contentCache.has(path)) {
             return contentCache.get(path);
@@ -912,15 +1032,23 @@
         return `${artifactsLibrary.hostPage}?${params.toString()}`;
     }
 
+    function normalizeArtifactText(value) {
+        return String(value || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function renderArtifactContextBox(label, value) {
-        if (!value) {
+        const text = normalizeArtifactText(value);
+
+        if (!text) {
             return '';
         }
 
         return `
             <div class="artifact-context-box">
                 <span class="artifact-context-box__label">${escapeHtml(label)}</span>
-                <p>${escapeHtml(value)}</p>
+                <p>${escapeHtml(text)}</p>
             </div>
         `;
     }
@@ -929,43 +1057,70 @@
         const override = artifactsLibrary.pedagogyBySlug?.[artifact.slug] || {};
 
         return {
-            teaches: artifact.teaches || override.teaches || artifact.summary || '',
-            whyHere: override.whyHere || artifact.whenToUse || '',
-            whenToUse: artifact.whenToUse || '',
-            observe: artifact.observe || '',
-            examBridge: override.examBridge || '',
-            gain: override.gain || '',
-            hint: artifact.hint || '',
+            teaches: normalizeArtifactText(artifact.teaches || override.teaches || artifact.summary || ''),
+            whyHere: normalizeArtifactText(override.whyHere || artifact.whenToUse || ''),
+            whenToUse: normalizeArtifactText(artifact.whenToUse || ''),
+            observe: normalizeArtifactText(artifact.observe || ''),
+            examBridge: normalizeArtifactText(override.examBridge || ''),
+            gain: normalizeArtifactText(override.gain || ''),
+            hint: normalizeArtifactText(artifact.hint || ''),
         };
     }
 
     function renderArtifactDidacticGrid(artifact) {
         const pedagogy = getArtifactPedagogy(artifact);
-        const boxes = [
-            renderArtifactContextBox('O que ensina', pedagogy.teaches),
+        const learningBoxes = [
+            renderArtifactContextBox('Ideia central', pedagogy.teaches),
             renderArtifactContextBox('Por que esta aqui', pedagogy.whyHere),
             renderArtifactContextBox('Quando usar', pedagogy.whenToUse),
+        ].filter(Boolean);
+        const practiceBoxes = [
+            renderArtifactContextBox('O que observar', pedagogy.observe),
             renderArtifactContextBox('Na prova', pedagogy.examBridge),
         ].filter(Boolean);
+        const closingNotes = [pedagogy.gain && `Ganho de entendimento: ${pedagogy.gain}`, pedagogy.hint && `Como explorar: ${pedagogy.hint}`].filter(Boolean);
 
-        if (!boxes.length) {
+        if (!learningBoxes.length && !practiceBoxes.length && !closingNotes.length) {
             return '';
         }
 
         return `
-            <div class="artifact-context-grid">
-                ${boxes.join('')}
-            </div>
-            ${
-                pedagogy.observe || pedagogy.gain
-                    ? `
-                <div class="artifact-context-grid" style="margin-top: 12px;">
-                    ${renderArtifactContextBox('O que observar', pedagogy.observe)}
-                    ${renderArtifactContextBox('Ganho de entendimento', pedagogy.gain)}
+            <div class="artifact-lesson-stack">
+                ${
+                    learningBoxes.length
+                        ? `
+                <section class="artifact-lesson-section">
+                    <span class="artifact-lesson-section__eyebrow">Leitura guiada</span>
+                    <div class="artifact-context-grid artifact-context-grid--lesson">
+                        ${learningBoxes.join('')}
+                    </div>
+                </section>
+            `
+                        : ''
+                }
+                ${
+                    practiceBoxes.length
+                        ? `
+                <section class="artifact-lesson-section">
+                    <span class="artifact-lesson-section__eyebrow">Pensando na prova</span>
+                    <div class="artifact-context-grid artifact-context-grid--lesson">
+                        ${practiceBoxes.join('')}
+                    </div>
+                </section>
+            `
+                        : ''
+                }
+                ${
+                    closingNotes.length
+                        ? `
+                <div class="artifact-lesson-note">
+                    <span class="artifact-lesson-note__label">Fechamento</span>
+                    <p>${escapeHtml(closingNotes.join(' '))}</p>
                 </div>
             `
-                    : ''
-            }
+                        : ''
+                }
+            </div>
         `;
     }
 
@@ -994,7 +1149,7 @@
                     <span class="artifact-priority artifact-priority--${escapeAttribute(artifact.priority || 'medium')}">${escapeHtml(priorityLabel)}</span>
                 </div>
 
-                <p class="artifact-card__summary">${escapeHtml(artifact.summary)}</p>
+                <p class="artifact-card__summary artifact-card__summary--lead">${escapeHtml(artifact.summary)}</p>
                 <div class="artifact-chip-row" style="margin-bottom: 6px;">
                     ${renderArtifactModulePills(artifact, moduleLabelMap)}
                 </div>
@@ -1003,13 +1158,13 @@
 
                 ${
                     pedagogy.hint
-                        ? `<p class="artifact-card__summary" style="margin: 2px 0 0; color: var(--text-muted);">${escapeHtml(`Como explorar: ${pedagogy.hint}`)}</p>`
+                        ? `<p class="artifact-card__summary artifact-card__summary--hint">${escapeHtml(`Como explorar: ${pedagogy.hint}`)}</p>`
                         : ''
                 }
 
                 <div class="artifact-card__meta" style="margin-top:auto">
                     <button class="btn btn--secondary" type="button" style="pointer-events:none;">
-                        Explorar experiência →
+                        Abrir artefato →
                     </button>
                 </div>
             </article>
@@ -1026,15 +1181,15 @@
                 <div class="section-heading">
                     <div>
                         <span class="topic-label">Aprendizado visual</span>
-                        <h3>Artefatos interativos do modulo</h3>
-                        <p>Use estes artefatos para transformar teoria em observacao guiada: cada recurso reforca um conceito, mostra um padrao e liga o conteudo a exercicios e prova.</p>
+                        <h3>Artefatos como mini aulas</h3>
+                        <p>Cada artefato abaixo foi pensado para ser lido em sequencia: entenda a ideia central, observe o padrao e use a leitura para ganhar seguranca na resolucao.</p>
                     </div>
                     <button class="btn btn--secondary" data-nav="page-laboratorio">Ver laboratorio completo</button>
                 </div>
                 <div class="artifact-context-grid" style="margin-bottom: 18px;">
-                    ${renderArtifactContextBox('Como estudar', 'Leia o texto-base, abra o artefato e tente prever o que vai acontecer antes de mexer nos controles.')}
-                    ${renderArtifactContextBox('O que observar', 'Procure a relacao entre simbolo, figura, caso limite e resposta final.')}
-                    ${renderArtifactContextBox('Na prova', 'Use o artefato para reconhecer padroes rapidamente e evitar erros de leitura.')}
+                    ${renderArtifactContextBox('Antes de abrir', 'Leia a ideia principal e tente prever o que o recurso vai revelar.')}
+                    ${renderArtifactContextBox('Enquanto explora', 'Observe como simbolo, figura e variacao dos controles mudam a resposta.')}
+                    ${renderArtifactContextBox('Depois de fechar', 'Resuma o padrao em uma frase e leve essa leitura para os exercicios.')}
                 </div>
                 <div class="artifact-grid">
                     ${module.artifacts.map((artifact) => renderArtifactCard(artifact, { scopeId: module.slug, moduleLabelMap })).join('')}
@@ -1058,9 +1213,9 @@
                 <div class="lab-hero" data-accent="blue">
                     <div>
                         <span class="topic-label">Laboratorio Matematico</span>
-                        <h2>Artefatos interativos integrados ao estudo</h2>
+                        <h2>Artefatos interativos organizados como estudo guiado</h2>
                         <p class="home-hero__lead">
-                            Todos os ${artifactsLibrary.totalArtifacts || categories.reduce((count, category) => count + category.items.length, 0)} artefatos do projeto agora fazem parte da experiencia da plataforma, com contexto pedagogico e distribuicao por tema.
+                            Todos os ${artifactsLibrary.totalArtifacts || categories.reduce((count, category) => count + category.items.length, 0)} artefatos do projeto agora funcionam como pequenas aulas visuais: cada um explica um padrao, mostra o que observar e ajuda a levar a leitura para a prova.
                         </p>
                     </div>
                     <div class="lab-hero__stats">
@@ -1070,25 +1225,25 @@
                         </div>
                         <div class="lab-stat-card">
                             <strong>${featuredArtifacts.length}</strong>
-                            <span>recursos de prioridade alta</span>
+                            <span>recursos com leitura prioritária</span>
                         </div>
                         <div class="lab-stat-card">
                             <strong>${categories.length}</strong>
-                            <span>frentes tematicas</span>
+                            <span>frentes tematicas organizadas</span>
                         </div>
                     </div>
                 </div>
                 <div class="artifact-context-grid" style="margin: 0 0 22px;">
-                    ${renderArtifactContextBox('Como usar o laboratorio', 'Escolha um artefato com objetivo claro, explore os controles e volte ao texto para consolidar a ideia.')}
-                    ${renderArtifactContextBox('Quando abrir', 'Use depois de estudar a base teorica ou na revisao, quando voce quiser fixar um padrao visual.')}
-                    ${renderArtifactContextBox('O que vale levar', 'Leve a relacao entre conceito, figura e prova para nao transformar o artefato em mero enfeite.')}
+                    ${renderArtifactContextBox('Como estudar', 'Comece pela ideia central, explore os controles e volte ao texto para nomear o padrao que apareceu.')}
+                    ${renderArtifactContextBox('Quando abrir', 'Use na explicacao, na revisao ou quando um conteudo precisar sair do abstrato e ganhar forma.')}
+                    ${renderArtifactContextBox('O que levar', 'Leve a relacao entre conceito, figura e prova para transformar a visualizacao em entendimento duradouro.')}
                 </div>
 
                 <section class="home-section">
                     <div class="section-heading">
                         <div>
-                            <h3>Comece pelos destaques</h3>
-                            <p>Esses sao os recursos com maior valor pedagogico imediato para reforcar os pontos mais cobrados da trilha.</p>
+                            <h3>Comece pelas mini aulas mais fortes</h3>
+                            <p>Estes recursos entregam a ideia com mais rapidez e costumam ser os melhores pontos de entrada quando o assunto ainda parece abstrato.</p>
                         </div>
                     </div>
                     <div class="artifact-grid">
@@ -1174,10 +1329,12 @@
             )
             .join('');
         const artifactsSection = renderModuleArtifactsSection(module, moduleLabelMap);
+        const moduleFlowCard = renderModuleFlowCard(module);
+        const tutorLauncher = renderModuleTutorLauncher(module);
 
         const articleCards = module.articles
             .map(
-                (article) => `
+                (article, articleIndex) => `
                     <article id="${escapeAttribute(article.anchor)}" class="content-sheet">
                         <header class="content-sheet__header">
                             <div>
@@ -1189,6 +1346,7 @@
                         <div class="content-sheet__sections">
                             ${article.sections.map(renderSection).join('')}
                         </div>
+                        ${renderArticleNextStep(module, article, articleIndex)}
                     </article>
                 `,
             )
@@ -1211,8 +1369,10 @@
 
                 <div class="module-shell">
                     <div class="module-shell__content">
+                        ${moduleFlowCard}
                         ${articleCards}
                         ${artifactsSection}
+                        ${tutorLauncher}
 
                         <div class="ai-section">
                             <h3>Assistente de IA</h3>
@@ -1257,10 +1417,13 @@
                             module.artifacts?.length
                                 ? `
                             <div class="card module-panel module-panel--visual">
-                                <h3>Explorar visualmente</h3>
-                                <p>${module.artifacts.length} recurso${module.artifacts.length > 1 ? 's' : ''} interativo${module.artifacts.length > 1 ? 's' : ''} integrado${module.artifacts.length > 1 ? 's' : ''} a este modulo.</p>
-                                <button class="btn btn--secondary" data-scroll-target="${escapeAttribute(`${module.slug}-artifacts`)}">Ir para os artefatos</button>
-                                <button class="btn btn--secondary" data-nav="page-laboratorio">Abrir laboratorio</button>
+                                <h3>Proximo passo</h3>
+                                <p>${module.artifacts.length} recurso${module.artifacts.length > 1 ? 's' : ''} visual${module.artifacts.length > 1 ? 's' : ''} espera logo abaixo. Use um artefato, feche com pratica curta e so depois avance.</p>
+                                <div class="module-panel__actions">
+                                    <button class="btn btn--secondary" data-scroll-target="${escapeAttribute(`${module.slug}-artifacts`)}">Ir para os artefatos</button>
+                                    <button class="btn btn--secondary" data-quiz-topic="${escapeAttribute(module.quizTopic || module.title)}">Fazer pratica curta</button>
+                                    <button class="btn btn--secondary" data-nav="page-laboratorio">Abrir laboratorio</button>
+                                </div>
                             </div>
                         `
                                 : ''

@@ -40,6 +40,14 @@ p {
   color: var(--text-muted);
 }
 
+p,
+li,
+blockquote,
+figcaption {
+  text-wrap: pretty;
+  hyphens: auto;
+}
+
 strong {
   color: var(--text-main);
 }

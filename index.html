@@ -187,14 +187,14 @@
 <div id="chat-widget" class="chat-widget">
     <button id="chat-toggle" class="chat-toggle" type="button" aria-controls="chat-window" aria-expanded="false">
         <span class="chat-toggle__eyebrow">Tutor IA</span>
-        <span class="chat-toggle__label">Abrir painel</span>
+        <span class="chat-toggle__label">Abrir tutor</span>
     </button>
     <div id="chat-window" class="chat-window hidden" role="dialog" aria-modal="true" aria-label="Tutor de Matemática">
         <div class="chat-header">
             <div class="chat-header__title">
                 <span class="chat-header__eyebrow">Tutor de Matemática</span>
-                <h3>Peça explicações, exercícios ou revisão</h3>
-                <p>Abra como painel dedicado para estudar sem cobrir os módulos.</p>
+                <h3>Respostas curtas, guiadas e fáceis de escanear</h3>
+                <p>Abra como painel dedicado para estudar sem cobrir os módulos ou perder o foco.</p>
             </div>
             <div class="chat-header__actions">
                 <select id="chat-model" aria-label="Selecionar modelo do tutor">
@@ -205,12 +205,25 @@
                 <button id="chat-close" type="button" aria-label="Fechar tutor">×</button>
             </div>
         </div>
-        <div class="chat-suggestions" aria-label="Sugestões rápidas">
-            <button type="button" class="chat-suggestion" data-chat-prompt="Explique o conteúdo deste módulo de forma simples, com exemplos.">Explique o módulo</button>
-            <button type="button" class="chat-suggestion" data-chat-prompt="Crie três exercícios graduais sobre o tópico atual, com gabarito comentado.">Gerar exercícios</button>
-            <button type="button" class="chat-suggestion" data-chat-prompt="Quais são os erros mais comuns neste assunto e como evitá-los?">Erros comuns</button>
+        <div class="chat-body">
+            <div class="chat-intro">
+                <span class="chat-intro__eyebrow">Assistente guiado</span>
+                <h4>Peça uma resposta em blocos, não um texto bruto.</h4>
+                <p>O tutor funciona melhor quando você pede explicação, prática ou revisão com um objetivo claro. Assim a resposta vem mais legível e útil.</p>
+                <div class="chat-pattern" aria-label="Estrutura sugerida para respostas">
+                    <span class="chat-pattern__chip">Resumo rápido</span>
+                    <span class="chat-pattern__chip">Explicação</span>
+                    <span class="chat-pattern__chip">Exemplo</span>
+                    <span class="chat-pattern__chip">Erros comuns</span>
+                </div>
+            </div>
+            <div class="chat-suggestions" aria-label="Sugestões rápidas">
+                <button type="button" class="chat-suggestion chat-suggestion--primary" data-chat-prompt="Explique o conteúdo deste módulo de forma simples, com exemplos.">Explicar</button>
+                <button type="button" class="chat-suggestion chat-suggestion--secondary" data-chat-prompt="Crie três exercícios graduais sobre o tópico atual, com gabarito comentado.">Gerar exercícios</button>
+                <button type="button" class="chat-suggestion chat-suggestion--ghost" data-chat-prompt="Quais são os erros mais comuns neste assunto e como evitá-los?">Erros comuns</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
         </div>
-        <div id="chat-messages" class="chat-messages"></div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Pergunte sobre um módulo, exercício ou artefato..." autocomplete="off" />
             <button id="chat-send" type="button">Enviar</button>

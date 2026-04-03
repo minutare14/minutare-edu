@@ -391,20 +391,21 @@
     display: none !important;
   }
 
-  /* No desktop, o widget ocupa a coluna direita do flex grid */
+  /* Chat ocupa a coluna direita do CSS Grid (380px definida no wrapper) */
   .chat-widget {
     position: sticky;
     top: 74px;
-    width: 380px;
+    width: 100%;     /* preenche os 380px da coluna do grid */
     height: calc(100vh - 74px);
-    flex-shrink: 0;
-    align-self: flex-start;
+    align-self: start;
     pointer-events: auto;
     z-index: 40;
     margin: 0;
-    /* Reset do position:fixed do base */
+    /* Reset completo do position:fixed mobile */
     right: unset;
     bottom: unset;
+    /* Remove dimensões fixas que conflitam com o grid */
+    flex-shrink: unset;
   }
 
   /* Força o painel a ser visível mesmo com .hidden no HTML */
@@ -421,9 +422,10 @@
     opacity: 1 !important;
     pointer-events: auto;
     background: var(--surface-container-low);
-    box-shadow: -8px 0 32px rgba(11, 18, 32, 0.04);
+    box-shadow: -4px 0 24px rgba(11, 18, 32, 0.06);
     border: none;
     border-radius: 0;
+    border-left: 1px solid var(--border-soft);
   }
 }
 

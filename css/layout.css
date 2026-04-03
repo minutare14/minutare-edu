@@ -130,25 +130,33 @@
   display: none !important;
 }
 
+/* ─── DESKTOP WORKSPACE GRID ─────────────────────────────────── */
 .desktop-layout-wrapper {
-  display: flex;
-  align-items: flex-start;
+  display: block; /* mobile: stacked */
   width: 100%;
-  position: relative;
 }
 
 .app-container {
-  flex: 1;
-  min-width: 0;
   width: 100%;
+  min-width: 0;
   padding: 104px 40px 72px;
   margin: 0;
 }
 
 @media (min-width: 1025px) {
   .desktop-layout-wrapper {
-    /* Garante que o wrapper seja o contexto de referência para sticky */
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    align-items: start;
+    width: 100%;
+    min-height: calc(100vh - 74px);
+  }
+
+  .app-container {
+    /* flex: 1 substituto no grid — ocupa toda a coluna esquerda */
+    min-width: 0;
+    width: 100%;
+    padding: 104px 48px 72px;
   }
 }
 
@@ -207,7 +215,7 @@ body.chat-open .app-footer {
 }
 
 .module-page {
-  max-width: 1160px;
+  width: 100%;
   margin: 0;
 }
 

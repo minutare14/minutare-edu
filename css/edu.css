@@ -36,7 +36,7 @@
 }
 
 #page-home.page--narrow {
-  max-width: 1120px;
+  width: 100%;
 }
 
 .section-heading {
@@ -1127,8 +1127,7 @@
 #page-laboratory-experience .lab-experience-layout {
   display: grid;
   gap: 22px;
-  max-width: 1160px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 #page-laboratory-experience .lab-experience-header {

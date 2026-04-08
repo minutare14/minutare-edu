@@ -1,5 +1,7 @@
 import { startTransition, useEffect, useMemo, useState } from 'react';
+import { marked } from 'marked';
 import {
+    BookOpen,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
@@ -7,9 +9,13 @@ import {
     ClipboardList,
     Clock3,
     Expand,
+    ExternalLink,
+    FileText,
     Flag,
+    FlaskConical,
     GraduationCap,
     House,
+    Layers3,
     MessageCircleMore,
     PenTool,
     Save,
@@ -33,6 +39,7 @@ import {
     type ToggleAnswer,
 } from './exam/grading';
 import { TOPIC_META, type ContentBlock, type ExamQuestion, type GraphKey, type TopicId } from './exam/model';
+import { STUDY_MODULES, getStudyModuleBySlug } from './study/catalog';
 import { TutorPanel, type TutorQuickAction } from './tutor';
 
 const STORAGE_KEY = 'ctia03-lista1-interactive-exam-v1';
@@ -111,6 +118,13 @@ function contentBlocksToPlainText(blocks: ContentBlock[]) {
 
 function truncateText(text: string, maxLength: number) {
     return text.length <= maxLength ? text : `${text.slice(0, maxLength - 3).trimEnd()}...`;
+}
+
+function buildInitialModuleSelection<T extends { slug: string; lessons?: Array<{ id: string }>; artifacts?: Array<{ id: string }> }>(
+    entries: T[],
+    key: 'lessons' | 'artifacts',
+) {
+    return Object.fromEntries(entries.map((entry) => [entry.slug, entry[key]?.[0]?.id || ''])) as Record<string, string>;
 }
 
 function summarizeDraftForTutor(question: ExamQuestion, draft: QuestionDraft) {
@@ -229,6 +243,10 @@ export default function App() {
     const [aiFeedback, setAiFeedback] = useState<PedagogicalFeedback | null>(null);
     const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'ready' | 'fallback'>('idle');
     const [tutorOpenRequest, setTutorOpenRequest] = useState(0);
+    const [activeStudyModuleSlug, setActiveStudyModuleSlug] = useState(STUDY_MODULES[0]?.slug || '');
+    const [selectedLessonByModule, setSelectedLessonByModule] = useState<Record<string, string>>(() => buildInitialModuleSelection(STUDY_MODULES, 'lessons'));
+    const [selectedArtifactByModule, setSelectedArtifactByModule] = useState<Record<string, string>>(() => buildInitialModuleSelection(STUDY_MODULES, 'artifacts'));
+    const [studyLessonCache, setStudyLessonCache] = useState<Record<string, { status: 'loading' | 'ready' | 'error'; html: string }>>({});
 
     useEffect(() => {
         const local = readLocalState();
@@ -297,6 +315,24 @@ export default function App() {
     const reviewCount = Object.values(progressByQuestion).filter((status) => status === 'review').length;
     const inProgressCount = Object.values(progressByQuestion).filter((status) => status === 'in-progress').length;
     const examStatus: ExamCardStatus = finished ? 'completed' : answeredCount || inProgressCount || reviewCount ? 'in-progress' : 'not-started';
+    const activeStudyModule = useMemo(() => getStudyModuleBySlug(activeStudyModuleSlug), [activeStudyModuleSlug]);
+    const selectedStudyLessonId = selectedLessonByModule[activeStudyModule.slug] || activeStudyModule.lessons[0]?.id || '';
+    const selectedStudyArtifactId = selectedArtifactByModule[activeStudyModule.slug] || activeStudyModule.artifacts[0]?.id || '';
+    const activeStudyLesson = activeStudyModule.lessons.find((lesson) => lesson.id === selectedStudyLessonId) || activeStudyModule.lessons[0];
+    const activeStudyArtifact = activeStudyModule.artifacts.find((artifact) => artifact.id === selectedStudyArtifactId) || activeStudyModule.artifacts[0];
+    const activeStudyLessonCache = activeStudyLesson ? studyLessonCache[activeStudyLesson.file] : undefined;
+    const totalStudyLessons = useMemo(() => STUDY_MODULES.reduce((sum, module) => sum + module.lessons.length, 0), []);
+    const totalStudyArtifacts = useMemo(() => STUDY_MODULES.reduce((sum, module) => sum + module.artifacts.length, 0), []);
+    const studyCoverageByModule = useMemo(
+        () =>
+            Object.fromEntries(
+                STUDY_MODULES.map((module) => [
+                    module.slug,
+                    EXAM_QUESTIONS.filter((question) => question.topics.some((topic) => module.topics.includes(topic))).length,
+                ]),
+            ) as Record<string, number>,
+        [],
+    );
 
     useEffect(() => {
         if (!finished) {
@@ -348,6 +384,55 @@ export default function App() {
         };
     }, [answeredCount, correctCount, evaluations, finished, incorrectCount, overallRatio, topicPerformance]);
 
+    useEffect(() => {
+        if (!activeStudyLesson) return;
+        const lessonFile = activeStudyLesson.file;
+        let shouldFetch = false;
+
+        setStudyLessonCache((current) => {
+            const existing = current[lessonFile];
+            if (existing?.status === 'loading' || existing?.status === 'ready') return current;
+            shouldFetch = true;
+            return {
+                ...current,
+                [lessonFile]: { status: 'loading', html: '' },
+            };
+        });
+
+        if (!shouldFetch) return;
+
+        let cancelled = false;
+        const lessonUrl = `/content/markdown/${lessonFile}`;
+
+        fetch(lessonUrl)
+            .then(async (response) => {
+                if (!response.ok) throw new Error('lesson unavailable');
+                const markdown = await response.text();
+                const html = await Promise.resolve(marked.parse(markdown));
+                if (!cancelled) {
+                    setStudyLessonCache((current) => ({
+                        ...current,
+                        [lessonFile]: {
+                            status: 'ready',
+                            html: typeof html === 'string' ? html : '',
+                        },
+                    }));
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setStudyLessonCache((current) => ({
+                        ...current,
+                        [lessonFile]: { status: 'error', html: '' },
+                    }));
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeStudyLesson]);
+
     const activeIndex = EXAM_QUESTIONS.findIndex((question) => question.id === activeQuestionId);
     const activeQuestion = EXAM_QUESTIONS[activeIndex] || EXAM_QUESTIONS[0];
     const activeDraft = ensureDraft(drafts[activeQuestion.id]);
@@ -392,19 +477,25 @@ export default function App() {
         () =>
             truncateText(
                 [
-                    `Voce esta no painel principal do aluno para a prova "${LISTA1_EXAM.subtitle} - ${LISTA1_EXAM.title}".`,
-                    `A prova tem ${LISTA1_EXAM.questionCount} questoes e trabalha: ${LISTA1_EXAM.topics.map((topic) => TOPIC_META[topic].label).join(', ')}.`,
-                    `Status atual: ${examStatusLabel(examStatus)}. Respondidas: ${answeredCount}. Marcadas para revisao: ${reviewCount}.`,
-                    'Ajude o aluno a planejar o estudo, decidir por onde comecar e entender como usar tutor, rascunho e resposta oficial.',
+                    `Voce esta no painel de estudo do aluno para "${LISTA1_EXAM.subtitle} - ${LISTA1_EXAM.title}".`,
+                    `Modulo em foco: ${activeStudyModule.title}.`,
+                    `Resumo do modulo: ${activeStudyModule.summary}.`,
+                    `Objetivos principais: ${activeStudyModule.learningGoals.join('; ')}.`,
+                    `Conceitos centrais: ${activeStudyModule.keyConcepts.join('; ')}.`,
+                    activeStudyLesson ? `Material aberto: ${activeStudyLesson.title}.` : '',
+                    activeStudyArtifact ? `Laboratorio ativo: ${activeStudyArtifact.title}.` : '',
+                    `Esse modulo conversa com ${studyCoverageByModule[activeStudyModule.slug] || 0} questoes da prova.`,
+                    `Status da prova: ${examStatusLabel(examStatus)}. Respondidas: ${answeredCount}. Marcadas para revisao: ${reviewCount}.`,
+                    'Ajude o aluno a planejar o estudo, revisar o modulo atual e ligar o conteudo ao momento certo de abrir a prova.',
                 ].join('\n'),
-                1600,
+                2000,
             ),
-        [answeredCount, examStatus, reviewCount],
+        [activeStudyArtifact, activeStudyLesson, activeStudyModule, answeredCount, examStatus, reviewCount, studyCoverageByModule],
     );
     const tutorContextLabel = screen === 'dashboard' ? 'Painel principal' : screen === 'results' ? 'Correcao final da prova' : `Questao ${activeQuestion.number}`;
     const tutorContextSummary =
         screen === 'dashboard'
-            ? 'Ajuda rapida para escolher a prova e planejar a resolucao.'
+            ? `Ajuda didatica para o modulo "${activeStudyModule.title}" e para decidir quando entrar na prova.`
             : screen === 'results'
                 ? 'Use o tutor para transformar o resultado em plano de estudo.'
                 : 'Tire duvidas sobre a questao atual sem travar a tela.';
@@ -413,9 +504,9 @@ export default function App() {
         () =>
             screen === 'dashboard'
                 ? [
-                      { id: 'dashboard-plan', label: 'Como comecar', description: 'Peca um plano curto para entrar na prova com estrategia.', prompt: 'Monte um plano curto para eu comecar esta prova sem me perder.', tone: 'primary' },
-                      { id: 'dashboard-topics', label: 'Assuntos-chave', description: 'Descubra os temas que merecem mais atencao antes de resolver.', prompt: 'Quais assuntos desta prova eu devo revisar primeiro antes de responder?', tone: 'secondary' },
-                      { id: 'dashboard-usage', label: 'Como usar a prova', description: 'Entenda como aproveitar rascunho, resposta oficial e revisao.', prompt: 'Explique como usar bem o rascunho, a resposta oficial e a marcacao para revisar.', tone: 'ghost' },
+                      { id: 'dashboard-module', label: 'Entender modulo', description: 'Receba um mapa curto para estudar o modulo em foco.', prompt: `Explique o modulo ${activeStudyModule.title} em blocos curtos e diga por onde eu devo comecar a revisao.`, tone: 'primary' },
+                      { id: 'dashboard-errors', label: 'Erros comuns', description: 'Veja os deslizes mais frequentes antes de praticar.', prompt: `Quais erros mais comuns devo evitar ao estudar ${activeStudyModule.title}?`, tone: 'secondary' },
+                      { id: 'dashboard-proof-link', label: 'Ligar com a prova', description: 'Entenda como o modulo aparece nas questoes da lista.', prompt: `Como o modulo ${activeStudyModule.title} aparece na prova ${LISTA1_EXAM.title} e o que eu devo observar quando abrir essas questoes?`, tone: 'ghost' },
                   ]
                 : screen === 'results'
                     ? [
@@ -428,7 +519,7 @@ export default function App() {
                           { id: 'question-step', label: 'Passo a passo', description: 'Monte uma sequencia curta de passos para eu tentar sozinho.', prompt: 'Monte um passo a passo curto para eu resolver a questao atual sozinho.', tone: 'secondary' },
                           { id: 'question-graph', label: activeQuestion.graphKey ? 'Ler o grafico' : 'O que observar', description: activeQuestion.graphKey ? 'Peca ajuda para interpretar o elemento visual da questao.' : 'Descubra por onde comecar e o que observar primeiro.', prompt: activeQuestion.graphKey ? 'Explique como interpretar o grafico desta questao antes de resolver.' : 'Aponte o que eu devo observar primeiro para resolver a questao atual.', tone: 'ghost' },
                       ],
-        [activeQuestion.graphKey, screen],
+        [activeQuestion.graphKey, activeStudyModule.title, screen],
     );
 
     function updateQuestionDraft(questionId: string, updater: (draft: QuestionDraft) => QuestionDraft) {
@@ -470,8 +561,253 @@ export default function App() {
 
     const dashboardView = (
         <main className="dashboard-shell">
-            <section className="dashboard-section">
-                <div className="section-heading"><div><h3>Simulados e provas</h3><p>As avaliacoes cadastradas aparecem aqui com status real de progresso, assunto e atalho direto para entrar na resolucao.</p></div></div>
+            <section id="study-section" className="dashboard-section">
+                <div className="section-heading">
+                    <div>
+                        <h3>Trilha de estudo</h3>
+                        <p>Os modulos, materiais e laboratorios voltaram a ser o centro da home. A prova continua disponivel, mas agora entra como extensao natural da rotina de estudo.</p>
+                    </div>
+                </div>
+                <div className="dashboard-grid dashboard-grid--study">
+                    <article className="dashboard-note">
+                        <span className="question-card__eyebrow">Panorama</span>
+                        <h3>Biblioteca ativa do aluno</h3>
+                        <p>Voce tem <strong>{STUDY_MODULES.length} modulos</strong>, <strong>{totalStudyLessons} leituras guiadas</strong> e <strong>{totalStudyArtifacts} laboratorios</strong> no mesmo painel.</p>
+                    </article>
+                    <article className="dashboard-note">
+                        <span className="question-card__eyebrow">Modulo em foco</span>
+                        <h3>{activeStudyModule.title}</h3>
+                        <p>{activeStudyModule.summary} Este modulo conversa com <strong>{studyCoverageByModule[activeStudyModule.slug] || 0} questoes</strong> da prova atual.</p>
+                    </article>
+                    <article className="dashboard-note">
+                        <span className="question-card__eyebrow">Estado da prova</span>
+                        <h3>{examStatusLabel(examStatus)}</h3>
+                        <p>Voce ja respondeu <strong>{answeredCount}</strong> questoes, tem <strong>{inProgressCount}</strong> em andamento e <strong>{reviewCount}</strong> marcadas para revisar.</p>
+                    </article>
+                    <article className="dashboard-note">
+                        <span className="question-card__eyebrow">Tutor IA</span>
+                        <h3>Apoio no estudo e na prova</h3>
+                        <p>O tutor acompanha o modulo selecionado, as leituras abertas e o status da prova para orientar estudo, revisao e entrada nas questoes.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section className="study-board">
+                <aside className="study-sidebar">
+                    <div className="study-sidebar__header">
+                        <span className="question-card__eyebrow">Modulos de estudo</span>
+                        <h3>Escolha um percurso</h3>
+                        <p>Selecione um modulo para abrir leituras, revisar conceitos e usar os laboratorios do projeto.</p>
+                    </div>
+                    <div className="study-module-list">
+                        {STUDY_MODULES.map((module) => {
+                            const linkedQuestions = studyCoverageByModule[module.slug] || 0;
+                            const isActive = module.slug === activeStudyModule.slug;
+
+                            return (
+                                <button
+                                    key={module.slug}
+                                    type="button"
+                                    className={`study-module-button ${isActive ? 'study-module-button--active' : ''}`}
+                                    onClick={() => setActiveStudyModuleSlug(module.slug)}
+                                >
+                                    <div className="study-module-button__top">
+                                        <span className="question-card__eyebrow">Modulo {module.order}</span>
+                                        <span className="study-module-button__count">{linkedQuestions} questoes</span>
+                                    </div>
+                                    <strong>{module.title}</strong>
+                                    <p>{module.summary}</p>
+                                    <div className="badge-row">
+                                        {module.topics.slice(0, 3).map((topic) => (
+                                            <span key={topic} className="tag">
+                                                {TOPIC_META[topic].short}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </aside>
+
+                <div className="study-main">
+                    <article className="study-focus-card">
+                        <div className="study-focus-card__header">
+                            <div>
+                                <span className="question-card__eyebrow">Modulo em foco</span>
+                                <h3>{activeStudyModule.title}</h3>
+                                <p>{activeStudyModule.studyPrompt}</p>
+                            </div>
+                            <div className="study-focus-card__badge">
+                                <Layers3 size={16} />
+                                <span>{studyCoverageByModule[activeStudyModule.slug] || 0} questoes relacionadas na prova</span>
+                            </div>
+                        </div>
+                        <div className="study-focus-card__grid">
+                            <section className="study-focus-card__column">
+                                <h4>Objetivos de aprendizagem</h4>
+                                <ul className="study-list">
+                                    {activeStudyModule.learningGoals.map((goal) => (
+                                        <li key={goal}>{goal}</li>
+                                    ))}
+                                </ul>
+                            </section>
+                            <section className="study-focus-card__column">
+                                <h4>Conceitos centrais</h4>
+                                <ul className="study-list study-list--compact">
+                                    {activeStudyModule.keyConcepts.map((concept) => (
+                                        <li key={concept}>{concept}</li>
+                                    ))}
+                                </ul>
+                            </section>
+                            <section className="study-focus-card__column">
+                                <h4>Erros comuns para vigiar</h4>
+                                <ul className="study-list study-list--compact">
+                                    {activeStudyModule.commonMistakes.map((mistake) => (
+                                        <li key={mistake}>{mistake}</li>
+                                    ))}
+                                </ul>
+                            </section>
+                        </div>
+                    </article>
+
+                    <section className="study-content-grid">
+                        <article className="study-reader-card">
+                            <div className="study-panel__header">
+                                <div>
+                                    <span className="question-card__eyebrow">Leituras e guias</span>
+                                    <h3>Conteudo de estudo do modulo</h3>
+                                    <p>Os cards abaixo usam os materiais reais da pasta <code>/content/markdown</code>, agora expostos de volta na home.</p>
+                                </div>
+                                <div className="study-panel__header-icon">
+                                    <BookOpen size={18} />
+                                </div>
+                            </div>
+
+                            <div className="study-resource-stack">
+                                {activeStudyModule.lessons.map((lesson) => (
+                                    <button
+                                        key={lesson.id}
+                                        type="button"
+                                        className={`study-resource-button ${activeStudyLesson?.id === lesson.id ? 'study-resource-button--active' : ''}`}
+                                        onClick={() =>
+                                            setSelectedLessonByModule((current) => ({
+                                                ...current,
+                                                [activeStudyModule.slug]: lesson.id,
+                                            }))
+                                        }
+                                    >
+                                        <div className="study-resource-button__top">
+                                            <strong>{lesson.title}</strong>
+                                            <span>{lesson.minutes} min</span>
+                                        </div>
+                                        <p>{lesson.summary}</p>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {activeStudyLesson ? (
+                                <>
+                                    <div className="study-reader-toolbar">
+                                        <div className="study-reader-toolbar__meta">
+                                            <FileText size={16} />
+                                            <div>
+                                                <strong>{activeStudyLesson.title}</strong>
+                                                <span>{activeStudyLesson.summary}</span>
+                                            </div>
+                                        </div>
+                                        <a className="ghost-button" href={`/content/markdown/${activeStudyLesson.file}`} target="_blank" rel="noreferrer">
+                                            <ExternalLink size={16} />
+                                            Abrir arquivo
+                                        </a>
+                                    </div>
+
+                                    {activeStudyLessonCache?.status === 'ready' ? (
+                                        <div className="study-reader" dangerouslySetInnerHTML={{ __html: activeStudyLessonCache.html }} />
+                                    ) : activeStudyLessonCache?.status === 'error' ? (
+                                        <div className="study-reader study-reader--state">
+                                            <p>Nao foi possivel carregar este material agora. O arquivo continua disponivel no botao acima.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="study-reader study-reader--state">
+                                            <CircleDashed className="spin" size={18} />
+                                            <span>Carregando material do modulo...</span>
+                                        </div>
+                                    )}
+                                </>
+                            ) : null}
+                        </article>
+
+                        <article className="study-lab-card">
+                            <div className="study-panel__header">
+                                <div>
+                                    <span className="question-card__eyebrow">Laboratorios</span>
+                                    <h3>Exploracao interativa</h3>
+                                    <p>Os artefatos abaixo usam os HTMLs reais da pasta <code>/content/artifacts/raw</code>, agora de volta ao fluxo principal.</p>
+                                </div>
+                                <div className="study-panel__header-icon">
+                                    <FlaskConical size={18} />
+                                </div>
+                            </div>
+
+                            <div className="study-resource-stack">
+                                {activeStudyModule.artifacts.map((artifact) => (
+                                    <button
+                                        key={artifact.id}
+                                        type="button"
+                                        className={`study-resource-button ${activeStudyArtifact?.id === artifact.id ? 'study-resource-button--active' : ''}`}
+                                        onClick={() =>
+                                            setSelectedArtifactByModule((current) => ({
+                                                ...current,
+                                                [activeStudyModule.slug]: artifact.id,
+                                            }))
+                                        }
+                                    >
+                                        <div className="study-resource-button__top">
+                                            <strong>{artifact.title}</strong>
+                                            <span>{artifact.kind}</span>
+                                        </div>
+                                        <p>{artifact.description}</p>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {activeStudyArtifact ? (
+                                <div className="study-lab-stage">
+                                    <div className="study-reader-toolbar">
+                                        <div className="study-reader-toolbar__meta">
+                                            <FlaskConical size={16} />
+                                            <div>
+                                                <strong>{activeStudyArtifact.title}</strong>
+                                                <span>{activeStudyArtifact.description}</span>
+                                            </div>
+                                        </div>
+                                        <a className="ghost-button" href={`/content/artifacts/raw/${activeStudyArtifact.file}`} target="_blank" rel="noreferrer">
+                                            <ExternalLink size={16} />
+                                            Abrir em nova guia
+                                        </a>
+                                    </div>
+                                    <div className="study-lab-frame-wrap">
+                                        <iframe
+                                            className="study-lab-frame"
+                                            title={activeStudyArtifact.title}
+                                            src={`/content/artifacts/raw/${activeStudyArtifact.file}`}
+                                        />
+                                    </div>
+                                </div>
+                            ) : null}
+                        </article>
+                    </section>
+                </div>
+            </section>
+
+            <section id="exam-section" className="dashboard-section">
+                <div className="section-heading">
+                    <div>
+                        <h3>Simulados e provas</h3>
+                        <p>As avaliacoes ficam visiveis no mesmo painel, abaixo da trilha de estudo, com status real de progresso e atalho direto para resolver.</p>
+                    </div>
+                </div>
                 <div className="exam-library">
                     {EXAM_LIBRARY.map((exam) => {
                         const cardStatus = exam.id === LISTA1_EXAM.id ? examStatus : 'not-started';
@@ -485,22 +821,54 @@ export default function App() {
                                     </div>
                                     <span className={`exam-status-pill exam-status-pill--${cardStatus}`}>{examStatusLabel(cardStatus)}</span>
                                 </div>
-                                <div className="badge-row">{exam.topics.slice(0, 6).map((topic) => <span key={topic} className="tag">{TOPIC_META[topic].short}</span>)}</div>
+                                <div className="badge-row">
+                                    {exam.topics.slice(0, 6).map((topic) => (
+                                        <span key={topic} className="tag">
+                                            {TOPIC_META[topic].short}
+                                        </span>
+                                    ))}
+                                </div>
                                 <div className="exam-library-card__meta">
-                                    <div className="exam-library-card__meta-item"><ClipboardList size={16} /><div><strong>{exam.questionCount} questoes</strong><span>Resolucao por blocos individuais</span></div></div>
-                                    <div className="exam-library-card__meta-item"><Clock3 size={16} /><div><strong>{exam.estimatedMinutes} min</strong><span>Tempo sugerido para prova completa</span></div></div>
-                                    <div className="exam-library-card__meta-item"><GraduationCap size={16} /><div><strong>{answeredCount} respondidas</strong><span>{reviewCount} marcadas para revisar</span></div></div>
+                                    <div className="exam-library-card__meta-item">
+                                        <ClipboardList size={16} />
+                                        <div>
+                                            <strong>{exam.questionCount} questoes</strong>
+                                            <span>Resolucao por blocos individuais</span>
+                                        </div>
+                                    </div>
+                                    <div className="exam-library-card__meta-item">
+                                        <Clock3 size={16} />
+                                        <div>
+                                            <strong>{exam.estimatedMinutes} min</strong>
+                                            <span>Tempo sugerido para prova completa</span>
+                                        </div>
+                                    </div>
+                                    <div className="exam-library-card__meta-item">
+                                        <GraduationCap size={16} />
+                                        <div>
+                                            <strong>{answeredCount} respondidas</strong>
+                                            <span>{reviewCount} marcadas para revisar</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="exam-library-card__actions">
                                     {cardStatus === 'completed' ? (
                                         <>
-                                            <button type="button" className="primary-button" onClick={() => setScreen('results')}>Ver correcao</button>
-                                            <button type="button" className="ghost-button" onClick={reopenExamQuestions}>Reabrir questoes</button>
+                                            <button type="button" className="primary-button" onClick={() => setScreen('results')}>
+                                                Ver correcao
+                                            </button>
+                                            <button type="button" className="ghost-button" onClick={reopenExamQuestions}>
+                                                Reabrir questoes
+                                            </button>
                                         </>
                                     ) : (
                                         <>
-                                            <button type="button" className="primary-button" onClick={openExamView}>{cardStatus === 'in-progress' ? 'Continuar prova' : 'Iniciar prova'}</button>
-                                            <button type="button" className="ghost-button" onClick={() => setTutorOpenRequest((value) => value + 1)}>Abrir tutor</button>
+                                            <button type="button" className="primary-button" onClick={openExamView}>
+                                                {cardStatus === 'in-progress' ? 'Continuar prova' : 'Iniciar prova'}
+                                            </button>
+                                            <button type="button" className="ghost-button" onClick={() => setTutorOpenRequest((value) => value + 1)}>
+                                                Abrir tutor
+                                            </button>
                                         </>
                                     )}
                                 </div>
@@ -508,10 +876,6 @@ export default function App() {
                         );
                     })}
                 </div>
-            </section>
-            <section className="dashboard-grid">
-                <article className="dashboard-note"><span className="question-card__eyebrow">Status atual</span><h3>Como a prova esta neste momento</h3><p>Status: <strong>{examStatusLabel(examStatus)}</strong>. Voce ja respondeu {answeredCount} questoes, tem {inProgressCount} em andamento e {reviewCount} marcadas para revisar.</p></article>
-                <article className="dashboard-note"><span className="question-card__eyebrow">Tutor IA</span><h3>Ajuda sem areas mortas de clique</h3><p>O tutor abre como painel proprio, com input fixo, acoes rapidas clicaveis, envio real e funcionamento em desktop e mobile.</p></article>
             </section>
         </main>
     );
@@ -576,11 +940,98 @@ export default function App() {
                     <button type="button" className="topbar-link topbar-link--accent" onClick={() => setTutorOpenRequest((value) => value + 1)}><MessageCircleMore size={16} />Tutor</button>
                 </div>
             </div>
-            {screen === 'dashboard' ? <header className="hero hero--dashboard"><div className="hero__copy"><span className="hero__eyebrow">UFBA - Bases Matematicas - Painel do aluno</span><h1>Simulados e provas em um painel claro, com acesso direto e tutor funcional.</h1><p>O aluno entra pelo painel principal, enxerga as provas cadastradas no sistema, acompanha status e segue para a resolucao completa com feedback no final.</p></div><div className="hero__stats"><div className="stat-card"><span>Provas disponiveis</span><strong>{EXAM_LIBRARY.length}</strong></div><div className="stat-card"><span>Em andamento</span><strong>{examStatus === 'in-progress' ? 1 : 0}</strong></div><div className="stat-card"><span>Concluidas</span><strong>{examStatus === 'completed' ? 1 : 0}</strong></div></div></header> : <header className="hero"><div className="hero__copy"><span className="hero__eyebrow">UFBA - Bases Matematicas - {LISTA1_EXAM.title}</span><h1>{screen === 'results' ? 'Correcao pedagogica por questao, com leitura por assunto e proximo passo.' : 'Prova interativa, questao por questao, com navegacao clara e tutor usavel.'}</h1><p>{screen === 'results' ? 'Veja acertos, erros, explicacoes e recomendacoes de estudo em um fluxo unico, sem voltar ao PDF bruto.' : 'Cada questao tem enunciado estruturado, rascunho, resposta oficial, graficos em SVG e suporte do tutor ao lado.'}</p><div className="hero__actions"><button type="button" className="ghost-button ghost-button--light" onClick={() => setScreen('dashboard')}><House size={16} />Painel principal</button><button type="button" className="ghost-button ghost-button--light" onClick={() => setTutorOpenRequest((value) => value + 1)}><MessageCircleMore size={16} />Abrir tutor</button></div></div><div className="hero__stats"><div className="stat-card"><span>Respondidas</span><strong>{answeredCount}/{EXAM_QUESTIONS.length}</strong></div><div className="stat-card"><span>Aproveitamento</span><strong>{(overallRatio * 100).toFixed(0)}%</strong></div><div className="stat-card"><span>Para revisar</span><strong>{reviewCount}</strong></div></div></header>}
+            {screen === 'dashboard' ? (
+                <header className="hero hero--dashboard">
+                    <div className="hero__copy">
+                        <span className="hero__eyebrow">UFBA - Bases Matematicas - Painel do aluno</span>
+                        <h1>Estudo primeiro, provas como extensao natural da trilha.</h1>
+                        <p>O painel principal voltou a destacar modulos, leituras e laboratorios do curso. As provas continuam acessiveis no mesmo fluxo, sem substituir a experiencia central de estudo.</p>
+                        <div className="hero__actions">
+                            <button
+                                type="button"
+                                className="ghost-button ghost-button--light"
+                                onClick={() => document.getElementById('study-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            >
+                                <BookOpen size={16} />
+                                Ver trilha de estudo
+                            </button>
+                            <button
+                                type="button"
+                                className="ghost-button ghost-button--light"
+                                onClick={() => document.getElementById('exam-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            >
+                                <ClipboardList size={16} />
+                                Ir para provas
+                            </button>
+                            <button type="button" className="ghost-button ghost-button--light" onClick={() => setTutorOpenRequest((value) => value + 1)}>
+                                <MessageCircleMore size={16} />
+                                Abrir tutor
+                            </button>
+                        </div>
+                    </div>
+                    <div className="hero__stats">
+                        <div className="stat-card">
+                            <span>Modulos ativos</span>
+                            <strong>{STUDY_MODULES.length}</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span>Materiais de estudo</span>
+                            <strong>{totalStudyLessons}</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span>Laboratorios</span>
+                            <strong>{totalStudyArtifacts}</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span>Status da prova</span>
+                            <strong>{examStatusLabel(examStatus)}</strong>
+                        </div>
+                    </div>
+                </header>
+            ) : (
+                <header className="hero">
+                    <div className="hero__copy">
+                        <span className="hero__eyebrow">UFBA - Bases Matematicas - {LISTA1_EXAM.title}</span>
+                        <h1>{screen === 'results' ? 'Correcao pedagogica por questao, com leitura por assunto e proximo passo.' : 'Prova interativa, questao por questao, com navegacao clara e tutor usavel.'}</h1>
+                        <p>{screen === 'results' ? 'Veja acertos, erros, explicacoes e recomendacoes de estudo em um fluxo unico, sem voltar ao PDF bruto.' : 'Cada questao tem enunciado estruturado, rascunho, resposta oficial, graficos em SVG e suporte do tutor ao lado.'}</p>
+                        <div className="hero__actions">
+                            <button type="button" className="ghost-button ghost-button--light" onClick={() => setScreen('dashboard')}>
+                                <House size={16} />
+                                Painel principal
+                            </button>
+                            <button type="button" className="ghost-button ghost-button--light" onClick={() => setTutorOpenRequest((value) => value + 1)}>
+                                <MessageCircleMore size={16} />
+                                Abrir tutor
+                            </button>
+                        </div>
+                    </div>
+                    <div className="hero__stats">
+                        <div className="stat-card">
+                            <span>Respondidas</span>
+                            <strong>{answeredCount}/{EXAM_QUESTIONS.length}</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span>Aproveitamento</span>
+                            <strong>{(overallRatio * 100).toFixed(0)}%</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span>Para revisar</span>
+                            <strong>{reviewCount}</strong>
+                        </div>
+                    </div>
+                </header>
+            )}
             {screen === 'dashboard' ? dashboardView : screen === 'results' ? resultsView : examView}
             {screen === 'exam' ? <section className="floating-actions"><div className="question-actions"><div className="question-actions__left"><button type="button" className="ghost-button" onClick={() => goToQuestion(activeIndex - 1)} disabled={activeIndex === 0}><ChevronLeft size={16} />Anterior</button><button type="button" className="ghost-button" onClick={() => goToQuestion(activeIndex + 1)} disabled={activeIndex === EXAM_QUESTIONS.length - 1}>Proxima<ChevronRight size={16} /></button></div><div className="question-actions__right"><button type="button" className={`ghost-button ${activeDraft.flagged ? 'ghost-button--flagged' : ''}`} onClick={() => updateQuestionDraft(activeQuestion.id, (draft) => ({ ...draft, flagged: !draft.flagged }))}><Flag size={16} />{activeDraft.flagged ? 'Remover revisao' : 'Marcar para revisar'}</button><button type="button" className="ghost-button" onClick={() => updateQuestionDraft(activeQuestion.id, () => ({ ...createEmptyDraft() }))}>Limpar questao</button><button type="button" className="primary-button" onClick={handleSave}><Save size={16} />Salvar resposta</button><button type="button" className="primary-button primary-button--finish" onClick={() => { startTransition(() => setFinished(true)); setScreen('results'); handleSave(); }}><GraduationCap size={18} />Finalizar prova</button></div></div><div className="question-footer"><span>Estado atual: <strong>{progressLabel(progressByQuestion[activeQuestion.id])}</strong></span><span>{saveStatus === 'saving' ? 'Sincronizando...' : saveStatus === 'saved' ? 'Salvo localmente e sincronizado com o servidor.' : saveStatus === 'local-only' ? 'Salvo localmente. A sincronizacao remota falhou.' : 'Os rascunhos tambem ficam guardados localmente no navegador.'}</span></div></section> : null}
             {zoomedGraph ? <div className="graph-modal" role="dialog" aria-modal="true" onClick={() => setZoomedGraph(null)}><div className="graph-modal__content" onClick={(event) => event.stopPropagation()}><button type="button" className="graph-modal__close" onClick={() => setZoomedGraph(null)}>Fechar</button><GraphFigure graphKey={zoomedGraph} /></div></div> : null}
-            <TutorPanel contextLabel={tutorContextLabel} contextSummary={tutorContextSummary} contextPrompt={tutorContextPrompt} quickActions={tutorQuickActions} openRequestToken={tutorOpenRequest} />
+            <TutorPanel
+                contextLabel={tutorContextLabel}
+                contextSummary={tutorContextSummary}
+                contextPrompt={tutorContextPrompt}
+                quickActions={tutorQuickActions}
+                moduleSlug={screen === 'dashboard' ? activeStudyModule.slug : undefined}
+                openRequestToken={tutorOpenRequest}
+            />
         </div>
     );
 }

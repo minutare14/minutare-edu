@@ -24,6 +24,7 @@ interface TutorPanelProps {
     contextSummary: string;
     contextPrompt: string;
     quickActions: TutorQuickAction[];
+    moduleSlug?: string;
     openRequestToken?: number;
 }
 
@@ -219,6 +220,7 @@ export function TutorPanel({
     contextSummary,
     contextPrompt,
     quickActions,
+    moduleSlug,
     openRequestToken = 0,
 }: TutorPanelProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -331,6 +333,7 @@ export function TutorPanel({
                     model,
                     history,
                     message: buildContextualMessage(contextPrompt, prompt),
+                    module_slug: moduleSlug || undefined,
                 }),
             });
             const payload = await response.json().catch(() => null);

@@ -19,6 +19,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build --chown=node:node /app/index.html ./index.html
+COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/server.ts ./server.ts
 COPY --from=build --chown=node:node /app/server ./server
 COPY --from=build --chown=node:node /app/db ./db

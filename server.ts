@@ -243,6 +243,36 @@ type ExercisePayload = {
     }>;
 };
 
+type ExamPedagogicalFeedbackRequest = {
+    summary: {
+        totalQuestions: number;
+        correctCount: number;
+        incorrectCount: number;
+        answeredCount: number;
+        performanceRatio: number;
+    };
+    topicPerformance: Array<{
+        label: string;
+        ratio: number;
+    }>;
+    wrongQuestions: Array<{
+        number: number;
+        title: string;
+        topics: string[];
+        studyTip: string;
+        answerSummary: string;
+    }>;
+};
+
+type ExamPedagogicalFeedbackPayload = {
+    overview: string;
+    strengths: string[];
+    focusAreas: string[];
+    errorPatterns: string[];
+    studyPlan: string[];
+    encouragement: string;
+};
+
 type QuizQuestion = {
     question: string;
     options: string[];
@@ -1012,6 +1042,167 @@ function buildTutorResponse(rawText: string, userMessage: string): string {
     ].join('\n\n');
 }
 
+function extractTutorPromptValue(message: string, label: string): string {
+    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = message.match(new RegExp(`(?:^|\\n)${escapedLabel}:\\s*(.+)`, 'i'));
+    return match?.[1]?.trim() || '';
+}
+
+function extractTutorStudentRequest(message: string): string {
+    const match = message.match(/Pedido do aluno:\s*([\s\S]*)$/i);
+    return cleanTutorSectionText(match?.[1] || message);
+}
+
+function formatTutorBulletItems(items: string[]): string {
+    return items.filter(Boolean).map((item) => `- ${clipTutorText(item, 180)}`).join('\n');
+}
+
+function buildLocalTutorFallbackResponse(message: string, diagnostics: AiDiagnostics): string {
+    const lowerMessage = normalizeTutorText(message).toLowerCase();
+    const studentRequest = extractTutorStudentRequest(message) || 'Preciso de ajuda para seguir com a prova.';
+    const topics = extractTutorPromptValue(message, 'Assuntos')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const questionLabel = extractTutorPromptValue(message, 'Questao atual');
+    const graphContext = extractTutorPromptValue(message, 'Elemento visual da questao');
+    const answerDraft = extractTutorPromptValue(message, 'Resposta oficial digitada ate agora');
+    const scratchDraft = extractTutorPromptValue(message, 'Rascunho atual do aluno');
+    const strongestTopic = extractTutorPromptValue(message, 'Assunto mais forte');
+    const weakestTopic = extractTutorPromptValue(message, 'Assunto com mais necessidade de revisao');
+    const providerNote =
+        diagnostics.errorType === 'missing_key'
+            ? 'A IA externa nao esta configurada agora, entao sigo em modo local.'
+            : 'A IA externa ficou indisponivel agora, entao sigo em modo local.';
+
+    if (lowerMessage.includes('painel principal do aluno')) {
+        return [
+            '### Resumo rapido',
+            `Voce ja consegue entrar na prova pelo painel e seguir um plano simples sem depender do PDF bruto. ${providerNote}`,
+            '',
+            '### Explicacao',
+            formatTutorBulletItems([
+                'Abra a prova pelo card principal ou pelo atalho de continuar prova no topo.',
+                'Use o rascunho para organizar a ideia e so depois preencha a resposta oficial.',
+                'Se travar em uma questao, marque para revisar e mantenha o fluxo andando.',
+            ]),
+            '',
+            '### O que observar',
+            formatTutorBulletItems([
+                topics.length ? `Priorize primeiro estes assuntos: ${topics.slice(0, 4).join(', ')}.` : 'Comece pelas questoes com leitura mais direta para ganhar ritmo.',
+                'Quando houver grafico, leia eixo, escala, pontos destacados e tendencia antes da conta.',
+                'Salve respostas nos blocos importantes para nao perder progresso.',
+            ]),
+            '',
+            '### Erros comuns',
+            formatTutorBulletItems([
+                'Ir direto para a resposta sem separar o que o enunciado da do que ele pede.',
+                'Deixar as questoes longas travarem toda a prova logo no inicio.',
+                'Ignorar o rascunho e tentar resolver tudo mentalmente.',
+            ]),
+            '',
+            '### Exemplo',
+            `Pedido atual: ${clipTutorText(studentRequest, 220)}. Um bom primeiro giro e resolver 2 ou 3 questoes mais objetivas, marcar as que exigem mais leitura visual e voltar nelas no segundo momento.`,
+        ].join('\n');
+    }
+
+    if (lowerMessage.includes('correcao final da prova')) {
+        return [
+            '### Resumo rapido',
+            `A correcao final serve para transformar erro em plano de estudo, nao so em gabarito. ${providerNote}`,
+            '',
+            '### Explicacao',
+            formatTutorBulletItems([
+                'Revise primeiro as questoes em que voce errou o raciocinio, nao apenas o resultado final.',
+                'Use o assunto mais forte como ponto de apoio para recuperar confianca.',
+                'Monte uma ordem curta de revisao antes de refazer a prova inteira.',
+            ]),
+            '',
+            '### O que observar',
+            formatTutorBulletItems([
+                strongestTopic ? `Seu melhor apoio agora e ${strongestTopic}. Use esse tema para aquecer a revisao.` : 'Comece pelo assunto em que voce se sente mais seguro para retomar ritmo.',
+                weakestTopic ? `A prioridade de estudo deve ser ${weakestTopic}, porque ele aparece como maior necessidade de revisao.` : 'Identifique o tema em que mais perdeu pontos e comece por ele.',
+                'Se houve questao com grafico, releia o visual antes de reler a solucao pronta.',
+            ]),
+            '',
+            '### Erros comuns',
+            formatTutorBulletItems([
+                'Ler so o gabarito e nao reconstruir o passo a passo com as proprias palavras.',
+                'Misturar varios assuntos na revisao e nao fechar nenhum deles.',
+                'Refazer tudo de uma vez sem priorizar o que mais derrubou o desempenho.',
+            ]),
+            '',
+            '### Exemplo',
+            `Pedido atual: ${clipTutorText(studentRequest, 220)}. Um plano curto pode ser: 1) revisar o assunto mais fragil, 2) refazer 2 questoes desse bloco, 3) encerrar com 1 questao de um tema que voce domina melhor.`,
+        ].join('\n');
+    }
+
+    const observeItems: string[] = [];
+    const mistakeItems: string[] = [];
+
+    if (graphContext) {
+        observeItems.push(`Leia primeiro o elemento visual da questao: ${clipTutorText(graphContext, 170)}.`);
+        observeItems.push('Use os eixos, a escala, os pontos marcados e as linhas de referencia antes de tirar conclusoes.');
+        mistakeItems.push('Ler so um ponto destacado e ignorar a inclinacao, a curva ou a escala inteira do grafico.');
+    }
+
+    if (lowerMessage.includes('interval')) {
+        observeItems.push('Confirme se as extremidades sao abertas ou fechadas antes de responder.');
+        mistakeItems.push('Trocar parenteses por colchetes e mudar o conjunto resposta.');
+    }
+
+    if (lowerMessage.includes('conjunto')) {
+        observeItems.push('Separe uniao, intersecao, diferenca e complemento antes de contar elementos.');
+        mistakeItems.push('Contar a mesma regiao duas vezes em problemas com sobreposicao.');
+    }
+
+    if (lowerMessage.includes('funcao') || lowerMessage.includes('dominio') || lowerMessage.includes('imagem')) {
+        observeItems.push('Pergunte se a tarefa pede lei de formacao, dominio, imagem, composicao ou leitura de grafico.');
+        mistakeItems.push('Confundir dominio com imagem ou trocar a ordem na composicao de funcoes.');
+    }
+
+    if (!observeItems.length) {
+        observeItems.push('Separe o que o enunciado fornece do que ele realmente pede ao final.');
+        observeItems.push('Escreva a regra, a operacao ou a relacao principal antes de fechar a conta.');
+    }
+
+    if (!mistakeItems.length) {
+        mistakeItems.push('Pular uma etapa importante do raciocinio e perder a conexao entre dado e resposta.');
+        mistakeItems.push('Fechar o resultado sem conferir se ele responde exatamente ao pedido da questao.');
+    }
+
+    return [
+        '### Resumo rapido',
+        `${questionLabel ? `Para ${questionLabel},` : 'Para esta questao,'} o melhor caminho e separar dados, pedido e ferramenta matematica principal. ${providerNote}`,
+        '',
+        '### Explicacao',
+        formatTutorBulletItems([
+            topics.length ? `Assuntos envolvidos: ${topics.join(', ')}.` : 'Identifique se a questao pede conjunto, intervalo, funcao, grafico ou uma combinacao desses itens.',
+            graphContext ? 'Comece pela leitura visual e so depois parta para a conta.' : 'Reescreva a pergunta final com suas palavras para saber o que precisa entregar.',
+            answerDraft ? `Compare sua resposta parcial com o pedido original: ${clipTutorText(answerDraft, 170)}.` : 'Use a resposta oficial apenas depois de organizar a estrategia no rascunho.',
+            scratchDraft ? `Seu rascunho ja aponta este caminho: ${clipTutorText(scratchDraft, 170)}.` : 'Se travar, escreva um mini roteiro no rascunho antes de tentar responder.',
+        ]),
+        '',
+        '### O que observar',
+        formatTutorBulletItems(observeItems),
+        '',
+        '### Erros comuns',
+        formatTutorBulletItems(mistakeItems),
+        '',
+        '### Exemplo',
+        `Pedido atual: ${clipTutorText(studentRequest, 220)}. Um roteiro bom e: 1) identificar o tipo de relacao matematica, 2) testar a regra ou ler o grafico, 3) conferir se a resposta final bate com o que a questao pediu.`,
+    ].join('\n');
+}
+
+function formatTutorResponsePayload(rawText: string, userMessage: string): string {
+    const normalizedRaw = rawText.replace(/^##\s+/gm, '### ').trim();
+    if (/^###\s/m.test(normalizedRaw)) {
+        return normalizedRaw;
+    }
+
+    return buildTutorResponse(rawText, userMessage).replace(/^##\s+/gm, '### ').trim();
+}
+
 function validateExplainPayload(value: unknown): ExplainPayload {
     if (!isRecord(value)) {
         throw new Error('Invalid explain payload.');
@@ -1073,6 +1264,68 @@ function validateExercisesPayload(value: unknown): ExercisePayload {
     return {
         intro: requireNonEmptyString(value.intro, 'intro'),
         exercises,
+    };
+}
+
+function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogicalFeedbackRequest {
+    if (!isRecord(value) || !isRecord(value.summary) || !Array.isArray(value.topicPerformance) || !Array.isArray(value.wrongQuestions)) {
+        throw new Error('Invalid exam pedagogical feedback request.');
+    }
+
+    const parseFinite = (input: unknown, field: string) => {
+        const parsed = Number(input);
+        if (!Number.isFinite(parsed)) {
+            throw new Error(`Invalid field "${field}".`);
+        }
+        return parsed;
+    };
+
+    return {
+        summary: {
+            totalQuestions: parseFinite(value.summary.totalQuestions, 'summary.totalQuestions'),
+            correctCount: parseFinite(value.summary.correctCount, 'summary.correctCount'),
+            incorrectCount: parseFinite(value.summary.incorrectCount, 'summary.incorrectCount'),
+            answeredCount: parseFinite(value.summary.answeredCount, 'summary.answeredCount'),
+            performanceRatio: parseFinite(value.summary.performanceRatio, 'summary.performanceRatio'),
+        },
+        topicPerformance: value.topicPerformance.map((item, index) => {
+            if (!isRecord(item)) {
+                throw new Error(`Invalid topic performance at index ${index}.`);
+            }
+
+            return {
+                label: requireNonEmptyString(item.label, `topicPerformance.${index}.label`),
+                ratio: parseFinite(item.ratio, `topicPerformance.${index}.ratio`),
+            };
+        }),
+        wrongQuestions: value.wrongQuestions.map((item, index) => {
+            if (!isRecord(item)) {
+                throw new Error(`Invalid wrong question at index ${index}.`);
+            }
+
+            return {
+                number: parseFinite(item.number, `wrongQuestions.${index}.number`),
+                title: requireNonEmptyString(item.title, `wrongQuestions.${index}.title`),
+                topics: requireStringArray(item.topics, `wrongQuestions.${index}.topics`, 0),
+                studyTip: requireNonEmptyString(item.studyTip, `wrongQuestions.${index}.studyTip`),
+                answerSummary: requireNonEmptyString(item.answerSummary, `wrongQuestions.${index}.answerSummary`),
+            };
+        }),
+    };
+}
+
+function validateExamPedagogicalFeedbackPayload(value: unknown): ExamPedagogicalFeedbackPayload {
+    if (!isRecord(value)) {
+        throw new Error('Invalid exam pedagogical feedback payload.');
+    }
+
+    return {
+        overview: requireNonEmptyString(value.overview, 'overview'),
+        strengths: requireStringArray(value.strengths, 'strengths', 1),
+        focusAreas: requireStringArray(value.focusAreas, 'focusAreas', 1),
+        errorPatterns: requireStringArray(value.errorPatterns, 'errorPatterns', 1),
+        studyPlan: requireStringArray(value.studyPlan, 'studyPlan', 1),
+        encouragement: requireNonEmptyString(value.encouragement, 'encouragement'),
     };
 }
 
@@ -1314,10 +1567,12 @@ function shouldTryNextModel(error: unknown): boolean {
     const { statusCode, providerStatus, detail } = getProviderErrorMeta(error);
     return (
         statusCode === 404 ||
+        statusCode === 503 ||
         statusCode === 429 ||
         providerStatus === 'NOT_FOUND' ||
+        providerStatus === 'UNAVAILABLE' ||
         providerStatus === 'RESOURCE_EXHAUSTED' ||
-        /not found|not supported|quota/i.test(detail)
+        /not found|not supported|quota|high demand|temporar/i.test(detail)
     );
 }
 
@@ -1658,7 +1913,7 @@ app.post('/auth/refresh-session', requireAuth, async (req, res) => {
 });
 
 app.get('/app', requirePageAuth, (_req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.use('/api', requireAuth);
@@ -1945,6 +2200,47 @@ app.post('/api/generate-exercises', async (req, res) => {
     }
 });
 
+app.post('/api/exam/pedagogical-feedback', async (req, res) => {
+    const route = '/api/exam/pedagogical-feedback';
+    const modelKey: ModelKey = 'flash';
+    const requestId = String(res.locals.requestId || 'unknown');
+    const primaryModel = MODEL_CANDIDATES[modelKey][0];
+
+    try {
+        const request = validateExamPedagogicalFeedbackRequest(req.body);
+
+        const { data: feedback, model, attemptedModels } = await generateJson<ExamPedagogicalFeedbackPayload>({
+            modelKey,
+            route,
+            requestId,
+            contents:
+                'Voce e uma professora de matematica brasileira, didatica e encorajadora. ' +
+                'Analise o desempenho de um aluno em uma prova de matematica e retorne JSON valido, sem markdown. ' +
+                'Seja clara, concreta e pedagogica. ' +
+                'overview deve ter 2 ou 3 frases. strengths, focusAreas, errorPatterns e studyPlan devem ter de 2 a 4 itens. ' +
+                'encouragement deve fechar com tom realista e acolhedor. ' +
+                `Dados do desempenho: ${JSON.stringify(request)}.`,
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    overview: { type: Type.STRING },
+                    strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    errorPatterns: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    studyPlan: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    encouragement: { type: Type.STRING },
+                },
+                required: ['overview', 'strengths', 'focusAreas', 'errorPatterns', 'studyPlan', 'encouragement'],
+            },
+            validator: validateExamPedagogicalFeedbackPayload,
+        });
+
+        res.json({ ok: true, feedback, model, requestedModel: modelKey, attemptedModels });
+    } catch (error) {
+        sendAiError(res, route, primaryModel, 'gerar feedback pedagogico da prova', error);
+    }
+});
+
 app.post('/api/feynman/evaluate', async (req, res) => {
     const route = '/api/feynman/evaluate';
     const modelKey: ModelKey = 'flash';
@@ -2215,8 +2511,8 @@ app.post('/api/chat/ask', async (req, res) => {
 
         res.json({
             ok: true,
-            answer: buildTutorResponse(text, question),
-            text: buildTutorResponse(text, question),
+            answer: formatTutorResponsePayload(text, question),
+            text: formatTutorResponsePayload(text, question),
             mode: prompt.mode,
             sources: prompt.sources,
             moduleSlug: prompt.moduleSlug,
@@ -2236,9 +2532,12 @@ app.post('/api/chat', async (req, res) => {
     const requestId = String(res.locals.requestId || 'unknown');
     const requestedModel = parseModelKey(req.body?.model);
     const primaryModel = MODEL_CANDIDATES[requestedModel][0];
+    let message = '';
+    let mode: string = 'general_fallback';
+    let sources: Array<{ file: string; section: string }> = [];
 
     try {
-        const message = requireNonEmptyString(req.body?.message, 'message');
+        message = requireNonEmptyString(req.body?.message, 'message');
         const history = Array.isArray(req.body?.history) ? req.body.history : [];
 
         // If module context is provided, redirect to contextual endpoint internally
@@ -2247,8 +2546,6 @@ app.post('/api/chat', async (req, res) => {
         const allModules = getAllModules();
 
         let systemInstruction: string;
-        let mode: string = 'general_fallback';
-        let sources: Array<{ file: string; section: string }> = [];
 
         if (module) {
             const prompt = buildContextualPrompt(message, module, allModules);
@@ -2283,7 +2580,7 @@ app.post('/api/chat', async (req, res) => {
 
         res.json({
             ok: true,
-            text: buildTutorResponse(text, message),
+            text: formatTutorResponsePayload(text, message),
             mode,
             sources,
             model,
@@ -2291,6 +2588,24 @@ app.post('/api/chat', async (req, res) => {
             attemptedModels,
         });
     } catch (error) {
+        const diagnostics = classifyAiError(error, route, requestId, primaryModel);
+        const fallbackEligible = ['missing_key', 'quota_exceeded', 'network', 'provider', 'auth'].includes(diagnostics.errorType);
+
+        if (fallbackEligible && message) {
+            logAiFailure(diagnostics, error);
+            res.json({
+                ok: true,
+                text: buildLocalTutorFallbackResponse(message, diagnostics),
+                mode: 'local_fallback',
+                sources,
+                model: 'local',
+                requestedModel,
+                attemptedModels: diagnostics.attemptedModels || [primaryModel],
+                diagnostics,
+            });
+            return;
+        }
+
         sendAiError(res, route, primaryModel, 'processar mensagem', error);
     }
 });
@@ -2341,6 +2656,7 @@ app.use('/api', (_req, res) => {
 });
 
 [
+    { route: '/assets', dir: path.join(__dirname, 'dist', 'assets') },
     { route: '/css', dir: path.join(__dirname, 'css') },
     { route: '/js', dir: path.join(__dirname, 'js') },
     { route: '/vendor', dir: path.join(__dirname, 'vendor') },

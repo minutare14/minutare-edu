@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "npm run build && tsx server.ts",
     "build": "vite build",
-    "start": "tsx server.ts",
+    "start": "npm run build && tsx server.ts",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down --remove-orphans",
     "clean": "rm -rf dist",

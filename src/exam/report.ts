@@ -2,7 +2,7 @@ import type { PedagogicalFeedback } from './feedback';
 import type { ExamDraftState, QuestionEvaluation, TopicPerformance } from './grading';
 import { ensureDraft } from './grading';
 import type { ExamDefinition } from './library';
-import type { ExamQuestion, TopicId } from './model';
+import type { Difficulty, ExamQuestion, GraphKey, TopicId } from './model';
 import { formatDuration, formatDurationLong, type ExamTimingSnapshot } from './timing';
 
 export interface ExamReportSummary {
@@ -25,17 +25,29 @@ export interface ExamReportQuestionEntry {
     questionNumber: number;
     title: string;
     shortPrompt: string;
+    difficultyLabel: string;
     status: QuestionEvaluation['status'];
     statusLabel: string;
+    score: number;
+    maxScore: number;
+    scoreRatio: number;
     studentAnswer: string;
     correctAnswer: string;
     timeMs: number;
     timeLabel: string;
     topics: string[];
     explanationSteps: string[];
+    graphKey?: GraphKey;
     graphComment?: string;
     studyTip: string;
     scratchpad: string;
+    fields: Array<{
+        label: string;
+        studentAnswer: string;
+        expectedAnswer: string;
+        score: number;
+        maxScore: number;
+    }>;
 }
 
 export interface ExamReportTopicEntry {
@@ -76,6 +88,12 @@ export interface ExamReport {
     strongestTopics: string[];
     weakestTopics: string[];
     aiFeedback: PedagogicalFeedback | null;
+}
+
+function difficultyLabel(difficulty: Difficulty) {
+    if (difficulty === 'base') return 'Base';
+    if (difficulty === 'desafio') return 'Desafio';
+    return 'Intermediaria';
 }
 
 export function statusLabel(status: QuestionEvaluation['status']) {
@@ -158,17 +176,29 @@ export function buildExamReport({
             questionNumber: question.number,
             title: question.title,
             shortPrompt: contentBlocksToPlainText(question),
+            difficultyLabel: difficultyLabel(question.difficulty),
             status: evaluation.status,
             statusLabel: statusLabel(evaluation.status),
+            score: evaluation.score,
+            maxScore: evaluation.maxScore,
+            scoreRatio: evaluation.ratio,
             studentAnswer: summarizeStudentAnswer(evaluation),
             correctAnswer: question.solution.answerSummary,
             timeMs,
             timeLabel: formatDuration(timeMs),
             topics: question.topics.map((topic) => topicLabels[topic]),
             explanationSteps: question.solution.steps,
+            graphKey: question.graphKey,
             graphComment: question.solution.graphComment,
             studyTip: question.solution.studyTip,
             scratchpad: draft.scratch.trim(),
+            fields: evaluation.fields.map((field) => ({
+                label: field.label,
+                studentAnswer: field.studentAnswer || 'Em branco',
+                expectedAnswer: field.expectedAnswer,
+                score: field.score,
+                maxScore: field.maxScore,
+            })),
         };
     });
 

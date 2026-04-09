@@ -208,7 +208,7 @@ export function ExamReportView({
                 <div className="results-list__stack">
                     {report.questions.map((question) => {
                         const evaluation = evaluations.find((item) => item.questionId === question.questionId)!;
-                        const graphKey = questionGraphKeys[question.questionId];
+                        const graphKey = question.graphKey || questionGraphKeys[question.questionId];
 
                         return (
                             <article key={question.questionId} className={`review-card review-card--${gradeTone(evaluation.ratio)}`}>

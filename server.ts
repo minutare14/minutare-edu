@@ -275,10 +275,21 @@ type ExercisePayload = {
 };
 
 type ExamPedagogicalFeedbackRequest = {
+    attempt: {
+        examTitle: string;
+        moduleLabel: string;
+        discipline: string;
+        attemptNumber: number;
+        startedAt: string | null;
+        completedAt: string | null;
+        generatedAt: string;
+    };
     summary: {
         totalQuestions: number;
         correctCount: number;
+        partialCount: number;
         incorrectCount: number;
+        blankCount: number;
         answeredCount: number;
         performanceRatio: number;
         totalTimeMs: number;
@@ -288,6 +299,35 @@ type ExamPedagogicalFeedbackRequest = {
         label: string;
         ratio: number;
         totalTimeMs?: number;
+        averageTimeMs?: number;
+        correctCount?: number;
+        partialCount?: number;
+        incorrectCount?: number;
+        blankCount?: number;
+    }>;
+    questionBreakdown: Array<{
+        number: number;
+        title: string;
+        difficulty: string;
+        status: string;
+        score: number;
+        maxScore: number;
+        scoreRatio: number;
+        topics: string[];
+        timeMs: number;
+        timeLabel: string;
+        studentAnswer: string;
+        correctAnswer: string;
+        studyTip: string;
+        graphComment: string;
+        scratchpad: string;
+        fieldFeedback: Array<{
+            label: string;
+            studentAnswer: string;
+            expectedAnswer: string;
+            score: number;
+            maxScore: number;
+        }>;
     }>;
     wrongQuestions: Array<{
         number: number;
@@ -295,7 +335,15 @@ type ExamPedagogicalFeedbackRequest = {
         topics: string[];
         studyTip: string;
         answerSummary: string;
+        status: string;
+        timeLabel: string;
+        studentAnswer: string;
     }>;
+    errorSummary: {
+        blankQuestions: number[];
+        partialQuestions: number[];
+        incorrectQuestions: number[];
+    };
     timingHighlights: {
         slowestQuestions: Array<{
             number: number;
@@ -305,6 +353,15 @@ type ExamPedagogicalFeedbackRequest = {
         slowestTopics: Array<{
             label: string;
             timeLabel: string;
+            performanceRatio?: number;
+            incorrectCount?: number;
+            blankCount?: number;
+        }>;
+        rushedQuestions: Array<{
+            number: number;
+            title: string;
+            timeLabel: string;
+            status: string;
         }>;
     };
 };
@@ -1317,12 +1374,19 @@ function validateExercisesPayload(value: unknown): ExercisePayload {
 function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogicalFeedbackRequest {
     if (
         !isRecord(value) ||
+        !isRecord(value.attempt) ||
         !isRecord(value.summary) ||
         !Array.isArray(value.topicPerformance) ||
+        !Array.isArray(value.questionBreakdown) ||
         !Array.isArray(value.wrongQuestions) ||
+        !isRecord(value.errorSummary) ||
+        !Array.isArray(value.errorSummary.blankQuestions) ||
+        !Array.isArray(value.errorSummary.partialQuestions) ||
+        !Array.isArray(value.errorSummary.incorrectQuestions) ||
         !isRecord(value.timingHighlights) ||
         !Array.isArray(value.timingHighlights.slowestQuestions) ||
-        !Array.isArray(value.timingHighlights.slowestTopics)
+        !Array.isArray(value.timingHighlights.slowestTopics) ||
+        !Array.isArray(value.timingHighlights.rushedQuestions)
     ) {
         throw new Error('Invalid exam pedagogical feedback request.');
     }
@@ -1336,10 +1400,21 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
     };
 
     return {
+        attempt: {
+            examTitle: requireNonEmptyString(value.attempt.examTitle, 'attempt.examTitle'),
+            moduleLabel: requireNonEmptyString(value.attempt.moduleLabel, 'attempt.moduleLabel'),
+            discipline: requireNonEmptyString(value.attempt.discipline, 'attempt.discipline'),
+            attemptNumber: parseFinite(value.attempt.attemptNumber, 'attempt.attemptNumber'),
+            startedAt: value.attempt.startedAt === null ? null : requireNonEmptyString(value.attempt.startedAt, 'attempt.startedAt'),
+            completedAt: value.attempt.completedAt === null ? null : requireNonEmptyString(value.attempt.completedAt, 'attempt.completedAt'),
+            generatedAt: requireNonEmptyString(value.attempt.generatedAt, 'attempt.generatedAt'),
+        },
         summary: {
             totalQuestions: parseFinite(value.summary.totalQuestions, 'summary.totalQuestions'),
             correctCount: parseFinite(value.summary.correctCount, 'summary.correctCount'),
+            partialCount: parseFinite(value.summary.partialCount, 'summary.partialCount'),
             incorrectCount: parseFinite(value.summary.incorrectCount, 'summary.incorrectCount'),
+            blankCount: parseFinite(value.summary.blankCount, 'summary.blankCount'),
             answeredCount: parseFinite(value.summary.answeredCount, 'summary.answeredCount'),
             performanceRatio: parseFinite(value.summary.performanceRatio, 'summary.performanceRatio'),
             totalTimeMs: parseFinite(value.summary.totalTimeMs, 'summary.totalTimeMs'),
@@ -1354,6 +1429,47 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
                 label: requireNonEmptyString(item.label, `topicPerformance.${index}.label`),
                 ratio: parseFinite(item.ratio, `topicPerformance.${index}.ratio`),
                 totalTimeMs: item.totalTimeMs === undefined ? undefined : parseFinite(item.totalTimeMs, `topicPerformance.${index}.totalTimeMs`),
+                averageTimeMs: item.averageTimeMs === undefined ? undefined : parseFinite(item.averageTimeMs, `topicPerformance.${index}.averageTimeMs`),
+                correctCount: item.correctCount === undefined ? undefined : parseFinite(item.correctCount, `topicPerformance.${index}.correctCount`),
+                partialCount: item.partialCount === undefined ? undefined : parseFinite(item.partialCount, `topicPerformance.${index}.partialCount`),
+                incorrectCount: item.incorrectCount === undefined ? undefined : parseFinite(item.incorrectCount, `topicPerformance.${index}.incorrectCount`),
+                blankCount: item.blankCount === undefined ? undefined : parseFinite(item.blankCount, `topicPerformance.${index}.blankCount`),
+            };
+        }),
+        questionBreakdown: value.questionBreakdown.map((item, index) => {
+            if (!isRecord(item) || !Array.isArray(item.fieldFeedback)) {
+                throw new Error(`Invalid question breakdown at index ${index}.`);
+            }
+
+            return {
+                number: parseFinite(item.number, `questionBreakdown.${index}.number`),
+                title: requireNonEmptyString(item.title, `questionBreakdown.${index}.title`),
+                difficulty: requireNonEmptyString(item.difficulty, `questionBreakdown.${index}.difficulty`),
+                status: requireNonEmptyString(item.status, `questionBreakdown.${index}.status`),
+                score: parseFinite(item.score, `questionBreakdown.${index}.score`),
+                maxScore: parseFinite(item.maxScore, `questionBreakdown.${index}.maxScore`),
+                scoreRatio: parseFinite(item.scoreRatio, `questionBreakdown.${index}.scoreRatio`),
+                topics: requireStringArray(item.topics, `questionBreakdown.${index}.topics`, 0),
+                timeMs: parseFinite(item.timeMs, `questionBreakdown.${index}.timeMs`),
+                timeLabel: requireNonEmptyString(item.timeLabel, `questionBreakdown.${index}.timeLabel`),
+                studentAnswer: requireNonEmptyString(item.studentAnswer, `questionBreakdown.${index}.studentAnswer`),
+                correctAnswer: requireNonEmptyString(item.correctAnswer, `questionBreakdown.${index}.correctAnswer`),
+                studyTip: requireNonEmptyString(item.studyTip, `questionBreakdown.${index}.studyTip`),
+                graphComment: typeof item.graphComment === 'string' ? item.graphComment : '',
+                scratchpad: typeof item.scratchpad === 'string' ? item.scratchpad : '',
+                fieldFeedback: item.fieldFeedback.map((field, fieldIndex) => {
+                    if (!isRecord(field)) {
+                        throw new Error(`Invalid field feedback at index ${index}.${fieldIndex}.`);
+                    }
+
+                    return {
+                        label: requireNonEmptyString(field.label, `questionBreakdown.${index}.fieldFeedback.${fieldIndex}.label`),
+                        studentAnswer: requireNonEmptyString(field.studentAnswer, `questionBreakdown.${index}.fieldFeedback.${fieldIndex}.studentAnswer`),
+                        expectedAnswer: requireNonEmptyString(field.expectedAnswer, `questionBreakdown.${index}.fieldFeedback.${fieldIndex}.expectedAnswer`),
+                        score: parseFinite(field.score, `questionBreakdown.${index}.fieldFeedback.${fieldIndex}.score`),
+                        maxScore: parseFinite(field.maxScore, `questionBreakdown.${index}.fieldFeedback.${fieldIndex}.maxScore`),
+                    };
+                }),
             };
         }),
         wrongQuestions: value.wrongQuestions.map((item, index) => {
@@ -1367,8 +1483,22 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
                 topics: requireStringArray(item.topics, `wrongQuestions.${index}.topics`, 0),
                 studyTip: requireNonEmptyString(item.studyTip, `wrongQuestions.${index}.studyTip`),
                 answerSummary: requireNonEmptyString(item.answerSummary, `wrongQuestions.${index}.answerSummary`),
+                status: requireNonEmptyString(item.status, `wrongQuestions.${index}.status`),
+                timeLabel: requireNonEmptyString(item.timeLabel, `wrongQuestions.${index}.timeLabel`),
+                studentAnswer: requireNonEmptyString(item.studentAnswer, `wrongQuestions.${index}.studentAnswer`),
             };
         }),
+        errorSummary: {
+            blankQuestions: value.errorSummary.blankQuestions.map((item, index) =>
+                parseFinite(item, `errorSummary.blankQuestions.${index}`),
+            ),
+            partialQuestions: value.errorSummary.partialQuestions.map((item, index) =>
+                parseFinite(item, `errorSummary.partialQuestions.${index}`),
+            ),
+            incorrectQuestions: value.errorSummary.incorrectQuestions.map((item, index) =>
+                parseFinite(item, `errorSummary.incorrectQuestions.${index}`),
+            ),
+        },
         timingHighlights: {
             slowestQuestions: value.timingHighlights.slowestQuestions.map((item, index) => {
                 if (!isRecord(item)) {
@@ -1389,6 +1519,30 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
                 return {
                     label: requireNonEmptyString(item.label, `timingHighlights.slowestTopics.${index}.label`),
                     timeLabel: requireNonEmptyString(item.timeLabel, `timingHighlights.slowestTopics.${index}.timeLabel`),
+                    performanceRatio:
+                        item.performanceRatio === undefined
+                            ? undefined
+                            : parseFinite(item.performanceRatio, `timingHighlights.slowestTopics.${index}.performanceRatio`),
+                    incorrectCount:
+                        item.incorrectCount === undefined
+                            ? undefined
+                            : parseFinite(item.incorrectCount, `timingHighlights.slowestTopics.${index}.incorrectCount`),
+                    blankCount:
+                        item.blankCount === undefined
+                            ? undefined
+                            : parseFinite(item.blankCount, `timingHighlights.slowestTopics.${index}.blankCount`),
+                };
+            }),
+            rushedQuestions: value.timingHighlights.rushedQuestions.map((item, index) => {
+                if (!isRecord(item)) {
+                    throw new Error(`Invalid rushed question at index ${index}.`);
+                }
+
+                return {
+                    number: parseFinite(item.number, `timingHighlights.rushedQuestions.${index}.number`),
+                    title: requireNonEmptyString(item.title, `timingHighlights.rushedQuestions.${index}.title`),
+                    timeLabel: requireNonEmptyString(item.timeLabel, `timingHighlights.rushedQuestions.${index}.timeLabel`),
+                    status: requireNonEmptyString(item.status, `timingHighlights.rushedQuestions.${index}.status`),
                 };
             }),
         },
@@ -2306,9 +2460,12 @@ app.post('/api/exam/pedagogical-feedback', async (req, res) => {
             contents:
                 'Voce e uma professora de matematica brasileira, didatica e encorajadora. ' +
                 'Analise o desempenho de um aluno em uma prova de matematica e retorne JSON valido, sem markdown. ' +
-                'Seja clara, concreta e pedagogica. ' +
-                'overview deve ter 2 ou 3 frases. strengths, focusAreas, errorPatterns, timeInsights e studyPlan devem ter de 2 a 4 itens. ' +
-                'Comente explicitamente a gestao de tempo, os assuntos mais lentos e as questoes em que o aluno pareceu travar mais. ' +
+                'Seja clara, concreta e pedagogica, mas nunca generica. ' +
+                'Baseie cada ponto em evidencias do payload: numero das questoes, assunto, tempo, tipo de erro, respostas em branco, respostas parciais e relacao entre desempenho e tempo. ' +
+                'overview deve ter 2 ou 3 frases e citar o padrao dominante da tentativa. ' +
+                'strengths, focusAreas, errorPatterns, timeInsights e studyPlan devem ter de 2 a 4 itens, cada um com observacoes acionaveis e personalizadas. ' +
+                'Distinga erro por falta de conceito, erro de interpretacao, resposta precipitada e questao deixada em branco quando isso aparecer nos dados. ' +
+                'Comente explicitamente a gestao de tempo, os assuntos mais lentos, as questoes em que o aluno travou e o que deve revisar primeiro. ' +
                 'encouragement deve fechar com tom realista e acolhedor. ' +
                 `Dados do desempenho: ${JSON.stringify(request)}.`,
             responseSchema: {

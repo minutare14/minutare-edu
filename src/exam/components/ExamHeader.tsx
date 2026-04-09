@@ -20,22 +20,14 @@ function saveStatusLabel(saveStatus: ExamHeaderProps['saveStatus']) {
 
 export function ExamHeader({ title, subtitle, attemptNumber, totalMs, questionMs, saveStatus, onSave }: ExamHeaderProps) {
     return (
-        <section className="floating-actions">
-            <div className="question-actions">
-                <div className="question-actions__left">
-                    <span className="badge">Tentativa {attemptNumber}</span>
-                    <span className="progress-pill">{subtitle}</span>
-                    <span className="timer-pill">
-                        <Clock3 size={16} />
-                        Tempo total {formatDuration(totalMs)}
-                    </span>
-                    <span className="timer-pill">
-                        <Clock3 size={16} />
-                        Questao atual {formatDuration(questionMs)}
-                    </span>
+        <section className="exam-command">
+            <div className="exam-command__top">
+                <div className="exam-command__copy">
+                    <span className="question-card__eyebrow">Modo prova · Tentativa {attemptNumber}</span>
+                    <h2>{title}</h2>
+                    <p>{subtitle}. Fluxo de prova sem dicas e sem correcao imediata, com salvamento continuo e retomada limpa.</p>
                 </div>
-
-                <div className="question-actions__right">
+                <div className="exam-command__actions">
                     <span className="support-chip support-chip--status">{saveStatusLabel(saveStatus)}</span>
                     <button type="button" className="ghost-button" onClick={onSave}>
                         <Save size={16} />
@@ -43,9 +35,23 @@ export function ExamHeader({ title, subtitle, attemptNumber, totalMs, questionMs
                     </button>
                 </div>
             </div>
-            <div className="question-footer">
-                <span className="question-card__eyebrow">{title}</span>
-                <span className="question-footer__hint">Modo prova sem dicas, sem tutor e sem correcao imediata.</span>
+
+            <div className="exam-command__metrics">
+                <article className="exam-command__metric">
+                    <span>Etapa</span>
+                    <strong>Questao em andamento</strong>
+                    <small>Continue no seu ritmo e use o mapa lateral para voltar a qualquer ponto.</small>
+                </article>
+                <article className="exam-command__metric">
+                    <span>Tempo total</span>
+                    <strong>{formatDuration(totalMs)}</strong>
+                    <small>Cronometro da tentativa inteira, salvo junto com o progresso.</small>
+                </article>
+                <article className="exam-command__metric">
+                    <span>Questao atual</span>
+                    <strong>{formatDuration(questionMs)}</strong>
+                    <small>Tempo acumulado apenas na questao selecionada.</small>
+                </article>
             </div>
         </section>
     );

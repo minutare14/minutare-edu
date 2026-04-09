@@ -47,14 +47,16 @@ export function ExamSidebar({
     questions,
     onSelectQuestion,
 }: ExamSidebarProps) {
+    const completionRatio = totalQuestions ? answeredCount / totalQuestions : 0;
+
     return (
         <aside className="question-rail">
             <div className="question-rail__header">
                 <h2>Mapa da prova</h2>
-                <p>Acompanhe a tentativa atual, retome qualquer questao e identifique rapidamente os pontos marcados para revisao.</p>
+                <p>Acompanhe a tentativa atual, retome qualquer questao e identifique onde ainda falta resposta final.</p>
             </div>
 
-            <div className="question-rail__summary">
+            <div className="question-rail__summary question-rail__summary--primary">
                 <div className="rail-summary-card">
                     <span>Tentativa</span>
                     <strong>{attemptNumber}</strong>
@@ -66,6 +68,16 @@ export function ExamSidebar({
                 <div className="rail-summary-card">
                     <span>Tempo total</span>
                     <strong>{formatDuration(totalTimeMs)}</strong>
+                </div>
+            </div>
+
+            <div className="rail-progress">
+                <div className="rail-progress__copy">
+                    <strong>{Math.round(completionRatio * 100)}% da prova com resposta final registrada</strong>
+                    <span>{answeredCount} respondidas, {reviewCount} para revisar e {Math.max(0, totalQuestions - answeredCount - inProgressCount - reviewCount)} pendentes.</span>
+                </div>
+                <div className="rail-progress__bar" aria-hidden="true">
+                    <span style={{ width: `${answeredCount ? Math.max(6, completionRatio * 100) : 0}%` }} />
                 </div>
             </div>
 
@@ -99,7 +111,7 @@ export function ExamSidebar({
                                 <span className="rail-item__label">{question.title}</span>
                                 <span className="rail-item__meta">{progressLabel(question.progress)}</span>
                             </span>
-                            <span className="timer-pill">
+                            <span className="timer-pill timer-pill--rail">
                                 <Clock3 size={14} />
                                 {formatDuration(question.timeMs)}
                             </span>

@@ -36,6 +36,12 @@ function progressClass(progress: QuestionProgress) {
     return 'progress-pill';
 }
 
+function difficultyLabel(value: ExamQuestion['difficulty']) {
+    if (value === 'base') return 'Base';
+    if (value === 'desafio') return 'Desafio';
+    return 'Intermediaria';
+}
+
 export function ExamQuestionArea({
     question,
     draft,
@@ -54,14 +60,9 @@ export function ExamQuestionArea({
                 <div>
                     <span className="question-card__eyebrow">Questao {question.number} de {totalQuestions}</span>
                     <h2>{question.title}</h2>
-                    <p>Preencha apenas a resposta oficial nos campos abaixo. O rascunho continua separado e nao influencia a correcao imediata.</p>
+                    <p>Leia o enunciado com calma, registre a resposta oficial nos campos abaixo e mantenha o rascunho separado para organizar o raciocinio.</p>
                 </div>
                 <div className="question-card__top-actions">
-                    <span className={progressClass(progress)}>{progressLabel(progress)}</span>
-                    <span className="timer-pill">
-                        <Clock3 size={16} />
-                        {formatDuration(questionTimeMs)}
-                    </span>
                     <button
                         type="button"
                         className={`ghost-button ${draft.flagged ? 'ghost-button--flagged' : ''}`}
@@ -73,57 +74,73 @@ export function ExamQuestionArea({
                 </div>
             </div>
 
-            <div className="badge-row">
+            <div className="question-card__status-strip">
+                <span className={progressClass(progress)}>{progressLabel(progress)}</span>
+                <span className="timer-pill">
+                    <Clock3 size={16} />
+                    Tempo na questao {formatDuration(questionTimeMs)}
+                </span>
+                <span className="support-chip">{difficultyLabel(question.difficulty)}</span>
+            </div>
+
+            <div className="badge-row badge-row--topics">
                 {question.topics.map((topic) => (
                     <span key={topic} className="tag">
                         {topic}
                     </span>
                 ))}
-                <span className="badge">{question.difficulty}</span>
             </div>
 
-            <div className={`question-card__body ${question.graphKey ? 'question-card__body--with-graph' : ''}`}>
-                <article className="statement-panel">
-                    <div className="graph-panel__header">
-                        <div>
-                            <h3>Enunciado</h3>
-                            <p>Leia com calma e use o mapa lateral para voltar em qualquer questao sem perder o progresso.</p>
-                        </div>
-                    </div>
-                    <div className="content-stack">
-                        <ContentRenderer blocks={question.prompt} />
-                    </div>
-                </article>
-
-                {question.graphKey ? (
-                    <article className="graph-panel">
+            <div className="question-card__body">
+                <div className={`question-card__context ${question.graphKey ? 'question-card__context--with-graph' : ''}`}>
+                    <article className="statement-panel">
                         <div className="graph-panel__header">
                             <div>
-                                <h3>Apoio visual</h3>
-                                <p>{question.graphCaption || 'Grafico de apoio para interpretar a questao.'}</p>
+                                <h3>Enunciado</h3>
+                                <p>Use o texto abaixo como referencia principal e deixe o mapa lateral para navegacao, nao para leitura.</p>
                             </div>
-                            <button type="button" className="icon-button" onClick={() => onZoomGraph(question.graphKey)}>
-                                <Expand size={16} />
-                                Ampliar
-                            </button>
                         </div>
-                        <GraphFigure graphKey={question.graphKey} />
+                        <div className="content-stack">
+                            <ContentRenderer blocks={question.prompt} />
+                        </div>
                     </article>
-                ) : null}
 
-                <article className="answer-panel">
-                    <div className="answer-panel__header">
-                        <div>
-                            <h3>Resposta oficial</h3>
-                            <p>{question.answerSchema.kind === 'matrix' ? question.answerSchema.instructions : question.answerSchema.instructions || 'Registre somente a resposta final pedida em cada campo.'}</p>
+                    {question.graphKey ? (
+                        <article className="graph-panel">
+                            <div className="graph-panel__header">
+                                <div>
+                                    <h3>Apoio visual</h3>
+                                    <p>{question.graphCaption || 'Grafico de apoio para interpretar a questao.'}</p>
+                                </div>
+                                <button type="button" className="icon-button" onClick={() => onZoomGraph(question.graphKey)}>
+                                    <Expand size={16} />
+                                    Ampliar
+                                </button>
+                            </div>
+                            <GraphFigure graphKey={question.graphKey} />
+                        </article>
+                    ) : null}
+                </div>
+
+                <div className="question-card__response-grid">
+                    <article className="answer-panel">
+                        <div className="answer-panel__header">
+                            <div>
+                                <h3>Resposta oficial</h3>
+                                <p>{question.answerSchema.kind === 'matrix' ? question.answerSchema.instructions : question.answerSchema.instructions || 'Registre somente a resposta final pedida em cada campo.'}</p>
+                            </div>
                         </div>
-                    </div>
-                    <ExamAnswerArea question={question} draft={draft} onAnswerChange={onAnswerChange} onMatrixChange={onMatrixChange} />
-                </article>
+                        <ExamAnswerArea question={question} draft={draft} onAnswerChange={onAnswerChange} onMatrixChange={onMatrixChange} />
+                    </article>
 
-                <article className="scratch-panel">
-                    <ExamScratchpad value={draft.scratch} onChange={onScratchChange} />
-                </article>
+                    <article className="scratch-panel">
+                        <div className="scratch-panel__header">
+                            <h3>Rascunho e checkpoints</h3>
+                            <p>Este espaco nao altera a correcao. Use para organizar conta, estrategia e duvidas antes de finalizar.</p>
+                        </div>
+                        <ExamScratchpad value={draft.scratch} onChange={onScratchChange} />
+                    </article>
+                </div>
             </div>
         </section>
     );

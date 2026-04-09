@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getGraphExportMarkup } from './graphs';
 import { buildTimeHighlights, formatReportDateTime, type ExamReport } from './report';
 import { formatDurationLong } from './timing';
 
@@ -36,6 +37,39 @@ function drawSectionTitle(doc: jsPDF, title: string, y: number, margin: number) 
 function buildFileName(report: ExamReport) {
     const slug = `${report.examId}-tentativa-${report.attemptNumber}`.replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
     return `${slug}.pdf`;
+}
+
+async function svgMarkupToPngDataUrl(svgMarkup: string, width: number, height: number) {
+    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    try {
+        const image = new Image();
+        image.decoding = 'async';
+
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = () => reject(new Error('graph render failed'));
+            image.src = url;
+        });
+
+        const scale = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('canvas unavailable');
+        }
+
+        context.fillStyle = '#fffdf8';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        return canvas.toDataURL('image/png');
+    } finally {
+        URL.revokeObjectURL(url);
+    }
 }
 
 export async function exportExamReportPdf(report: ExamReport) {
@@ -198,7 +232,7 @@ export async function exportExamReportPdf(report: ExamReport) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
 
-    report.questions.forEach((question) => {
+    for (const question of report.questions) {
         cursorY = ensureSpace(doc, cursorY, 120, margin);
         doc.setFillColor(248, 250, 252);
         doc.roundedRect(margin, cursorY - 12, contentWidth, 24, 10, 10, 'F');
@@ -215,6 +249,8 @@ export async function exportExamReportPdf(report: ExamReport) {
 
         const metaRows = [
             `Status: ${question.statusLabel}`,
+            `Pontuacao: ${question.score}/${question.maxScore}`,
+            `Dificuldade: ${question.difficultyLabel}`,
             `Tempo: ${question.timeLabel}`,
             `Assuntos: ${question.topics.join(', ') || 'Nao informado'}`,
             `Sua resposta: ${question.studentAnswer}`,
@@ -232,6 +268,40 @@ export async function exportExamReportPdf(report: ExamReport) {
         doc.text('Resolucao comentada', margin, cursorY);
         cursorY += 16;
         doc.setFont('helvetica', 'normal');
+        if (question.graphKey) {
+            const graphAsset = getGraphExportMarkup(question.graphKey);
+            if (graphAsset) {
+                try {
+                    const graphDataUrl = await svgMarkupToPngDataUrl(graphAsset.svgMarkup, graphAsset.width, graphAsset.height);
+                    const targetWidth = Math.min(contentWidth, graphAsset.width * 0.72);
+                    const targetHeight = (graphAsset.height / graphAsset.width) * targetWidth;
+                    cursorY = ensureSpace(doc, cursorY, targetHeight + 26, margin);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Grafico da questao', margin, cursorY);
+                    cursorY += 10;
+                    doc.addImage(graphDataUrl, 'PNG', margin, cursorY, targetWidth, targetHeight, undefined, 'FAST');
+                    cursorY += targetHeight + 12;
+                    doc.setFont('helvetica', 'normal');
+                } catch {
+                    cursorY = ensureSpace(doc, cursorY, 24, margin);
+                    cursorY = writeWrappedText(doc, 'Grafico nao foi incorporado ao PDF por falha de renderizacao do asset visual.', margin, cursorY, contentWidth, 14) + 4;
+                }
+            }
+        }
+
+        if (question.fields.length) {
+            cursorY = ensureSpace(doc, cursorY, 40, margin);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Campos avaliados', margin, cursorY);
+            cursorY += 14;
+            doc.setFont('helvetica', 'normal');
+            question.fields.forEach((field) => {
+                const fieldRow = `${field.label}: aluno ${field.studentAnswer} | esperado ${field.expectedAnswer} | nota ${field.score}/${field.maxScore}`;
+                cursorY = ensureSpace(doc, cursorY, 24, margin);
+                cursorY = writeWrappedText(doc, fieldRow, margin, cursorY, contentWidth, 14) + 2;
+            });
+        }
+
         question.explanationSteps.forEach((step) => {
             cursorY = ensureSpace(doc, cursorY, 24, margin);
             doc.text('\u2022', margin, cursorY);
@@ -252,7 +322,7 @@ export async function exportExamReportPdf(report: ExamReport) {
         }
 
         cursorY += 8;
-    });
+    }
 
     doc.save(buildFileName(report));
 }

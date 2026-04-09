@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, CircleDashed, ClipboardList, Clock3, GraduationCap, House, ListFilter, PlayCircle } from 'lucide-react';
 import { EXAM_FILTERS, examStatusLabel, resolveExamFeatures, type ExamCardStatus, type ExamListFilterId } from './exam/config';
-import { buildLocalPedagogicalFeedback, type PedagogicalFeedback } from './exam/feedback';
+import { buildLocalPedagogicalFeedback, isPedagogicalFeedbackSpecific, type PedagogicalFeedback } from './exam/feedback';
 import {
     buildTopicPerformance,
     createEmptyDraft,
@@ -153,19 +153,49 @@ function summarizeAttempt(exam: ExamDefinition, attempt: ExamAttemptRecord | nul
 }
 
 function buildAiRequestPayload(report: ExamReport) {
+    const rushedQuestions = report.questions
+        .filter(
+            (question) =>
+                question.status !== 'correct' &&
+                report.summary.averageTimePerQuestionMs > 0 &&
+                question.timeMs > 0 &&
+                question.timeMs < report.summary.averageTimePerQuestionMs * 0.55,
+        )
+        .slice(0, 3)
+        .map((question) => ({
+            number: question.questionNumber,
+            title: question.title,
+            timeLabel: question.timeLabel,
+            status: question.statusLabel,
+        }));
+
     const slowestTopics = [...report.topics]
         .sort((left, right) => right.totalTimeMs - left.totalTimeMs)
         .slice(0, 3)
         .map((topic) => ({
             label: topic.label,
             timeLabel: formatDurationLong(topic.totalTimeMs),
+            performanceRatio: topic.performanceRatio,
+            incorrectCount: topic.incorrectCount,
+            blankCount: topic.blankCount,
         }));
 
     return {
+        attempt: {
+            examTitle: `${report.subtitle} - ${report.title}`,
+            moduleLabel: report.moduleLabel,
+            discipline: report.discipline,
+            attemptNumber: report.attemptNumber,
+            startedAt: report.summary.startedAt,
+            completedAt: report.summary.completedAt,
+            generatedAt: report.summary.generatedAt,
+        },
         summary: {
             totalQuestions: report.summary.totalQuestions,
             correctCount: report.summary.correctCount,
+            partialCount: report.summary.partialCount,
             incorrectCount: report.summary.incorrectCount,
+            blankCount: report.summary.blankCount,
             answeredCount: report.summary.answeredCount,
             performanceRatio: report.summary.performanceRatio,
             totalTimeMs: report.summary.totalTimeMs,
@@ -175,17 +205,54 @@ function buildAiRequestPayload(report: ExamReport) {
             label: topic.label,
             ratio: topic.performanceRatio,
             totalTimeMs: topic.totalTimeMs,
+            averageTimeMs: topic.averageTimeMs,
+            correctCount: topic.correctCount,
+            partialCount: topic.partialCount,
+            incorrectCount: topic.incorrectCount,
+            blankCount: topic.blankCount,
+        })),
+        questionBreakdown: report.questions.map((question) => ({
+            number: question.questionNumber,
+            title: question.title,
+            difficulty: question.difficultyLabel,
+            status: question.statusLabel,
+            score: question.score,
+            maxScore: question.maxScore,
+            scoreRatio: question.scoreRatio,
+            topics: question.topics,
+            timeMs: question.timeMs,
+            timeLabel: question.timeLabel,
+            studentAnswer: question.studentAnswer,
+            correctAnswer: question.correctAnswer,
+            studyTip: question.studyTip,
+            graphComment: question.graphComment || '',
+            scratchpad: question.scratchpad.slice(0, 320),
+            fieldFeedback: question.fields.map((field) => ({
+                label: field.label,
+                studentAnswer: field.studentAnswer,
+                expectedAnswer: field.expectedAnswer,
+                score: field.score,
+                maxScore: field.maxScore,
+            })),
         })),
         wrongQuestions: report.questions
             .filter((question) => question.status !== 'correct')
-            .slice(0, 8)
+            .slice(0, 10)
             .map((question) => ({
                 number: question.questionNumber,
                 title: question.title,
                 topics: question.topics,
                 studyTip: question.studyTip,
                 answerSummary: question.correctAnswer,
+                status: question.statusLabel,
+                timeLabel: question.timeLabel,
+                studentAnswer: question.studentAnswer,
             })),
+        errorSummary: {
+            blankQuestions: report.questions.filter((question) => question.status === 'blank').map((question) => question.questionNumber),
+            partialQuestions: report.questions.filter((question) => question.status === 'partial').map((question) => question.questionNumber),
+            incorrectQuestions: report.questions.filter((question) => question.status === 'incorrect').map((question) => question.questionNumber),
+        },
         timingHighlights: {
             slowestQuestions: report.slowestQuestions.map((question) => ({
                 number: question.questionNumber,
@@ -193,6 +260,7 @@ function buildAiRequestPayload(report: ExamReport) {
                 timeLabel: question.timeLabel,
             })),
             slowestTopics,
+            rushedQuestions,
         },
     };
 }
@@ -280,7 +348,14 @@ export default function App() {
     const currentAttempt = useMemo(() => getCurrentAttempt(activeExamState), [activeExamState]);
     const activeQuestionId = currentAttempt?.activeQuestionId || activeQuestions[0]?.id || '';
 
-    const timing = useExamTiming({
+    const {
+        snapshot: timingSnapshot,
+        totalElapsedMs: liveTotalElapsedMs,
+        questionElapsedMs: liveQuestionElapsedMs,
+        finish: finishTiming,
+        reset: resetTiming,
+        hydrate: hydrateTiming,
+    } = useExamTiming({
         questionIds,
         initialSnapshot: currentAttempt?.timing || null,
         activeQuestionId,
@@ -332,9 +407,9 @@ export default function App() {
 
     useEffect(() => {
         if (!currentAttempt) return;
-        timing.hydrate(currentAttempt.timing);
+        hydrateTiming(currentAttempt.timing);
         lastTimingPersistSecondRef.current = null;
-    }, [currentAttempt?.id, timing]);
+    }, [currentAttempt?.id, hydrateTiming]);
 
     useEffect(() => {
         if (!activeExam) return;
@@ -423,13 +498,13 @@ export default function App() {
         () =>
             ensureTimingSnapshot(
                 {
-                    ...timing.snapshot,
-                    totalElapsedMs: timing.totalElapsedMs,
-                    questionElapsedMs: timing.questionElapsedMs,
+                    ...timingSnapshot,
+                    totalElapsedMs: liveTotalElapsedMs,
+                    questionElapsedMs: liveQuestionElapsedMs,
                 },
                 questionIds,
             ),
-        [questionIds, timing.questionElapsedMs, timing.snapshot, timing.totalElapsedMs],
+        [liveQuestionElapsedMs, liveTotalElapsedMs, questionIds, timingSnapshot],
     );
 
     const currentAttemptView = useMemo(() => {
@@ -529,27 +604,8 @@ export default function App() {
 
     const fallbackFeedback = useMemo(() => {
         if (!reportCore) return null;
-
-        const slowestTopics = [...reportCore.topics]
-            .sort((left, right) => right.totalTimeMs - left.totalTimeMs)
-            .slice(0, 3)
-            .map((topic) => ({
-                label: topic.label,
-                timeLabel: formatDurationLong(topic.totalTimeMs),
-            }));
-
-        return buildLocalPedagogicalFeedback({
-            questions: activeQuestions,
-            evaluations: reportEvaluations,
-            topicPerformance: reportTopicPerformance,
-            slowestQuestions: reportCore.slowestQuestions.map((question) => ({
-                number: question.questionNumber,
-                title: question.title,
-                timeLabel: question.timeLabel,
-            })),
-            slowestTopics,
-        });
-    }, [activeQuestions, reportCore, reportEvaluations, reportTopicPerformance]);
+        return buildLocalPedagogicalFeedback(reportCore);
+    }, [reportCore]);
 
     const report = useMemo(
         () => (reportCore ? { ...reportCore, aiFeedback: reportAttempt?.analysis.feedback || null } : null),
@@ -640,14 +696,14 @@ export default function App() {
 
             const nextAttempt = getCurrentAttempt(nextState);
             if (examId === activeExam?.id) {
-                timing.reset();
+                resetTiming();
             }
 
             setViewedAttemptId(nextAttempt?.id || null);
             setExportStatus('idle');
             navigateToScreen('exam', examId);
         },
-        [activeExam?.id, exams, mutateExamState, navigateToScreen, timing],
+        [activeExam?.id, exams, mutateExamState, navigateToScreen, resetTiming],
     );
 
     const handleSelectQuestion = useCallback(
@@ -794,7 +850,7 @@ export default function App() {
     const handleFinish = useCallback(() => {
         if (!activeExam || !currentAttempt) return;
 
-        const finalTiming = timing.finish();
+        const finalTiming = finishTiming();
         mutateExamState(
             activeExam,
             (state) =>
@@ -814,7 +870,7 @@ export default function App() {
         setViewedAttemptId(currentAttempt.id);
         setExportStatus('idle');
         navigateToScreen('results', activeExam.id);
-    }, [activeExam, activeQuestionId, currentAttempt, mutateExamState, navigateToScreen, timing]);
+    }, [activeExam, activeQuestionId, currentAttempt, finishTiming, mutateExamState, navigateToScreen]);
 
     const handleRetry = useCallback(() => {
         if (!activeExam) return;
@@ -860,6 +916,12 @@ export default function App() {
             setViewedAttemptId(reportAttempt.id);
         }
     }, [reportAttempt?.id, screen, viewedAttemptId]);
+
+    useEffect(() => {
+        if (screen !== 'exam' || !activeExam || !currentAttempt?.finished) return;
+        setViewedAttemptId(currentAttempt.id);
+        navigateToScreen('results', activeExam.id, 'replace');
+    }, [activeExam, currentAttempt?.finished, currentAttempt?.id, navigateToScreen, screen]);
 
     useEffect(() => {
         if (loading || screen !== 'results' || reportAttempt || !activeExam) return;
@@ -908,18 +970,29 @@ export default function App() {
                 const feedback = payload?.feedback as PedagogicalFeedback | undefined;
                 if (!feedback) throw new Error('invalid ai feedback');
 
+                const nextAnalysis =
+                    isPedagogicalFeedbackSpecific(feedback, reportCore)
+                        ? {
+                              status: 'ready' as const,
+                              source: 'ai' as const,
+                              requestedAt,
+                              generatedAt: new Date().toISOString(),
+                              feedback,
+                          }
+                        : {
+                              status: 'fallback' as const,
+                              source: 'local' as const,
+                              requestedAt,
+                              generatedAt: new Date().toISOString(),
+                              feedback: fallbackFeedback,
+                          };
+
                 mutateExamState(
                     exams.find((item) => item.id === examId) || activeExam,
                     (state) =>
                         updateAttempt(state, attemptId, (attempt) => ({
                             ...attempt,
-                            analysis: {
-                                status: 'ready',
-                                source: 'ai',
-                                requestedAt,
-                                generatedAt: new Date().toISOString(),
-                                feedback,
-                            },
+                            analysis: nextAnalysis,
                         })),
                     { syncServer: true, status: 'saving' },
                 );
@@ -1054,6 +1127,11 @@ export default function App() {
                                                     <span className="question-card__eyebrow">{item.exam.category}</span>
                                                     <h3>{item.exam.subtitle} - {item.exam.title}</h3>
                                                     <p>{item.exam.description}</p>
+                                                    <div className="exam-library-card__context">
+                                                        <span className="support-chip">{item.exam.semester}</span>
+                                                        <span className="support-chip">{item.exam.discipline}</span>
+                                                        <span className="support-chip">{item.exam.moduleLabel}</span>
+                                                    </div>
                                                 </div>
                                                 <span className={`exam-status-pill exam-status-pill--${item.status}`}>{examStatusLabel(item.status)}</span>
                                             </div>
@@ -1082,8 +1160,8 @@ export default function App() {
                                                 <div className="exam-library-card__meta-item">
                                                     <GraduationCap size={16} />
                                                     <div>
-                                                        <strong>{item.answeredCount} respondidas</strong>
-                                                        <span>{item.reviewCount} marcadas para revisao</span>
+                                                        <strong>{examStatusLabel(item.status)}</strong>
+                                                        <span>{item.answeredCount} respondidas, {item.inProgressCount} em andamento e {item.reviewCount} para revisar</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1187,16 +1265,33 @@ export default function App() {
                 </>
             ) : (
                 <>
-                    <header className="hero hero--exam">
-                        <div className="hero__copy">
+                    <header className="exam-overview">
+                        <div className="exam-overview__copy">
                             <span className="hero__eyebrow">{activeExam.subtitle} - {activeExam.title}</span>
-                            <h1>Experiencia de prova focada, legivel e pronta para continuar ou revisar.</h1>
-                            <p>Enunciado amplo, resposta oficial separada do rascunho, mapa de questoes claro e tempos visiveis sem quebrar a experiencia principal da plataforma.</p>
+                            <h1>{activeExam.moduleLabel} com leitura organizada, timers estaveis e retomada limpa.</h1>
+                            <p>O enunciado, a resposta oficial, o rascunho e o mapa lateral agora trabalham em conjunto para manter foco, clareza e navegacao previsivel durante toda a tentativa.</p>
                         </div>
-                        <div className="hero__stats">
-                            <div className="stat-card"><span>Respondidas</span><strong>{answeredCount}/{activeQuestions.length}</strong></div>
-                            <div className="stat-card"><span>Tempo total</span><strong>{features.showTotalTimer ? formatDuration(liveTimingSnapshot.totalElapsedMs) : '--:--'}</strong></div>
-                            <div className="stat-card"><span>Para revisar</span><strong>{reviewCount}</strong></div>
+                        <div className="exam-overview__stats">
+                            <div className="exam-overview__card">
+                                <span>Respondidas</span>
+                                <strong>{answeredCount}/{activeQuestions.length}</strong>
+                                <small>Respostas finais registradas</small>
+                            </div>
+                            <div className="exam-overview__card">
+                                <span>Tempo total</span>
+                                <strong>{features.showTotalTimer ? formatDuration(liveTimingSnapshot.totalElapsedMs) : '--:--'}</strong>
+                                <small>Cronometro da tentativa</small>
+                            </div>
+                            <div className="exam-overview__card">
+                                <span>Questao atual</span>
+                                <strong>{activeIndex >= 0 ? activeIndex + 1 : 1}</strong>
+                                <small>{activeQuestions[activeIndex]?.title || activeQuestions[0]?.title || 'Questao selecionada'}</small>
+                            </div>
+                            <div className="exam-overview__card">
+                                <span>Para revisar</span>
+                                <strong>{reviewCount}</strong>
+                                <small>{inProgressCount} ainda em andamento</small>
+                            </div>
                         </div>
                     </header>
 

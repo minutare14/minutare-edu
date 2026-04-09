@@ -29,6 +29,13 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [react(), tailwindcss(), copyStaticDirs(['js', 'content', 'vendor', 'ferramentas'])],
+    build: {
+      rollupOptions: {
+        input: {
+          exam: path.resolve(__dirname, 'exam.html'),
+        },
+      },
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },

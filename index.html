@@ -1,16 +1,389 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Lista 1 de Bases Matematicas em formato interativo, com questoes separadas, graficos reconstruidos, rascunho por item e correcao pedagogica."
-    />
-    <title>CTIA03 • Lista 1 Interativa</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTIA03 - Bases Matematicas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/edu.css">
+</head>
+<body>
+
+<header class="header">
+    <button id="btn-back" class="btn-back hidden" aria-label="Voltar">&larr;</button>
+    <h1 class="header__title">MINUTARE - EDUCATION DIVISION</h1>
+    <div class="header__actions">
+        <div id="session-status" class="session-status hidden" aria-live="polite">
+            <span class="session-status__label">Expira em</span>
+            <strong id="session-countdown" class="session-status__time">30:00</strong>
+            <span id="session-warning-text" class="session-status__warning hidden">Sessao prestes a expirar</span>
+        </div>
+        <span id="auth-user-badge" class="auth-badge hidden"></span>
+        <button id="btn-logout" class="header__logout" type="button">Sair</button>
+    </div>
+</header>
+
+<div class="desktop-layout-wrapper">
+<main class="app-container">
+    <section id="page-home" class="page page--narrow active">
+        <div class="home-hero">
+            <span class="topic-label">Trilha CTIA03</span>
+            <h2>Bases Matematicas</h2>
+            <p class="home-hero__lead">
+                Plataforma de revisao com conteudo real vindo dos arquivos Markdown do curso e um laboratorio de artefatos interativos organizado para estudo visual no celular e no desktop.
+            </p>
+        </div>
+
+        <div class="card card--progress">
+            <div class="card__split">
+                <div>
+                    <h3>Seu progresso</h3>
+                    <p>Voce revisou 0 de 6 modulos</p>
+                </div>
+                <span class="card__meta">9 arquivos + manual + 16 artefatos</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+        </div>
+
+        <section class="home-section">
+            <div class="section-heading">
+                <div>
+                    <h3>Modulos de estudo</h3>
+                    <p>Conteudo carregado de <code>/content/markdown</code>, enriquecido com o manual completo e apoiado por recursos visuais interativos.</p>
+                </div>
+            </div>
+            <div id="modules-list" class="modules-list">
+                <div class="card loading-card">
+                    <div class="loader"></div>
+                    <p>Carregando modulos...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-section">
+            <div class="section-heading">
+                <div>
+                    <h3>Provas e avaliacoes</h3>
+                    <p>As provas entram como recurso adicional da plataforma, sem substituir os modulos, o laboratorio e a trilha principal de estudo.</p>
+                </div>
+            </div>
+            <div id="exams-list" class="modules-list exams-list">
+                <div class="card loading-card">
+                    <div class="loader"></div>
+                    <p>Carregando provas...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-section">
+            <div class="section-heading">
+                <div>
+                    <h3>Acoes rapidas</h3>
+                    <p>Revise tudo de uma vez, monte um simulado ou entre direto no laboratorio visual.</p>
+                </div>
+            </div>
+            <button class="btn btn--primary" onclick="generateSimulado()">Simulado completo</button>
+            <button class="btn btn--secondary" data-nav="page-revisao">Revisao de vespera</button>
+            <button class="btn btn--secondary" data-nav="page-laboratorio">Laboratorio matematico</button>
+        </section>
+    </section>
+
+    <div id="module-pages"></div>
+    <div id="laboratory-dashboard"></div>
+    <section id="page-laboratory-experience" class="page page--narrow">
+        <div id="lab-experience-container"></div>
+    </section>
+
+    <section id="page-quiz" class="page page--narrow">
+        <div id="quiz-container">
+            <span class="topic-label" id="quiz-progress">Questao 1 de 3</span>
+            <h2 class="page-title-inline" id="question-text">Carregando...</h2>
+            <div id="options-container"></div>
+            <div id="explanation-box" class="explanation">
+                <h4 class="box__title">Explicacao</h4>
+                <p id="explanation-text"></p>
+            </div>
+            <button id="btn-next-quiz" class="btn btn--primary btn-spaced" style="display:none;">Proxima &rarr;</button>
+            <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(5)">Gerar mais 5 questoes</button>
+        </div>
+
+        <div id="quiz-result" class="result-screen" style="display:none;">
+            <h2 id="score-number">-</h2>
+            <h3>Quiz concluido</h3>
+            <p id="score-text"></p>
+            <button class="btn btn--primary" data-nav="page-home">&larr; Voltar para home</button>
+            <button class="btn btn--secondary ai-btn" onclick="generateQuizForTopic(window.currentTopic)">Novo quiz</button>
+            <button class="btn btn--secondary ai-btn btn-more-questions" onclick="generateMoreQuestions(10)">Mais 10 questoes</button>
+        </div>
+    </section>
+
+    <section id="page-simulado" class="page page--narrow">
+        <div id="simulado-intro">
+            <h2>Simulado completo</h2>
+            <p class="page-copy">
+                Dez questoes cobrindo os modulos atuais, com apoio do banco local se a geracao por IA falhar.
+            </p>
+            <div class="box box--tip">
+                <h4 class="box__title">Dica</h4>
+                <p>Use o simulado para medir retencao geral e depois volte aos modulos onde os erros se repetirem.</p>
+            </div>
+            <button class="btn btn--primary ai-btn btn-spaced" onclick="startSimulado()">Iniciar simulado</button>
+        </div>
+
+        <div id="simulado-container" style="display:none;">
+            <span class="topic-label" id="simulado-progress">Questao 1 de 10</span>
+            <h2 class="page-title-inline" id="simulado-question-text">Carregando...</h2>
+            <div id="simulado-options-container"></div>
+            <div id="simulado-explanation-box" class="explanation" style="display:none;">
+                <h4 class="box__title">Explicacao</h4>
+                <p id="simulado-explanation-text"></p>
+            </div>
+            <button id="btn-next-simulado" class="btn btn--primary btn-spaced" style="display:none;">Proxima &rarr;</button>
+        </div>
+
+        <div id="simulado-result" class="result-screen" style="display:none;">
+            <h2 id="simulado-score-number">-</h2>
+            <h3>Simulado concluido</h3>
+            <p id="simulado-score-text"></p>
+            <div id="simulado-feedback"></div>
+            <button class="btn btn--primary" data-nav="page-home">&larr; Voltar para home</button>
+            <button class="btn btn--secondary ai-btn" onclick="generateSimulado()">Refazer simulado</button>
+        </div>
+    </section>
+
+    <section id="page-revisao" class="page page--narrow">
+        <div class="section-heading">
+            <div>
+                <span class="topic-label">Revisao final</span>
+                <h2>Revisao de vespera</h2>
+                <p>Resumo rapido guiado pelos modulos reais que entraram na plataforma.</p>
+            </div>
+        </div>
+
+        <div id="review-dashboard">
+            <div class="card loading-card">
+                <div class="loader"></div>
+                <p>Montando revisao...</p>
+            </div>
+        </div>
+
+        <div class="ai-section">
+            <h3>Revisao com IA</h3>
+            <button
+                class="btn btn--secondary ai-btn"
+                onclick="generateReview('Conjuntos, Conjuntos Numericos, Relacao de Ordem, Intervalos Numericos, Propriedades da Algebra, Produtos Notaveis e Fatoracao', this)"
+            >
+                Gerar revisao completa
+            </button>
+            <div class="ai-response-box hidden"></div>
+        </div>
+
+        <h3 class="section-subtitle">Checklist da prova</h3>
+        <div class="checklist">
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Conjuntos e operacoes</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Conjuntos Numericos</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Ordem e Intervalos</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Propriedades da Algebra</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Produtos Notaveis</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Revisei Fatoracao</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Fiz pelo menos um quiz rapido</span></label>
+            <label class="checklist-item"><input type="checkbox"><span>Fiz um simulado completo</span></label>
+        </div>
+    </section>
+</main>
+
+<div id="chat-backdrop" class="chat-backdrop hidden" aria-hidden="true"></div>
+<div id="chat-widget" class="chat-widget">
+    <button id="chat-toggle" class="chat-toggle" type="button" aria-controls="chat-window" aria-expanded="false">
+        <span class="chat-toggle__eyebrow">Tutor IA</span>
+        <span class="chat-toggle__label">Abrir tutor</span>
+    </button>
+    <div id="chat-window" class="chat-window hidden" role="dialog" aria-modal="true" aria-label="Tutor de Matematica">
+        <div class="chat-header">
+            <div class="chat-header__title">
+                <span class="chat-header__eyebrow">Tutor de Matematica</span>
+                <h3>Respostas curtas, guiadas e faceis de escanear</h3>
+                <p>Abra como painel dedicado para estudar sem cobrir os modulos ou perder o foco.</p>
+                <div id="chat-context-badge" class="chat-context-badge hidden" aria-live="polite">
+                    <span class="chat-context-badge__icon">&#9679;</span>
+                    <span id="chat-context-label" class="chat-context-badge__label"></span>
+                </div>
+            </div>
+            <div class="chat-header__actions">
+                <select id="chat-model" aria-label="Selecionar modelo do tutor">
+                    <option value="flash">Flash</option>
+                    <option value="pro">Pro</option>
+                    <option value="lite">Lite</option>
+                </select>
+                <button id="chat-close" type="button" aria-label="Fechar tutor">&times;</button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="chat-intro">
+                <span class="chat-intro__eyebrow">Assistente guiado</span>
+                <h4>Peca uma resposta em blocos, nao um texto bruto.</h4>
+                <p>O tutor funciona melhor quando voce pede explicacao, pratica ou revisao com um objetivo claro. Assim a resposta vem mais legivel e util.</p>
+                <div class="chat-pattern" aria-label="Estrutura sugerida para respostas">
+                    <span class="chat-pattern__chip">Resumo rapido</span>
+                    <span class="chat-pattern__chip">Explicacao</span>
+                    <span class="chat-pattern__chip">Exemplo</span>
+                    <span class="chat-pattern__chip">Erros comuns</span>
+                </div>
+            </div>
+            <div class="chat-suggestions" aria-label="Sugestoes rapidas">
+                <button type="button" class="chat-suggestion chat-suggestion--primary" data-chat-prompt="Explique o conteudo deste modulo de forma simples, com exemplos.">Explicar</button>
+                <button type="button" class="chat-suggestion chat-suggestion--secondary" data-chat-prompt="Crie tres exercicios graduais sobre o topico atual, com gabarito comentado.">Gerar exercicios</button>
+                <button type="button" class="chat-suggestion chat-suggestion--ghost" data-chat-prompt="Quais sao os erros mais comuns neste assunto e como evita-los?">Erros comuns</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Pergunte sobre um modulo, exercicio ou artefato..." autocomplete="off" />
+            <button id="chat-send" type="button">Enviar</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="feynman-backdrop" class="feynman-backdrop hidden" aria-hidden="true"></div>
+<section id="feynman-modal" class="feynman-modal hidden" role="dialog" aria-modal="true" aria-labelledby="feynman-modal-title" aria-describedby="feynman-modal-description" aria-hidden="true">
+    <div class="feynman-shell">
+        <div class="feynman-shell__header">
+            <div class="feynman-shell__title-group">
+                <span class="feynman-shell__eyebrow">Modo Feynman</span>
+                <h2 id="feynman-modal-title">Testar se aprendi</h2>
+                <p id="feynman-modal-description" class="feynman-shell__lead">Explique com suas palavras o que voce entendeu. A IA vai avaliar sua compreensao antes de mostrar qualquer explicacao ideal.</p>
+            </div>
+            <button id="feynman-close" type="button" aria-label="Fechar Modo Feynman">&times;</button>
+        </div>
+
+        <div class="feynman-stepper" aria-label="Etapas do Modo Feynman">
+            <div class="feynman-step is-active" data-feynman-step="explain">
+                <span class="feynman-step__index">1</span>
+                <div>
+                    <strong>Explicar</strong>
+                    <span>Responda com suas palavras</span>
+                </div>
+            </div>
+            <div class="feynman-step" data-feynman-step="evaluate">
+                <span class="feynman-step__index">2</span>
+                <div>
+                    <strong>Avaliacao</strong>
+                    <span>Veja acertos, falhas e erros</span>
+                </div>
+            </div>
+            <div class="feynman-step" data-feynman-step="support">
+                <span class="feynman-step__index">3</span>
+                <div>
+                    <strong>Apoio</strong>
+                    <span>Revise e compare com a explicacao ideal</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="feynman-layout">
+            <aside class="feynman-sidebar" aria-label="Contexto da avaliacao">
+                <section class="feynman-card feynman-card--instruction">
+                    <span class="feynman-card__label">Como funciona</span>
+                    <h3>Explique como se estivesse ensinando outra pessoa</h3>
+                    <ul class="feynman-guidelines">
+                        <li>Diga a ideia principal com clareza.</li>
+                        <li>Mostre um exemplo curto ou uma aplicacao.</li>
+                        <li>Evite copiar o texto do modulo.</li>
+                    </ul>
+                </section>
+
+                <section class="feynman-card feynman-card--topic">
+                    <span class="feynman-card__label">Tema atual</span>
+                    <h3 id="feynman-topic-title">Tema do modulo</h3>
+                    <p id="feynman-topic-summary">Resumo do que sera avaliado.</p>
+                    <div class="feynman-chip-group">
+                        <span class="feynman-chip-group__label">Pontos esperados</span>
+                        <div id="feynman-topic-keywords" class="feynman-chip-list"></div>
+                    </div>
+                </section>
+            </aside>
+
+            <div class="feynman-stage">
+                <div id="feynman-input-phase" class="feynman-phase">
+                    <section class="feynman-card feynman-card--response">
+                        <div class="feynman-card__head">
+                            <span class="feynman-card__label">Sua explicacao</span>
+                            <span id="feynman-char-count" class="feynman-char-count">0 / 4000</span>
+                        </div>
+                        <label class="feynman-label" id="feynman-question-label">Explique com suas palavras o que voce entendeu sobre este tema:</label>
+                        <textarea
+                            id="feynman-input"
+                            class="feynman-textarea"
+                            rows="10"
+                            maxlength="4000"
+                            placeholder="Explique a ideia central, diga o que significa e acrescente um exemplo simples ou uma comparacao para provar que voce entendeu."
+                            aria-labelledby="feynman-question-label"
+                        ></textarea>
+                        <p class="feynman-helper">Dica: pense em como voce explicaria este tema para um colega em 1 minuto.</p>
+                        <p id="feynman-inline-error" class="feynman-inline-error hidden" role="alert"></p>
+                        <div class="feynman-actions">
+                            <button id="feynman-submit" class="btn btn--primary" type="button">Avaliar explicacao</button>
+                            <button id="feynman-cancel" class="btn btn--ghost" type="button">Cancelar</button>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="feynman-loading-phase" class="feynman-phase hidden">
+                    <section class="feynman-card feynman-card--loading">
+                        <div class="feynman-loading">
+                            <div class="loader" style="border-top-color:var(--blue-ink);"></div>
+                            <div>
+                                <strong>Avaliando sua explicacao</strong>
+                                <p>A IA esta conferindo se voce explicou o conceito central, onde acertou e o que ainda precisa revisar.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="feynman-result-phase" class="feynman-phase hidden">
+                    <section class="feynman-card feynman-card--result">
+                        <span class="feynman-card__label">Avaliacao</span>
+                        <p class="feynman-result-note">Primeiro revise o diagnostico da sua explicacao. So depois vale comparar com a explicacao ideal.</p>
+                        <div id="feynman-score-banner" class="feynman-score-banner"></div>
+                    </section>
+                    <div id="feynman-feedback" class="feynman-feedback"></div>
+                    <section class="feynman-card feynman-card--support">
+                        <span class="feynman-card__label">Apoio</span>
+                        <p class="feynman-support-copy">Refaca sua resposta usando o feedback acima. Se ainda restar duvida, abra a explicacao ideal como recurso de apoio.</p>
+                        <div class="feynman-actions feynman-actions--result">
+                            <button id="feynman-retry" class="btn btn--secondary" type="button">Tentar novamente</button>
+                            <button id="feynman-ideal" class="btn btn--ghost" type="button">Ver explicacao ideal</button>
+                        </div>
+                    </section>
+                    <div id="feynman-ideal-panel" class="feynman-ideal-panel hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="app-footer">
+    <span>MINUTARE - EDUCATION DIVISION</span>
+    <span class="dev-credit">Conteudo integrado a partir dos arquivos Markdown locais com renderizacao matematica via KaTeX e laboratorio de artefatos interativos.</span>
+</footer>
+
+<script src="/vendor/marked/marked.umd.js"></script>
+<script src="/vendor/katex/katex.min.js"></script>
+<script src="/vendor/katex/contrib/auto-render.min.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/modules-data.js"></script>
+<script src="/js/artifacts-data.js"></script>
+<script src="/js/exams-data.js"></script>
+<script src="/js/content-renderer.js"></script>
+<script src="/js/quiz.js"></script>
+<script src="/js/app.js"></script>
+</body>
 </html>

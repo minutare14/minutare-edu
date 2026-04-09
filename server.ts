@@ -350,6 +350,7 @@ app.use((req, res, next) => {
         req.path === '/' ||
         req.path === '/login' ||
         req.path === '/app' ||
+        req.path === '/app/provas' ||
         req.path === '/me' ||
         req.path === '/logout' ||
         req.path.startsWith('/api') ||
@@ -1913,7 +1914,11 @@ app.post('/auth/refresh-session', requireAuth, async (req, res) => {
 });
 
 app.get('/app', requirePageAuth, (_req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/app/provas', requirePageAuth, (_req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'exam.html'));
 });
 
 app.use('/api', requireAuth);

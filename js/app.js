@@ -1922,6 +1922,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnBack = document.getElementById('btn-back');
     const btnLogout = document.getElementById('btn-logout');
     const modulesList = document.getElementById('modules-list');
+    const examsList = document.getElementById('exams-list');
     const modulePages = document.getElementById('module-pages');
     const laboratoryDashboard = document.getElementById('laboratory-dashboard');
     const reviewDashboard = document.getElementById('review-dashboard');
@@ -2255,6 +2256,150 @@ document.addEventListener('DOMContentLoaded', async () => {
     function setErrorCard(target, message) {
         if (!target) return;
         target.innerHTML = `<div class="card error-card"><h3>Falha ao carregar conteúdo</h3><p>${message}</p></div>`;
+    }
+
+    function readExamState(exam) {
+        if (!exam || typeof exam !== 'object') {
+            return null;
+        }
+
+        const stateKey = typeof exam.stateKey === 'string' ? exam.stateKey : '';
+        if (stateKey && window.Store?.load) {
+            const hydratedState = window.Store.load(stateKey);
+            if (hydratedState && typeof hydratedState === 'object') {
+                return hydratedState;
+            }
+        }
+
+        const localStorageKey = typeof exam.localStorageKey === 'string' ? exam.localStorageKey : '';
+        if (!localStorageKey) {
+            return null;
+        }
+
+        try {
+            const raw = window.localStorage.getItem(localStorageKey);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (error) {
+            console.warn('[exams] falha ao ler estado local da prova', { examId: exam.id, error });
+            return null;
+        }
+    }
+
+    function draftHasResponse(draft) {
+        if (!draft || typeof draft !== 'object') {
+            return false;
+        }
+
+        if (typeof draft.officialAnswer === 'string' && draft.officialAnswer.trim()) {
+            return true;
+        }
+
+        if (typeof draft.scratchpad === 'string' && draft.scratchpad.trim()) {
+            return true;
+        }
+
+        if (draft.flagged) {
+            return true;
+        }
+
+        if (draft.answers && typeof draft.answers === 'object') {
+            const hasFieldValue = Object.values(draft.answers).some((value) => typeof value === 'string' && value.trim());
+            if (hasFieldValue) {
+                return true;
+            }
+        }
+
+        if (draft.matrixAnswers && typeof draft.matrixAnswers === 'object') {
+            const hasMatrixValue = Object.values(draft.matrixAnswers).some(
+                (row) => row && typeof row === 'object' && Object.values(row).some((value) => typeof value === 'string' && value.trim()),
+            );
+            if (hasMatrixValue) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function summarizeExamProgress(exam) {
+        const persistedState = readExamState(exam);
+        const drafts =
+            persistedState?.drafts && typeof persistedState.drafts === 'object'
+                ? Object.values(persistedState.drafts)
+                : [];
+        const answeredCount = drafts.filter(draftHasResponse).length;
+        const totalQuestions = typeof exam.questionCount === 'number' ? exam.questionCount : drafts.length;
+        const finished = Boolean(persistedState?.finished);
+        return {
+            answeredCount,
+            totalQuestions,
+            status: finished ? 'completed' : answeredCount > 0 ? 'in-progress' : 'not-started',
+        };
+    }
+
+    function examStatusLabel(status) {
+        if (status === 'completed') return 'Concluida';
+        if (status === 'in-progress') return 'Em andamento';
+        return 'Nao iniciada';
+    }
+
+    function examActionLabel(status) {
+        if (status === 'completed') return 'Revisar prova';
+        if (status === 'in-progress') return 'Continuar prova';
+        return 'Abrir prova';
+    }
+
+    function renderExamOverview() {
+        if (!examsList) return;
+
+        const exams = Array.isArray(window.EXAMS_DATA) ? window.EXAMS_DATA : [];
+        if (!exams.length) {
+            examsList.innerHTML = '<div class="card"><h3>Sem provas cadastradas</h3><p>Quando novas avaliacoes forem adicionadas, elas vao aparecer aqui sem alterar sua trilha principal de estudo.</p></div>';
+            return;
+        }
+
+        examsList.innerHTML = exams
+            .map((exam) => {
+                const progress = summarizeExamProgress(exam);
+                const accent = progress.status === 'completed' ? 'green' : progress.status === 'in-progress' ? 'blue' : 'amber';
+                const topicChips = Array.isArray(exam.topics)
+                    ? exam.topics
+                        .slice(0, 5)
+                        .map((topic) => `<span class="module-chip">${escapeHtml(topic)}</span>`)
+                        .join('')
+                    : '';
+                const answeredSummary =
+                    progress.status === 'not-started'
+                        ? 'Nenhuma resposta salva ainda.'
+                        : `${progress.answeredCount} de ${progress.totalQuestions || exam.questionCount} questoes com resposta ou rascunho salvos.`;
+
+                return `
+                    <article class="module-card" data-accent="${accent}">
+                        <div class="module-card__topline">
+                            <div>
+                                <span class="topic-label">Recurso adicional</span>
+                                <h3>${escapeHtml(exam.title)}</h3>
+                            </div>
+                            <span class="module-card__meta">${examStatusLabel(progress.status)}</span>
+                        </div>
+                        <div class="module-card__body">
+                            <p class="module-card__description">${escapeHtml(exam.subtitle)}. ${escapeHtml(exam.description)}</p>
+                            <div class="module-card__stats">
+                                <span class="module-card__stat">${escapeHtml(String(exam.questionCount))} questoes</span>
+                                <span class="module-card__stat">~${escapeHtml(String(exam.estimatedMinutes))} min</span>
+                            </div>
+                            <p class="module-card__description">${escapeHtml(answeredSummary)}</p>
+                            <div class="module-card__chips">${topicChips}</div>
+                        </div>
+                        <div class="module-card__footer">
+                            <a class="btn btn--primary" href="${escapeAttribute(exam.href)}">${examActionLabel(progress.status)}</a>
+                        </div>
+                    </article>
+                `;
+            })
+            .join('');
     }
 
     try {
@@ -2761,6 +2906,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     window.addEventListener('message', handleArtifactMessage);
+    window.addEventListener('focus', renderExamOverview);
+    window.addEventListener('storage', (event) => {
+        if (!event.key || event.key === 'ctia03_lista1InteractiveExam' || event.key === 'ctia03-lista1-interactive-exam-v1') {
+            renderExamOverview();
+        }
+    });
     window.addEventListener('resize', () => {
         syncAppScrollOffset();
         syncChatPresentation();
@@ -2773,6 +2924,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     syncChatPresentation();
 
     setLoadingCard(modulesList, 'Carregando módulos...');
+    setLoadingCard(examsList, 'Carregando provas...');
     setLoadingCard(reviewDashboard, 'Montando revisão...');
     setLoadingCard(laboratoryDashboard, 'Preparando laboratório visual...');
 
@@ -2820,6 +2972,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('[boot] home render failed; falling back to plain module cards.', error);
         modulesList.innerHTML = renderPlainFallbackHomeModules(modules);
+    }
+
+    try {
+        renderExamOverview();
+    } catch (error) {
+        console.error('[boot] exam overview render failed.', error);
+        setErrorCard(examsList, 'Nao foi possivel preparar a area de provas agora.');
     }
 
     try {
@@ -2877,6 +3036,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     refreshPages();
     window.updateProgress();
+    renderExamOverview();
     const initialPage = window.location.hash.replace('#', '') || 'page-home';
     if (document.getElementById(initialPage)) {
         window.navigateTo(initialPage);

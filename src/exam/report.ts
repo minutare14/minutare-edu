@@ -1,0 +1,251 @@
+import type { PedagogicalFeedback } from './feedback';
+import type { ExamDefinition } from './library';
+import type { ExamQuestion, TopicId } from './model';
+import type { ExamDraftState, QuestionEvaluation, TopicPerformance } from './grading';
+import { ensureDraft } from './grading';
+import { formatDuration, formatDurationLong, type ExamTimingSnapshot } from './timing';
+
+export interface ExamReportSummary {
+    totalQuestions: number;
+    answeredCount: number;
+    correctCount: number;
+    partialCount: number;
+    incorrectCount: number;
+    blankCount: number;
+    performanceRatio: number;
+    totalTimeMs: number;
+    averageTimePerQuestionMs: number;
+    startedAt: string | null;
+    completedAt: string | null;
+    generatedAt: string;
+}
+
+export interface ExamReportQuestionEntry {
+    questionId: string;
+    questionNumber: number;
+    title: string;
+    shortPrompt: string;
+    status: QuestionEvaluation['status'];
+    statusLabel: string;
+    studentAnswer: string;
+    correctAnswer: string;
+    timeMs: number;
+    timeLabel: string;
+    topics: string[];
+    explanationSteps: string[];
+    graphComment?: string;
+    studyTip: string;
+    scratchpad: string;
+}
+
+export interface ExamReportTopicEntry {
+    topic: TopicId;
+    label: string;
+    correctCount: number;
+    partialCount: number;
+    incorrectCount: number;
+    blankCount: number;
+    totalQuestions: number;
+    performanceRatio: number;
+    totalTimeMs: number;
+    averageTimeMs: number;
+}
+
+export interface ExamReportSlowQuestionEntry {
+    questionNumber: number;
+    title: string;
+    timeMs: number;
+    timeLabel: string;
+    topics: string[];
+}
+
+export interface ExamReport {
+    examId: string;
+    title: string;
+    subtitle: string;
+    discipline: string;
+    moduleLabel: string;
+    semester: string;
+    typeLabel: string;
+    summary: ExamReportSummary;
+    questions: ExamReportQuestionEntry[];
+    topics: ExamReportTopicEntry[];
+    slowestQuestions: ExamReportSlowQuestionEntry[];
+    strongestTopics: string[];
+    weakestTopics: string[];
+    aiFeedback: PedagogicalFeedback | null;
+}
+
+export function statusLabel(status: QuestionEvaluation['status']) {
+    if (status === 'correct') return 'Acertou';
+    if (status === 'partial') return 'Parcial';
+    if (status === 'incorrect') return 'Errou';
+    return 'Em branco';
+}
+
+export function formatReportDateTime(value: string | null) {
+    if (!value) return 'Nao registrado';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(new Date(value));
+}
+
+function contentBlocksToPlainText(question: ExamQuestion) {
+    return question.prompt
+        .map((block) => (block.type === 'bullets' ? block.items.join(' ') : block.text))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function summarizeStudentAnswer(evaluation: QuestionEvaluation) {
+    const answeredFields = evaluation.fields.filter((field) => field.studentAnswer.trim());
+    if (!answeredFields.length) return 'Em branco';
+    return answeredFields.map((field) => `${field.label}: ${field.studentAnswer}`).join(' | ');
+}
+
+function buildTopicQuestionBuckets(questions: ExamQuestion[]) {
+    return new Map<string, ExamQuestion>(questions.map((question) => [question.id, question]));
+}
+
+export function buildExamReport({
+    exam,
+    questions,
+    evaluations,
+    drafts,
+    topicPerformance,
+    timing,
+    topicLabels,
+    aiFeedback,
+}: {
+    exam: ExamDefinition;
+    questions: ExamQuestion[];
+    evaluations: QuestionEvaluation[];
+    drafts: ExamDraftState;
+    topicPerformance: TopicPerformance[];
+    timing: ExamTimingSnapshot;
+    topicLabels: Record<TopicId, string>;
+    aiFeedback: PedagogicalFeedback | null;
+}): ExamReport {
+    const questionMap = buildTopicQuestionBuckets(questions);
+    const answeredCount = evaluations.filter((evaluation) => evaluation.answered).length;
+    const correctCount = evaluations.filter((evaluation) => evaluation.status === 'correct').length;
+    const partialCount = evaluations.filter((evaluation) => evaluation.status === 'partial').length;
+    const incorrectCount = evaluations.filter((evaluation) => evaluation.status === 'incorrect').length;
+    const blankCount = evaluations.filter((evaluation) => evaluation.status === 'blank').length;
+    const totalScore = evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0);
+    const totalMax = evaluations.reduce((sum, evaluation) => sum + evaluation.maxScore, 0);
+    const performanceRatio = totalMax ? totalScore / totalMax : 0;
+    const totalTimeMs = timing.totalElapsedMs;
+    const averageTimePerQuestionMs = questions.length ? totalTimeMs / questions.length : 0;
+
+    const questionEntries: ExamReportQuestionEntry[] = evaluations.map((evaluation) => {
+        const question = questionMap.get(evaluation.questionId)!;
+        const draft = ensureDraft(drafts[question.id]);
+        const timeMs = timing.questionElapsedMs[question.id] || 0;
+        return {
+            questionId: question.id,
+            questionNumber: question.number,
+            title: question.title,
+            shortPrompt: contentBlocksToPlainText(question),
+            status: evaluation.status,
+            statusLabel: statusLabel(evaluation.status),
+            studentAnswer: summarizeStudentAnswer(evaluation),
+            correctAnswer: question.solution.answerSummary,
+            timeMs,
+            timeLabel: formatDuration(timeMs),
+            topics: question.topics.map((topic) => topicLabels[topic]),
+            explanationSteps: question.solution.steps,
+            graphComment: question.solution.graphComment,
+            studyTip: question.solution.studyTip,
+            scratchpad: draft.scratch.trim(),
+        };
+    });
+
+    const topicEntries: ExamReportTopicEntry[] = topicPerformance.map((topic) => {
+        const relatedQuestions = questions.filter((question) => question.topics.includes(topic.topic));
+        const relatedEvaluations = evaluations.filter((evaluation) => relatedQuestions.some((question) => question.id === evaluation.questionId));
+        const totalTimeForTopic = relatedQuestions.reduce((sum, question) => {
+            const questionTime = timing.questionElapsedMs[question.id] || 0;
+            return sum + questionTime / question.topics.length;
+        }, 0);
+
+        return {
+            topic: topic.topic,
+            label: topic.label,
+            correctCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'correct').length,
+            partialCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'partial').length,
+            incorrectCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'incorrect').length,
+            blankCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'blank').length,
+            totalQuestions: relatedQuestions.length,
+            performanceRatio: topic.ratio,
+            totalTimeMs: totalTimeForTopic,
+            averageTimeMs: relatedQuestions.length ? totalTimeForTopic / relatedQuestions.length : 0,
+        };
+    });
+
+    const slowestQuestions = [...questionEntries]
+        .sort((left, right) => right.timeMs - left.timeMs)
+        .slice(0, 5)
+        .map((entry) => ({
+            questionNumber: entry.questionNumber,
+            title: entry.title,
+            timeMs: entry.timeMs,
+            timeLabel: formatDuration(entry.timeMs),
+            topics: entry.topics,
+        }));
+
+    const strongestTopics = [...topicEntries]
+        .sort((left, right) => right.performanceRatio - left.performanceRatio)
+        .slice(0, 3)
+        .map((topic) => topic.label);
+
+    const weakestTopics = [...topicEntries]
+        .sort((left, right) => left.performanceRatio - right.performanceRatio)
+        .slice(0, 3)
+        .map((topic) => topic.label);
+
+    return {
+        examId: exam.id,
+        title: exam.title,
+        subtitle: exam.subtitle,
+        discipline: exam.discipline,
+        moduleLabel: exam.moduleLabel,
+        semester: exam.semester,
+        typeLabel: exam.typeLabel,
+        summary: {
+            totalQuestions: questions.length,
+            answeredCount,
+            correctCount,
+            partialCount,
+            incorrectCount,
+            blankCount,
+            performanceRatio,
+            totalTimeMs,
+            averageTimePerQuestionMs,
+            startedAt: timing.startedAt,
+            completedAt: timing.completedAt,
+            generatedAt: new Date().toISOString(),
+        },
+        questions: questionEntries,
+        topics: topicEntries,
+        slowestQuestions,
+        strongestTopics,
+        weakestTopics,
+        aiFeedback,
+    };
+}
+
+export function buildTimeHighlights(report: ExamReport) {
+    const slowest = report.slowestQuestions[0];
+    const slowestTopic = [...report.topics].sort((left, right) => right.totalTimeMs - left.totalTimeMs)[0];
+
+    return {
+        totalTimeLabel: formatDurationLong(report.summary.totalTimeMs),
+        averageTimeLabel: formatDurationLong(report.summary.averageTimePerQuestionMs),
+        slowestQuestionLabel: slowest ? `Questao ${slowest.questionNumber} (${slowest.timeLabel})` : 'Nao registrado',
+        slowestTopicLabel: slowestTopic ? `${slowestTopic.label} (${formatDurationLong(slowestTopic.totalTimeMs)})` : 'Nao registrado',
+    };
+}

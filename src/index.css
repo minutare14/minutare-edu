@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -1523,3 +1523,223 @@ textarea:focus {
         padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     }
 }
+
+.exam-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin: 18px 0 22px;
+}
+
+.exam-filter-bar__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.filter-chip,
+.support-chip,
+.progress-pill,
+.timer-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.filter-chip {
+    border: 1px solid rgba(34, 58, 90, 0.14);
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--navy);
+    padding: 10px 14px;
+}
+
+.filter-chip--active {
+    background: rgba(34, 58, 90, 0.95);
+    color: #fff;
+}
+
+.exam-library-card__support {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.support-chip {
+    padding: 8px 12px;
+    background: rgba(34, 58, 90, 0.08);
+    color: var(--navy);
+}
+
+.exam-library-card__footer,
+.exam-library-card__footer-copy,
+.review-card__status,
+.results-actions,
+.question-rail__summary,
+.question-card__metrics,
+.results-slowest__grid,
+.results-slowest__stack {
+    display: grid;
+    gap: 14px;
+}
+
+.exam-library-card__footer {
+    margin-top: 18px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.exam-library-card__footer-copy strong,
+.rail-summary-card strong,
+.metric-chip strong {
+    display: block;
+    font-size: 1.02rem;
+}
+
+.exam-library-card__footer-copy span,
+.rail-summary-card span,
+.metric-chip span {
+    color: var(--muted);
+    display: block;
+}
+
+.question-rail__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 18px 0;
+}
+
+.rail-summary-card,
+.metric-chip {
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(34, 58, 90, 0.1);
+}
+
+.rail-item__content {
+    display: grid;
+    gap: 4px;
+    text-align: left;
+}
+
+.rail-item__meta {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.progress-pill {
+    padding: 10px 14px;
+    background: rgba(34, 58, 90, 0.08);
+    color: var(--navy);
+}
+
+.progress-pill--answered {
+    background: rgba(63, 139, 127, 0.16);
+    color: #15554c;
+}
+
+.progress-pill--in-progress {
+    background: rgba(212, 140, 47, 0.18);
+    color: #8b5b17;
+}
+
+.progress-pill--review {
+    background: rgba(180, 74, 59, 0.16);
+    color: #8a372b;
+}
+
+.timer-pill {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--navy);
+    border: 1px solid rgba(34, 58, 90, 0.1);
+}
+
+.question-card__metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.results-actions {
+    grid-template-columns: repeat(2, auto);
+    align-items: center;
+}
+
+.results-slowest {
+    display: grid;
+    gap: 18px;
+    padding: 28px;
+    border-radius: 28px;
+    background: var(--bg-soft);
+    border: 1px solid var(--surface-border);
+    backdrop-filter: blur(12px);
+}
+
+.results-slowest__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.results-slowest__stack {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.coach-grid--secondary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 18px;
+}
+
+.review-card__status {
+    align-content: start;
+    justify-items: end;
+}
+
+@media (max-width: 1100px) {
+    .question-rail__summary,
+    .question-card__metrics,
+    .results-slowest__grid,
+    .coach-grid--secondary {
+        grid-template-columns: 1fr;
+    }
+
+    .exam-library-card__footer,
+    .results-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .review-card__status {
+        justify-items: start;
+    }
+}
+
+@media (max-width: 760px) {
+    .exam-filter-bar,
+    .exam-library-card__support,
+    .question-rail__summary,
+    .question-card__metrics,
+    .results-actions,
+    .results-slowest__grid,
+    .results-slowest__stack,
+    .coach-grid--secondary {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .exam-library-card__footer,
+    .exam-library-card__footer-copy {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-chip,
+    .support-chip,
+    .progress-pill,
+    .timer-pill {
+        justify-content: center;
+    }
+}
+

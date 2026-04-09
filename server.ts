@@ -250,10 +250,13 @@ type ExamPedagogicalFeedbackRequest = {
         incorrectCount: number;
         answeredCount: number;
         performanceRatio: number;
+        totalTimeMs: number;
+        averageTimePerQuestionMs: number;
     };
     topicPerformance: Array<{
         label: string;
         ratio: number;
+        totalTimeMs?: number;
     }>;
     wrongQuestions: Array<{
         number: number;
@@ -262,6 +265,17 @@ type ExamPedagogicalFeedbackRequest = {
         studyTip: string;
         answerSummary: string;
     }>;
+    timingHighlights: {
+        slowestQuestions: Array<{
+            number: number;
+            title: string;
+            timeLabel: string;
+        }>;
+        slowestTopics: Array<{
+            label: string;
+            timeLabel: string;
+        }>;
+    };
 };
 
 type ExamPedagogicalFeedbackPayload = {
@@ -269,6 +283,7 @@ type ExamPedagogicalFeedbackPayload = {
     strengths: string[];
     focusAreas: string[];
     errorPatterns: string[];
+    timeInsights: string[];
     studyPlan: string[];
     encouragement: string;
 };
@@ -1269,7 +1284,15 @@ function validateExercisesPayload(value: unknown): ExercisePayload {
 }
 
 function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogicalFeedbackRequest {
-    if (!isRecord(value) || !isRecord(value.summary) || !Array.isArray(value.topicPerformance) || !Array.isArray(value.wrongQuestions)) {
+    if (
+        !isRecord(value) ||
+        !isRecord(value.summary) ||
+        !Array.isArray(value.topicPerformance) ||
+        !Array.isArray(value.wrongQuestions) ||
+        !isRecord(value.timingHighlights) ||
+        !Array.isArray(value.timingHighlights.slowestQuestions) ||
+        !Array.isArray(value.timingHighlights.slowestTopics)
+    ) {
         throw new Error('Invalid exam pedagogical feedback request.');
     }
 
@@ -1288,6 +1311,8 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
             incorrectCount: parseFinite(value.summary.incorrectCount, 'summary.incorrectCount'),
             answeredCount: parseFinite(value.summary.answeredCount, 'summary.answeredCount'),
             performanceRatio: parseFinite(value.summary.performanceRatio, 'summary.performanceRatio'),
+            totalTimeMs: parseFinite(value.summary.totalTimeMs, 'summary.totalTimeMs'),
+            averageTimePerQuestionMs: parseFinite(value.summary.averageTimePerQuestionMs, 'summary.averageTimePerQuestionMs'),
         },
         topicPerformance: value.topicPerformance.map((item, index) => {
             if (!isRecord(item)) {
@@ -1297,6 +1322,7 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
             return {
                 label: requireNonEmptyString(item.label, `topicPerformance.${index}.label`),
                 ratio: parseFinite(item.ratio, `topicPerformance.${index}.ratio`),
+                totalTimeMs: item.totalTimeMs === undefined ? undefined : parseFinite(item.totalTimeMs, `topicPerformance.${index}.totalTimeMs`),
             };
         }),
         wrongQuestions: value.wrongQuestions.map((item, index) => {
@@ -1312,6 +1338,29 @@ function validateExamPedagogicalFeedbackRequest(value: unknown): ExamPedagogical
                 answerSummary: requireNonEmptyString(item.answerSummary, `wrongQuestions.${index}.answerSummary`),
             };
         }),
+        timingHighlights: {
+            slowestQuestions: value.timingHighlights.slowestQuestions.map((item, index) => {
+                if (!isRecord(item)) {
+                    throw new Error(`Invalid slowest question at index ${index}.`);
+                }
+
+                return {
+                    number: parseFinite(item.number, `timingHighlights.slowestQuestions.${index}.number`),
+                    title: requireNonEmptyString(item.title, `timingHighlights.slowestQuestions.${index}.title`),
+                    timeLabel: requireNonEmptyString(item.timeLabel, `timingHighlights.slowestQuestions.${index}.timeLabel`),
+                };
+            }),
+            slowestTopics: value.timingHighlights.slowestTopics.map((item, index) => {
+                if (!isRecord(item)) {
+                    throw new Error(`Invalid slowest topic at index ${index}.`);
+                }
+
+                return {
+                    label: requireNonEmptyString(item.label, `timingHighlights.slowestTopics.${index}.label`),
+                    timeLabel: requireNonEmptyString(item.timeLabel, `timingHighlights.slowestTopics.${index}.timeLabel`),
+                };
+            }),
+        },
     };
 }
 
@@ -1325,6 +1374,7 @@ function validateExamPedagogicalFeedbackPayload(value: unknown): ExamPedagogical
         strengths: requireStringArray(value.strengths, 'strengths', 1),
         focusAreas: requireStringArray(value.focusAreas, 'focusAreas', 1),
         errorPatterns: requireStringArray(value.errorPatterns, 'errorPatterns', 1),
+        timeInsights: requireStringArray(value.timeInsights, 'timeInsights', 1),
         studyPlan: requireStringArray(value.studyPlan, 'studyPlan', 1),
         encouragement: requireNonEmptyString(value.encouragement, 'encouragement'),
     };
@@ -2222,7 +2272,8 @@ app.post('/api/exam/pedagogical-feedback', async (req, res) => {
                 'Voce e uma professora de matematica brasileira, didatica e encorajadora. ' +
                 'Analise o desempenho de um aluno em uma prova de matematica e retorne JSON valido, sem markdown. ' +
                 'Seja clara, concreta e pedagogica. ' +
-                'overview deve ter 2 ou 3 frases. strengths, focusAreas, errorPatterns e studyPlan devem ter de 2 a 4 itens. ' +
+                'overview deve ter 2 ou 3 frases. strengths, focusAreas, errorPatterns, timeInsights e studyPlan devem ter de 2 a 4 itens. ' +
+                'Comente explicitamente a gestao de tempo, os assuntos mais lentos e as questoes em que o aluno pareceu travar mais. ' +
                 'encouragement deve fechar com tom realista e acolhedor. ' +
                 `Dados do desempenho: ${JSON.stringify(request)}.`,
             responseSchema: {
@@ -2232,10 +2283,11 @@ app.post('/api/exam/pedagogical-feedback', async (req, res) => {
                     strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
                     focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } },
                     errorPatterns: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    timeInsights: { type: Type.ARRAY, items: { type: Type.STRING } },
                     studyPlan: { type: Type.ARRAY, items: { type: Type.STRING } },
                     encouragement: { type: Type.STRING },
                 },
-                required: ['overview', 'strengths', 'focusAreas', 'errorPatterns', 'studyPlan', 'encouragement'],
+                required: ['overview', 'strengths', 'focusAreas', 'errorPatterns', 'timeInsights', 'studyPlan', 'encouragement'],
             },
             validator: validateExamPedagogicalFeedbackPayload,
         });

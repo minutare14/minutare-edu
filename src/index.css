@@ -118,6 +118,7 @@ button {
     display: grid;
     gap: 24px;
     grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+    align-items: stretch;
     padding: 30px;
     border: 1px solid rgba(34, 58, 90, 0.12);
     border-radius: 34px;
@@ -126,6 +127,10 @@ button {
         linear-gradient(135deg, rgba(212, 140, 47, 0.18), transparent);
     box-shadow: var(--shadow);
     color: white;
+}
+
+.hero__copy {
+    min-width: 0;
 }
 
 .hero__eyebrow,
@@ -154,6 +159,7 @@ button {
     font-size: clamp(2.1rem, 4vw, 3.6rem);
     line-height: 1.02;
     max-width: 12ch;
+    text-wrap: balance;
 }
 
 .hero p {
@@ -186,6 +192,52 @@ button {
 .summary-grid {
     display: grid;
     gap: 14px;
+}
+
+.hero .stat-card {
+    display: grid;
+    align-content: center;
+    min-height: 108px;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.hero .stat-card span {
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hero .stat-card strong {
+    color: #fff;
+}
+
+.hero--exam,
+.hero--results {
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.78fr);
+    gap: 28px;
+}
+
+.hero--exam h1,
+.hero--results h1 {
+    font-size: clamp(2rem, 3.2vw, 3.15rem);
+    line-height: 1.06;
+    max-width: 15ch;
+}
+
+.hero--exam .hero__eyebrow,
+.hero--results .hero__eyebrow {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.hero--exam p,
+.hero--results p {
+    font-size: 0.98rem;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 58ch;
 }
 
 .stat-card,
@@ -1405,6 +1457,11 @@ textarea:focus {
     .workspace,
     .question-card__body--with-graph {
         grid-template-columns: 1fr;
+    }
+
+    .hero--exam h1,
+    .hero--results h1 {
+        max-width: none;
     }
 
     .app-topbar {

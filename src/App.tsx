@@ -1156,7 +1156,7 @@ export default function App() {
                 </>
             ) : screen === 'results' && report ? (
                 <>
-                    <header className="hero">
+                    <header className="hero hero--results">
                         <div className="hero__copy">
                             <span className="hero__eyebrow">{activeExam.subtitle} - {activeExam.title}</span>
                             <h1>Relatorio forte, legivel e reutilizavel por tentativa.</h1>
@@ -1187,7 +1187,7 @@ export default function App() {
                 </>
             ) : (
                 <>
-                    <header className="hero">
+                    <header className="hero hero--exam">
                         <div className="hero__copy">
                             <span className="hero__eyebrow">{activeExam.subtitle} - {activeExam.title}</span>
                             <h1>Experiencia de prova focada, legivel e pronta para continuar ou revisar.</h1>

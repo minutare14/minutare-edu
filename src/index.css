@@ -290,11 +290,15 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    width: 100%;
     padding: 14px 16px;
     border-radius: 16px;
     border: 1px solid rgba(34, 58, 90, 0.08);
     background: rgba(255, 255, 255, 0.62);
     color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
 }
 
 .rail-item__number {
@@ -315,6 +319,11 @@ button {
 
 .rail-item--active {
     background: rgba(34, 58, 90, 0.93);
+    color: white;
+}
+
+.rail-item--active .rail-item__meta,
+.rail-item--active .timer-pill {
     color: white;
 }
 
@@ -1576,6 +1585,10 @@ textarea:focus {
     color: var(--navy);
 }
 
+.support-chip--status {
+    background: rgba(34, 58, 90, 0.12);
+}
+
 .exam-library-card__footer,
 .exam-library-card__footer-copy,
 .review-card__status,
@@ -1631,6 +1644,49 @@ textarea:focus {
     color: var(--muted);
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+.question-footer__hint {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.attempt-history {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.attempt-history__item {
+    display: grid;
+    gap: 6px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(34, 58, 90, 0.12);
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.attempt-history__item strong {
+    display: block;
+    font-size: 1rem;
+}
+
+.attempt-history__item span {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.attempt-history__item--active {
+    background: rgba(34, 58, 90, 0.93);
+    color: white;
+}
+
+.attempt-history__item--active span {
+    color: rgba(255, 255, 255, 0.82);
 }
 
 .progress-pill {

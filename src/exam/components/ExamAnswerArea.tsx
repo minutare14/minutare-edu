@@ -1,93 +1,129 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { MathText } from '../content';
+import type { QuestionDraft, ToggleAnswer } from '../grading';
+import type { ExamQuestion } from '../model';
 
-interface AnswerAreaProps {
-  question: any;
-  draft: any;
-  onUpdateDraft: (qId: string, value: any) => void;
+interface ExamAnswerAreaProps {
+    question: ExamQuestion;
+    draft: QuestionDraft;
+    onAnswerChange: (fieldKey: string, value: string) => void;
+    onMatrixChange: (rowKey: string, columnKey: string, value: ToggleAnswer) => void;
 }
 
-export const ExamAnswerArea: React.FC<AnswerAreaProps> = React.memo(({ question, draft, onUpdateDraft }) => {
-  // Local state for text/numeric inputs to ensure zero lag
-  const [localText, setLocalText] = useState(draft?.text || '');
+export function ExamAnswerArea({ question, draft, onAnswerChange, onMatrixChange }: ExamAnswerAreaProps) {
+    if (question.answerSchema.kind === 'matrix') {
+        const schema = question.answerSchema;
 
-  useEffect(() => {
-    setLocalText(draft?.text || '');
-  }, [question.id, draft?.text]);
+        return (
+            <div className="matrix-wrapper">
+                <div className="matrix-header">{schema.instructions}</div>
+                <div className="matrix-table">
+                    <div className="matrix-row matrix-row--head">
+                        <div className="matrix-cell matrix-cell--label">Intervalo</div>
+                        {schema.columns.map((column) => (
+                            <div key={column.key} className="matrix-cell matrix-cell--head">
+                                <MathText text={column.label} />
+                            </div>
+                        ))}
+                    </div>
+                    {schema.rows.map((row) => (
+                        <div key={row.key} className="matrix-row">
+                            <div className="matrix-cell matrix-cell--label">
+                                <MathText text={row.label} />
+                            </div>
+                            {schema.columns.map((column) => {
+                                const current = draft.matrixAnswers[row.key]?.[column.key] || '';
 
-  const handleBlur = useCallback(() => {
-    if (localText !== draft?.text) {
-      onUpdateDraft(question.id, { ...draft, text: localText });
+                                return (
+                                    <div key={`${row.key}-${column.key}`} className="matrix-cell">
+                                        <div className="toggle-set toggle-set--matrix">
+                                            <button
+                                                type="button"
+                                                className={`toggle-chip ${current === 'sim' ? 'toggle-chip--active' : ''}`}
+                                                onClick={() => onMatrixChange(row.key, column.key, 'sim')}
+                                            >
+                                                {schema.trueLabel}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`toggle-chip ${current === 'nao' ? 'toggle-chip--active-alt' : ''}`}
+                                                onClick={() => onMatrixChange(row.key, column.key, 'nao')}
+                                            >
+                                                {schema.falseLabel}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
-  }, [localText, draft, question.id, onUpdateDraft]);
 
-  // Multiple Choice
-  if (question.type === 'multiple-choice') {
     return (
-      <div className="answer-area">
-        {question.options.map((option: any) => (
-          <div 
-            key={option.id}
-            className={`answer-option ${draft?.selectedId === option.id ? 'selected' : ''}`}
-            onClick={() => onUpdateDraft(question.id, { selectedId: option.id })}
-          >
-            <div className="option-letter">{option.label}</div>
-            <div className="option-text">
-              <MathText text={option.text} />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+        <div className="groups-grid">
+            {question.answerSchema.groups.map((group) => (
+                <section key={group.key} className={`answer-group ${group.compact ? 'answer-group--compact' : ''}`}>
+                    <div className="answer-group__title">
+                        <span>{group.label}</span>
+                        {group.prompt ? (
+                            <small>
+                                <MathText text={group.prompt} />
+                            </small>
+                        ) : null}
+                    </div>
 
-  // Matching
-  if (question.type === 'matching') {
-    const pairs = draft?.pairs || {};
-    return (
-      <div className="answer-area">
-        {question.leftItems.map((left: any) => (
-          <div key={left.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ flex: 1, padding: '1rem', border: '1px solid var(--exam-border)', borderRadius: '8px', background: 'white' }}>
-              <MathText text={left.text} />
-            </div>
-            <div style={{ fontSize: '1.5rem', color: 'var(--exam-text-light)' }}>→</div>
-            <select 
-              value={pairs[left.id] || ''}
-              onChange={(e) => {
-                const newPairs = { ...pairs, [left.id]: e.target.value };
-                onUpdateDraft(question.id, { pairs: newPairs });
-              }}
-              style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: '1px solid var(--exam-border)', background: 'white' }}
-            >
-              <option value="">Selecione...</option>
-              {question.rightItems.map((right: any) => (
-                <option key={right.id} value={right.id}>{right.text}</option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-    );
-  }
+                    <div className={`field-stack ${group.fields.length > 1 ? 'field-stack--multi' : ''}`}>
+                        {group.fields.map((field) => {
+                            const value = draft.answers[field.key] || '';
+                            const expectsBoolean =
+                                field.input === 'toggle' &&
+                                field.checker.type === 'exact' &&
+                                ['v', 'f'].includes(field.checker.accepted[0].toLowerCase());
 
-  // Numeric or Text
-  return (
-    <div className="answer-area">
-      <div className="exam-card">
-        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--exam-text-light)', marginBottom: '0.5rem' }}>
-          Sua Resposta
-        </label>
-        <input 
-          type="text"
-          className="form-control"
-          style={{ padding: '1rem', fontSize: '1.25rem', fontWeight: 600 }}
-          placeholder="Digite sua resposta aqui..."
-          value={localText}
-          onChange={(e) => setLocalText(e.target.value)}
-          onBlur={handleBlur}
-        />
-      </div>
-    </div>
-  );
-});
+                            return (
+                                <label key={field.key} className="field-card">
+                                    <span className="field-card__label">{field.label}</span>
+                                    {field.helpText ? <span className="field-card__help">{field.helpText}</span> : null}
+                                    {field.input === 'textarea' ? (
+                                        <textarea
+                                            rows={field.rows || 4}
+                                            value={value}
+                                            placeholder={field.placeholder}
+                                            onChange={(event) => onAnswerChange(field.key, event.target.value)}
+                                        />
+                                    ) : field.input === 'toggle' ? (
+                                        <div className="toggle-set">
+                                            <button
+                                                type="button"
+                                                className={`toggle-chip ${value === (expectsBoolean ? 'V' : 'sim') ? 'toggle-chip--active' : ''}`}
+                                                onClick={() => onAnswerChange(field.key, expectsBoolean ? 'V' : 'sim')}
+                                            >
+                                                {expectsBoolean ? 'V' : 'Sim'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`toggle-chip toggle-chip--alt ${value === (expectsBoolean ? 'F' : 'nao') ? 'toggle-chip--active-alt' : ''}`}
+                                                onClick={() => onAnswerChange(field.key, expectsBoolean ? 'F' : 'nao')}
+                                            >
+                                                {expectsBoolean ? 'F' : 'Nao'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={value}
+                                            placeholder={field.placeholder}
+                                            onChange={(event) => onAnswerChange(field.key, event.target.value)}
+                                        />
+                                    )}
+                                </label>
+                            );
+                        })}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
+}

@@ -1,8 +1,8 @@
 import type { PedagogicalFeedback } from './feedback';
-import type { ExamDefinition } from './library';
-import type { ExamQuestion, TopicId } from './model';
 import type { ExamDraftState, QuestionEvaluation, TopicPerformance } from './grading';
 import { ensureDraft } from './grading';
+import type { ExamDefinition } from './library';
+import type { ExamQuestion, TopicId } from './model';
 import { formatDuration, formatDurationLong, type ExamTimingSnapshot } from './timing';
 
 export interface ExamReportSummary {
@@ -61,6 +61,8 @@ export interface ExamReportSlowQuestionEntry {
 
 export interface ExamReport {
     examId: string;
+    attemptId: string;
+    attemptNumber: number;
     title: string;
     subtitle: string;
     discipline: string;
@@ -112,6 +114,8 @@ function buildTopicQuestionBuckets(questions: ExamQuestion[]) {
 
 export function buildExamReport({
     exam,
+    attemptId,
+    attemptNumber,
     questions,
     evaluations,
     drafts,
@@ -119,8 +123,11 @@ export function buildExamReport({
     timing,
     topicLabels,
     aiFeedback,
+    generatedAt,
 }: {
     exam: ExamDefinition;
+    attemptId: string;
+    attemptNumber: number;
     questions: ExamQuestion[];
     evaluations: QuestionEvaluation[];
     drafts: ExamDraftState;
@@ -128,6 +135,7 @@ export function buildExamReport({
     timing: ExamTimingSnapshot;
     topicLabels: Record<TopicId, string>;
     aiFeedback: PedagogicalFeedback | null;
+    generatedAt?: string;
 }): ExamReport {
     const questionMap = buildTopicQuestionBuckets(questions);
     const answeredCount = evaluations.filter((evaluation) => evaluation.answered).length;
@@ -209,6 +217,8 @@ export function buildExamReport({
 
     return {
         examId: exam.id,
+        attemptId,
+        attemptNumber,
         title: exam.title,
         subtitle: exam.subtitle,
         discipline: exam.discipline,
@@ -227,7 +237,7 @@ export function buildExamReport({
             averageTimePerQuestionMs,
             startedAt: timing.startedAt,
             completedAt: timing.completedAt,
-            generatedAt: new Date().toISOString(),
+            generatedAt: generatedAt || timing.completedAt || timing.startedAt || new Date().toISOString(),
         },
         questions: questionEntries,
         topics: topicEntries,

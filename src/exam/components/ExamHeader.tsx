@@ -1,41 +1,52 @@
-import React from 'react';
-import { TimerDisplay } from './TimerDisplay';
+import { Clock3, Save } from 'lucide-react';
+import { formatDuration } from '../timing';
 
 interface ExamHeaderProps {
-  title: string;
-  totalMs: number;
-  questionMs: number;
-  onFinish: () => void;
+    title: string;
+    subtitle: string;
+    attemptNumber: number;
+    totalMs: number;
+    questionMs: number;
+    saveStatus: 'idle' | 'saving' | 'saved' | 'local-only';
+    onSave: () => void;
 }
 
-export const ExamHeader: React.FC<ExamHeaderProps> = React.memo(({ title, totalMs, questionMs, onFinish }) => {
-  return (
-    <header className="exam-header">
-      <div className="exam-header-title">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="32" height="32" rx="8" fill="#1e293b"/>
-          <path d="M10 16L14 20L22 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <span>{title}</span>
-      </div>
+function saveStatusLabel(saveStatus: ExamHeaderProps['saveStatus']) {
+    if (saveStatus === 'saving') return 'Salvando progresso...';
+    if (saveStatus === 'saved') return 'Progresso sincronizado';
+    if (saveStatus === 'local-only') return 'Salvo localmente';
+    return 'Progresso local continuo';
+}
 
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-        <TimerDisplay label="Questão" ms={questionMs} />
-        <TimerDisplay label="Total" ms={totalMs} />
-        
-        <button 
-          onClick={onFinish}
-          className="btn btn-primary"
-          style={{ 
-            backgroundColor: 'var(--exam-error)', 
-            borderColor: 'var(--exam-error)',
-            padding: '0.5rem 1.25rem',
-            fontWeight: 600
-          }}
-        >
-          Finalizar Prova
-        </button>
-      </div>
-    </header>
-  );
-});
+export function ExamHeader({ title, subtitle, attemptNumber, totalMs, questionMs, saveStatus, onSave }: ExamHeaderProps) {
+    return (
+        <section className="floating-actions">
+            <div className="question-actions">
+                <div className="question-actions__left">
+                    <span className="badge">Tentativa {attemptNumber}</span>
+                    <span className="progress-pill">{subtitle}</span>
+                    <span className="timer-pill">
+                        <Clock3 size={16} />
+                        Tempo total {formatDuration(totalMs)}
+                    </span>
+                    <span className="timer-pill">
+                        <Clock3 size={16} />
+                        Questao atual {formatDuration(questionMs)}
+                    </span>
+                </div>
+
+                <div className="question-actions__right">
+                    <span className="support-chip support-chip--status">{saveStatusLabel(saveStatus)}</span>
+                    <button type="button" className="ghost-button" onClick={onSave}>
+                        <Save size={16} />
+                        Salvar agora
+                    </button>
+                </div>
+            </div>
+            <div className="question-footer">
+                <span className="question-card__eyebrow">{title}</span>
+                <span className="question-footer__hint">Modo prova sem dicas, sem tutor e sem correcao imediata.</span>
+            </div>
+        </section>
+    );
+}

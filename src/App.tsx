@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   BarChart3,
   CheckCircle2,
@@ -46,7 +46,8 @@ import {
   readLocalExamState,
   type PersistedExamState,
 } from './exam/storage';
-import { ensureTimingSnapshot, formatDuration, formatDurationLong, useExamTiming } from './exam/timing';
+import { ensureTimingSnapshot, formatDuration, formatDurationLong, useExamTiming, type ExamTimingSnapshot } from './exam/timing';
+import { ExamModule } from './exam/ExamModule';
 
 type AppScreen = 'dashboard' | 'exam' | 'results';
 
@@ -246,7 +247,7 @@ export default function App() {
     questionIds,
     initialSnapshot: null,
     activeQuestionId: activeQuestionId || activeQuestions[0]?.id || '',
-    running: Boolean(activeExam && screen === 'exam' && !finished && !loading && examReady),
+    running: Boolean(activeExam && screen === 'exam' && !finished && !loading && examReady && false), // DISABLED: Now handled by ExamModule
   });
 
   useEffect(() => {
@@ -442,6 +443,28 @@ export default function App() {
     setDrafts((current) => ({ ...current, [questionId]: updater(ensureDraft(current[questionId])) }));
   }
 
+  const handleUpdateDraftFromModule = useCallback((qId: string, value: any) => {
+    updateQuestionDraft(qId, (draft) => ({ ...draft, ...value }));
+  }, []);
+
+  const handleFinishFromModule = useCallback((finalTiming: ExamTimingSnapshot) => {
+    if (!activeExam) return;
+    const nextState = buildPersistedExamState({
+      exam: activeExam,
+      activeQuestionId: activeQuestionId || activeQuestions[0]?.id || '',
+      finished: true,
+      drafts,
+      timing: finalTiming,
+    });
+    setFinished(true);
+    setScreen('results');
+    setRemoteExamStates((current) => ({ ...current, [activeExam.id]: nextState }));
+    if (features.persistProgress) {
+      window.localStorage.setItem(activeExam.storageKey, JSON.stringify(nextState));
+      void syncPersistedState(nextState);
+    }
+  }, [activeExam, activeQuestionId, activeQuestions, drafts, features.persistProgress]);
+
   function goToQuestion(nextIndex: number) {
     const safeIndex = Math.max(0, Math.min(activeQuestions.length - 1, nextIndex));
     const nextQuestion = activeQuestions[safeIndex];
@@ -459,24 +482,6 @@ export default function App() {
     void syncPersistedState(persistedState);
   }
 
-  function handleFinish() {
-    if (!activeExam) return;
-    const finishedTiming = timing.finish();
-    const nextState = buildPersistedExamState({
-      exam: activeExam,
-      activeQuestionId: activeQuestionId || activeQuestions[0]?.id || '',
-      finished: true,
-      drafts,
-      timing: finishedTiming,
-    });
-    setFinished(true);
-    setScreen('results');
-    setRemoteExamStates((current) => ({ ...current, [activeExam.id]: nextState }));
-    if (features.persistProgress) {
-      window.localStorage.setItem(activeExam.storageKey, JSON.stringify(nextState));
-      void syncPersistedState(nextState);
-    }
-  }
 
   async function handleExportReport() {
     if (!report || aiStatus === 'loading' || !aiFeedback) return;
@@ -598,100 +603,6 @@ export default function App() {
     </main>
   );
 
-  const examView = activeQuestion ? (
-    <div className="workspace">
-      <aside className="question-rail">
-        <div className="question-rail__header">
-          <h2>Mapa da prova</h2>
-          <p>Navegue entre as questoes sem perder o tempo acumulado de cada bloco.</p>
-        </div>
-
-        <div className="question-rail__summary">
-          <div className="rail-summary-card"><span>Tempo total</span><strong>{features.showTotalTimer ? formatDuration(timing.totalElapsedMs) : '--:--'}</strong></div>
-          <div className="rail-summary-card"><span>Respondidas</span><strong>{answeredCount}/{activeQuestions.length}</strong></div>
-          <div className="rail-summary-card"><span>Para revisar</span><strong>{reviewCount}</strong></div>
-        </div>
-
-        <div className="question-rail__list">
-          {activeQuestions.map((question, index) => {
-            const progress = progressByQuestion[question.id];
-            return (
-              <button key={question.id} type="button" className={`rail-item ${question.id === activeQuestionId ? 'rail-item--active' : ''} rail-item--${progress}`} onClick={() => goToQuestion(index)}>
-                <span className="rail-item__number">{question.number}</span>
-                <span className="rail-item__content">
-                  <span className="rail-item__label">{progressLabel(progress)}</span>
-                  {features.showQuestionTimers ? <span className="rail-item__meta">{formatDuration(timing.questionElapsedMs[question.id] || 0)}</span> : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </aside>
-
-      <main className="question-stage">
-        <section className="question-card">
-          <div className="question-card__top">
-            <div>
-              <span className="question-card__eyebrow">Questao {activeQuestion.number} · {activeExam.moduleLabel}</span>
-              <h2>{activeQuestion.title}</h2>
-              <div className="badge-row">
-                <span className="badge">{difficultyLabel(activeQuestion.difficulty)}</span>
-                {activeQuestion.topics.map((topic) => <span key={topic} className="tag">{TOPIC_META[topic].short}</span>)}
-              </div>
-            </div>
-            <div className="question-card__top-actions">
-              <span className={`progress-pill progress-pill--${activeQuestionProgress}`}>{progressLabel(activeQuestionProgress)}</span>
-              {features.showQuestionTimers ? <span className="timer-pill"><Clock3 size={16} />{formatDuration(activeQuestionTimeMs)}</span> : null}
-            </div>
-          </div>
-
-          <div className="question-card__metrics">
-            <div className="metric-chip"><span>Tempo da questao</span><strong>{features.showQuestionTimers ? formatDurationLong(activeQuestionTimeMs) : '--'}</strong></div>
-            <div className="metric-chip"><span>Tempo total</span><strong>{features.showTotalTimer ? formatDurationLong(timing.totalElapsedMs) : '--'}</strong></div>
-            <div className="metric-chip"><span>Regras ativas</span><strong>Sem apoio durante a resolucao</strong></div>
-          </div>
-
-          <div className={`question-card__body ${activeQuestion.graphKey ? 'question-card__body--with-graph' : ''}`}>
-            <div className="statement-panel"><ContentRenderer blocks={activeQuestion.prompt} /></div>
-            {activeQuestion.graphKey ? (
-              <aside className="graph-panel">
-                <div className="graph-panel__header">
-                  <div><h3>Elemento visual da questao</h3><p>{activeQuestion.graphCaption}</p></div>
-                  <button type="button" className="icon-button" onClick={() => setZoomedGraph(activeQuestion.graphKey!)}><Expand size={16} />Ampliar</button>
-                </div>
-                <GraphFigure graphKey={activeQuestion.graphKey} />
-              </aside>
-            ) : null}
-          </div>
-
-          <section className="answer-panel">
-            <div className="answer-panel__header">
-              <div>
-                <h3>Resposta oficial</h3>
-                <p>O sistema apenas registra sua resposta agora. A correcao aparece somente no relatorio final.</p>
-              </div>
-            </div>
-            {activeQuestion.answerSchema.kind === 'matrix' ? (
-              <MatrixResponse question={activeQuestion} draft={activeDraft} onChange={(rowKey, columnKey, value) => updateQuestionDraft(activeQuestion.id, (draft) => ({ ...draft, matrixAnswers: { ...draft.matrixAnswers, [rowKey]: { ...(draft.matrixAnswers[rowKey] || {}), [columnKey]: value } } }))} />
-            ) : (
-              <FieldResponse question={activeQuestion} draft={activeDraft} onAnswerChange={(fieldKey, value) => updateQuestionDraft(activeQuestion.id, (draft) => ({ ...draft, answers: { ...draft.answers, [fieldKey]: value } }))} />
-            )}
-          </section>
-
-          <section className="scratch-panel">
-            <div className="scratch-panel__header">
-              <div>
-                <h3>Rascunho da questao</h3>
-                <p>Espaco livre para conta, estrategia, testes e leitura do grafico sem receber pistas do sistema.</p>
-              </div>
-              <PenTool size={18} />
-            </div>
-            <textarea rows={8} value={activeDraft.scratch} onChange={(event) => updateQuestionDraft(activeQuestion.id, (draft) => ({ ...draft, scratch: event.target.value }))} placeholder="Use este campo para escrever contas, valores de teste, observacoes e caminho de resolucao." />
-          </section>
-        </section>
-      </main>
-    </div>
-  ) : null;
   const resultsView = report ? (
     <main className="results-shell">
       <section className="results-summary">
@@ -894,28 +805,16 @@ export default function App() {
         </header>
       )}
 
-      {screen === 'dashboard' ? dashboardView : screen === 'results' ? resultsView : examView}
+      {screen === 'dashboard' ? dashboardView : screen === 'results' ? resultsView : (
+        <ExamModule 
+          questions={activeQuestions}
+          initialDrafts={drafts}
+          initialTiming={remoteExamStates[activeExam.id]?.timing || null}
+          onUpdateDraft={handleUpdateDraftFromModule}
+          onFinish={handleFinishFromModule}
+        />
+      )}
 
-      {screen === 'exam' && activeQuestion ? (
-        <section className="floating-actions">
-          <div className="question-actions">
-            <div className="question-actions__left">
-              <button type="button" className="ghost-button" onClick={() => goToQuestion(activeIndex - 1)} disabled={activeIndex <= 0}><ChevronLeft size={16} />Anterior</button>
-              <button type="button" className="ghost-button" onClick={() => goToQuestion(activeIndex + 1)} disabled={activeIndex === activeQuestions.length - 1}>Proxima<ChevronRight size={16} /></button>
-            </div>
-            <div className="question-actions__right">
-              <button type="button" className={`ghost-button ${activeDraft.flagged ? 'ghost-button--flagged' : ''}`} onClick={() => updateQuestionDraft(activeQuestion.id, (draft) => ({ ...draft, flagged: !draft.flagged }))}><Flag size={16} />{activeDraft.flagged ? 'Remover revisao' : 'Marcar para revisar'}</button>
-              <button type="button" className="ghost-button" onClick={() => updateQuestionDraft(activeQuestion.id, () => createEmptyDraft())}>Limpar questao</button>
-              <button type="button" className="primary-button" onClick={handleSave}><Save size={16} />Salvar progresso</button>
-              <button type="button" className="primary-button primary-button--finish" onClick={handleFinish}><GraduationCap size={18} />Finalizar prova</button>
-            </div>
-          </div>
-          <div className="question-footer">
-            <span>Estado atual: <strong>{progressLabel(activeQuestionProgress)}</strong></span>
-            <span>{saveStatus === 'saving' ? 'Sincronizando progresso...' : saveStatus === 'saved' ? 'Progresso salvo localmente e sincronizado com o servidor.' : saveStatus === 'local-only' ? 'Progresso salvo localmente. A sincronizacao remota falhou.' : 'Modo prova: apoio e correcao sao liberados apenas no relatorio final.'}</span>
-          </div>
-        </section>
-      ) : null}
 
       {zoomedGraph ? (
         <div className="graph-modal" role="dialog" aria-modal="true" onClick={() => setZoomedGraph(null)}>

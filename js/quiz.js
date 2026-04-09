@@ -603,7 +603,7 @@ window.generateMoreQuestions = async function (count) {
 };
 
 window.startSimulado = async function () {
-    window.location.href = 'exam.html?examId=ufba-ctia03-lista-1&screen=exam';
+    window.location.assign('/app/provas?examId=ufba-ctia03-lista-1&screen=exam');
     return;
 
     document.getElementById('simulado-options-container').innerHTML = '';

@@ -283,6 +283,25 @@ function buildApiUrl(path) {
     return `${resolveApiBaseUrl()}${path}`;
 }
 
+function buildExamAppPath(examId, screen = 'exam') {
+    const params = new URLSearchParams();
+    const normalizedExamId = typeof examId === 'string' ? examId.trim() : '';
+    if (normalizedExamId) {
+        params.set('examId', normalizedExamId);
+    }
+    if (screen && screen !== 'dashboard') {
+        params.set('screen', screen);
+    }
+    const query = params.toString();
+    return query ? `/app/provas?${query}` : '/app/provas';
+}
+
+function buildExamEntryUrl(exam, status) {
+    const examId = exam && typeof exam.id === 'string' ? exam.id : '';
+    const targetScreen = status === 'completed' ? 'results' : 'exam';
+    return buildExamAppPath(examId, targetScreen);
+}
+
 async function readJsonResponse(response) {
     const rawText = await response.text();
     if (!rawText) return {};
@@ -1172,7 +1191,7 @@ function renderArtifactExperiencePage(artifact) {
 }
 
 window.generateSimulado = function () {
-    window.location.href = "exam.html?examId=ufba-ctia03-lista-1&screen=exam";
+    window.location.assign(buildExamAppPath('ufba-ctia03-lista-1', 'exam'));
     return;
     window.navigateTo('page-simulado');
     const intro = document.getElementById('simulado-intro');
@@ -2396,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="module-card__chips">${topicChips}</div>
                         </div>
                         <div class="module-card__footer">
-                            <a class="btn btn--primary" href="${escapeAttribute(exam.href)}">${examActionLabel(progress.status)}</a>
+                            <a class="btn btn--primary" href="${escapeAttribute(buildExamEntryUrl(exam, progress.status))}">${examActionLabel(progress.status)}</a>
                         </div>
                     </article>
                 `;

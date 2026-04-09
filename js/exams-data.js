@@ -19,6 +19,6 @@ window.EXAMS_DATA = [
             'Funcao quadratica',
             'Composicao de funcoes',
         ],
-        href: 'exam.html?examId=ufba-ctia03-lista-1',
+        href: '/app/provas?examId=ufba-ctia03-lista-1&screen=exam',
     },
 ];

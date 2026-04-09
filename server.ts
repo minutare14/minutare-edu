@@ -128,6 +128,37 @@ function getConfigIssueMessage() {
     return `Variáveis pendentes ou inválidas: ${issues.join(', ')}.`;
 }
 
+const VALID_EXAM_SCREENS = new Set(['dashboard', 'exam', 'results']);
+
+function firstQueryValue(value: unknown): string {
+    if (Array.isArray(value)) {
+        const first = value[0];
+        return typeof first === 'string' ? first : '';
+    }
+
+    return typeof value === 'string' ? value : '';
+}
+
+function buildExamAppRedirectPath(query: express.Request['query']) {
+    const params = new URLSearchParams();
+    const examId = firstQueryValue(query.examId).trim();
+    const screen = firstQueryValue(query.screen).trim();
+    const mode = firstQueryValue(query.mode).trim();
+
+    if (examId) {
+        params.set('examId', examId);
+    }
+
+    if (VALID_EXAM_SCREENS.has(screen) && screen !== 'dashboard') {
+        params.set('screen', screen);
+    } else if (mode === 'simulado') {
+        params.set('screen', 'exam');
+    }
+
+    const queryString = params.toString();
+    return queryString ? `/app/provas?${queryString}` : '/app/provas';
+}
+
 function buildSessionPayload(req: express.Request, overrides: { sessionExpiresAt?: string | null } = {}) {
     const sessionExpiresAt = overrides.sessionExpiresAt ?? req.authSessionExpiresAt ?? null;
 
@@ -1965,6 +1996,10 @@ app.post('/auth/refresh-session', requireAuth, async (req, res) => {
 
 app.get('/app', requirePageAuth, (_req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/exam.html', (req, res) => {
+    res.redirect(buildExamAppRedirectPath(req.query));
 });
 
 app.get('/app/provas', requirePageAuth, (_req, res) => {

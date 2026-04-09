@@ -50,6 +50,37 @@ import { ensureTimingSnapshot, formatDuration, formatDurationLong, useExamTiming
 import { ExamModule } from './exam/ExamModule';
 
 type AppScreen = 'dashboard' | 'exam' | 'results';
+const EXAM_APP_BASE_PATH = '/app/provas';
+
+function isAppScreen(value: string | null): value is AppScreen {
+  return value === 'dashboard' || value === 'exam' || value === 'results';
+}
+
+function buildExamAppPath(examId: string, screen: AppScreen) {
+  if (screen === 'dashboard') return EXAM_APP_BASE_PATH;
+  const params = new URLSearchParams();
+  if (examId) params.set('examId', examId);
+  params.set('screen', screen);
+  return `${EXAM_APP_BASE_PATH}?${params.toString()}`;
+}
+
+function readExamRoute(search: string, exams: ExamDefinition[]) {
+  const params = new URLSearchParams(search);
+  const examIdParam = params.get('examId');
+  const examId = examIdParam && exams.some((exam) => exam.id === examIdParam) ? examIdParam : exams[0]?.id || '';
+  const screenParam = params.get('screen');
+  const mode = params.get('mode');
+
+  if (isAppScreen(screenParam)) {
+    return { examId, screen: screenParam };
+  }
+
+  if (mode === 'simulado') {
+    return { examId, screen: 'exam' as AppScreen };
+  }
+
+  return { examId, screen: 'dashboard' as AppScreen };
+}
 
 function buildEmptyDrafts(questions: ExamQuestion[]): ExamDraftState {
   return Object.fromEntries(questions.map((question) => [question.id, createEmptyDraft()]));
@@ -243,23 +274,44 @@ export default function App() {
   const questionIds = useMemo(() => activeQuestions.map((question) => question.id), [activeQuestions]);
   const features = useMemo(() => resolveExamFeatures(activeExam?.features), [activeExam]);
 
-  // Handle URL parameters for redirection from legacy dashboard
+  // Keep the exam module aligned with the routed URL instead of the legacy static asset URL.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const examId = params.get('examId');
-    const screenParam = params.get('screen') as AppScreen | null;
-    const mode = params.get('mode');
+    const syncFromLocation = () => {
+      const nextRoute = readExamRoute(window.location.search, exams);
+      setSelectedExamId(nextRoute.examId);
+      setScreen(nextRoute.screen);
+    };
 
-    if (examId && EXAM_LIBRARY.some(e => e.id === examId)) {
-      setSelectedExamId(examId);
-    }
-
-    if (screenParam && ['dashboard', 'exam', 'results'].includes(screenParam)) {
-      setScreen(screenParam);
-    } else if (mode === 'simulado') {
-        setScreen('exam');
-    }
+    syncFromLocation();
+    window.addEventListener('popstate', syncFromLocation);
+    return () => {
+      window.removeEventListener('popstate', syncFromLocation);
+    };
   }, [exams]);
+
+  const syncRoute = useCallback((examId: string, nextScreen: AppScreen, historyMode: 'push' | 'replace' = 'replace') => {
+    const normalizedExamId = examId || activeExam?.id || exams[0]?.id || '';
+    const nextPath = buildExamAppPath(normalizedExamId, nextScreen);
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+
+    if (currentPath === nextPath) return;
+
+    if (historyMode === 'push') {
+      window.history.pushState(null, '', nextPath);
+      return;
+    }
+
+    window.history.replaceState(null, '', nextPath);
+  }, [activeExam?.id, exams]);
+
+  const navigateToScreen = useCallback((nextScreen: AppScreen, examId?: string, historyMode: 'push' | 'replace' = 'push') => {
+    const nextExamId = examId || activeExam?.id || exams[0]?.id || '';
+    if (nextExamId) {
+      setSelectedExamId(nextExamId);
+    }
+    setScreen(nextScreen);
+    syncRoute(nextExamId, nextScreen, historyMode);
+  }, [activeExam?.id, exams, syncRoute]);
 
   const timing = useExamTiming({
     questionIds,
@@ -321,6 +373,11 @@ export default function App() {
     if (!activeExam || !persistedState || loading || !examReady || !features.persistProgress) return;
     window.localStorage.setItem(activeExam.storageKey, JSON.stringify(persistedState));
   }, [activeExam, examReady, features.persistProgress, loading, persistedState]);
+
+  useEffect(() => {
+    if (!activeExam) return;
+    syncRoute(selectedExamId || activeExam.id, screen, 'replace');
+  }, [activeExam, screen, selectedExamId, syncRoute]);
 
   useEffect(() => {
     if (saveStatus === 'idle') return;
@@ -475,13 +532,13 @@ export default function App() {
       timing: finalTiming,
     });
     setFinished(true);
-    setScreen('results');
+    navigateToScreen('results', activeExam.id);
     setRemoteExamStates((current) => ({ ...current, [activeExam.id]: nextState }));
     if (features.persistProgress) {
       window.localStorage.setItem(activeExam.storageKey, JSON.stringify(nextState));
       void syncPersistedState(nextState);
     }
-  }, [activeExam, activeQuestionId, activeQuestions, drafts, features.persistProgress]);
+  }, [activeExam, activeQuestionId, activeQuestions, drafts, features.persistProgress, navigateToScreen]);
 
   function goToQuestion(nextIndex: number) {
     const safeIndex = Math.max(0, Math.min(activeQuestions.length - 1, nextIndex));
@@ -491,8 +548,7 @@ export default function App() {
   }
 
   function openExam(examId: string, target: AppScreen) {
-    setSelectedExamId(examId);
-    setScreen(target);
+    navigateToScreen(target, examId);
   }
 
   function handleSave() {
@@ -631,7 +687,7 @@ export default function App() {
             <p>{report.summary.correctCount} corretas, {report.summary.partialCount} parciais, {report.summary.incorrectCount} incorretas e {(report.summary.performanceRatio * 100).toFixed(0)}% de aproveitamento.</p>
           </div>
           <div className="results-actions">
-            <button type="button" className="ghost-button" onClick={() => setScreen('dashboard')}><House size={16} />Voltar para a lista</button>
+            <button type="button" className="ghost-button" onClick={() => navigateToScreen('dashboard', activeExam.id)}><House size={16} />Voltar para a lista</button>
             {features.exportPdf ? (
               <button type="button" className="primary-button" onClick={() => void handleExportReport()} disabled={aiStatus === 'loading' || !aiFeedback}>
                 <FileDown size={16} />{exportStatus === 'exporting' ? 'Preparando PDF...' : 'Exportar relatorio em PDF'}
@@ -787,8 +843,8 @@ export default function App() {
       <div className="app-topbar">
         <div className="app-topbar__brand"><span>MINUTARE</span><strong>CTIA03 - Bases Matematicas</strong></div>
         <div className="app-topbar__actions">
-          <button type="button" className={`topbar-link ${screen === 'dashboard' ? 'topbar-link--active' : ''}`} onClick={() => { timing.pause(); setScreen('dashboard'); }}><House size={16} />Painel de provas</button>
-          <button type="button" className={`topbar-link ${screen !== 'dashboard' ? 'topbar-link--active' : ''}`} onClick={() => setScreen(finished ? 'results' : 'exam')}>
+          <button type="button" className={`topbar-link ${screen === 'dashboard' ? 'topbar-link--active' : ''}`} onClick={() => { timing.pause(); navigateToScreen('dashboard', activeExam.id); }}><House size={16} />Painel de provas</button>
+          <button type="button" className={`topbar-link ${screen !== 'dashboard' ? 'topbar-link--active' : ''}`} onClick={() => navigateToScreen(finished ? 'results' : 'exam', activeExam.id)}>
             {finished ? <BarChart3 size={16} /> : <ClipboardList size={16} />}
             {finished ? 'Relatorio final' : examStatus === 'in-progress' ? 'Continuar prova' : 'Abrir prova'}
           </button>

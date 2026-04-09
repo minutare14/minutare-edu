@@ -1,6 +1,6 @@
 window.EXAMS_DATA = [
     {
-        id: 'lista1-interativa',
+        id: 'ufba-ctia03-lista-1',
         stateKey: 'lista1InteractiveExam',
         localStorageKey: 'ctia03-lista1-interactive-exam-v1',
         title: 'Lista 1 Interativa',
@@ -19,6 +19,6 @@ window.EXAMS_DATA = [
             'Funcao quadratica',
             'Composicao de funcoes',
         ],
-        href: '/app/provas',
+        href: 'exam.html?examId=ufba-ctia03-lista-1',
     },
 ];

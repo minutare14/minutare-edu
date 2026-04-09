@@ -603,14 +603,8 @@ window.generateMoreQuestions = async function (count) {
 };
 
 window.startSimulado = async function () {
-    const intro = document.getElementById('simulado-intro');
-    const container = document.getElementById('simulado-container');
-    const result = document.getElementById('simulado-result');
-    const progress = document.getElementById('simulado-progress');
-
-    intro.style.display = 'none';
-    result.style.display = 'none';
-    container.style.display = 'block';
+    window.location.href = 'exam.html?examId=ufba-ctia03-lista-1&screen=exam';
+    return;
 
     document.getElementById('simulado-options-container').innerHTML = '';
     document.getElementById('simulado-explanation-box').style.display = 'none';

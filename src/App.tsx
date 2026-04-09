@@ -243,6 +243,24 @@ export default function App() {
   const questionIds = useMemo(() => activeQuestions.map((question) => question.id), [activeQuestions]);
   const features = useMemo(() => resolveExamFeatures(activeExam?.features), [activeExam]);
 
+  // Handle URL parameters for redirection from legacy dashboard
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const examId = params.get('examId');
+    const screenParam = params.get('screen') as AppScreen | null;
+    const mode = params.get('mode');
+
+    if (examId && EXAM_LIBRARY.some(e => e.id === examId)) {
+      setSelectedExamId(examId);
+    }
+
+    if (screenParam && ['dashboard', 'exam', 'results'].includes(screenParam)) {
+      setScreen(screenParam);
+    } else if (mode === 'simulado') {
+        setScreen('exam');
+    }
+  }, [exams]);
+
   const timing = useExamTiming({
     questionIds,
     initialSnapshot: null,

@@ -1172,6 +1172,8 @@ function renderArtifactExperiencePage(artifact) {
 }
 
 window.generateSimulado = function () {
+    window.location.href = "exam.html?examId=ufba-ctia03-lista-1&screen=exam";
+    return;
     window.navigateTo('page-simulado');
     const intro = document.getElementById('simulado-intro');
     const container = document.getElementById('simulado-container');

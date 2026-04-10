@@ -32,6 +32,7 @@ export default defineConfig(({mode}) => {
     build: {
       rollupOptions: {
         input: {
+          dashboardAi: path.resolve(__dirname, 'dashboard-ai.html'),
           exam: path.resolve(__dirname, 'exam.html'),
         },
       },

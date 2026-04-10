@@ -2710,17 +2710,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function openDashboardAi(prompt = '') {
+        const normalizedPrompt = String(prompt || '').trim();
+
+        if (normalizedPrompt) {
+            window.sessionStorage.setItem('dashboard_ai_prefill', normalizedPrompt);
+        } else {
+            window.sessionStorage.removeItem('dashboard_ai_prefill');
+        }
+
+        window.location.assign('/dashboard/ai');
+    }
+
     async function openChatWithPrompt(prompt, { submit = true } = {}) {
         const normalizedPrompt = String(prompt || '').trim();
         if (!normalizedPrompt) return;
-        openChatWindow();
-        chatInput.value = normalizedPrompt;
-        chatInput.focus({ preventScroll: true });
-        chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
-
-        if (submit && !chatSend.disabled) {
-            await sendChatMessage();
-        }
+        openDashboardAi(normalizedPrompt);
     }
 
     window.ChatWidget = {
@@ -2894,11 +2899,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     if (chatToggle && chatWindow) {
         chatToggle.addEventListener('click', () => {
-            if (chatWindow.classList.contains('hidden')) {
-                openChatWindow();
-            } else {
-                closeChatWindow();
-            }
+            openDashboardAi();
         });
     }
     if (chatBackdrop) {

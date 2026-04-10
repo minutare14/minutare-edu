@@ -25,8 +25,21 @@ import {
     setSessionCookie,
 } from './server/auth.ts';
 import { closeDatabasePool, ensureDatabaseReady, getDatabaseStatus, query } from './server/database.ts';
+import {
+    deleteDashboardAiMessage,
+    findLastFailedDashboardAiTurn,
+    getDashboardAiSessionForUser,
+    getOrCreateDashboardAiSession,
+    insertDashboardAiMessage,
+    listDashboardAiMessages,
+    listDashboardAiMessagesForPrompt,
+    mapDashboardAiMessageRoleForProvider,
+    updateDashboardAiSessionStatus,
+    withDashboardAiClient,
+} from './server/dashboard-ai-store.ts';
 import { resolveModule, getAllModules } from './server/modules-registry.ts';
 import { buildContextualPrompt } from './server/prompt-builder.ts';
+import type { DashboardAiErrorCode } from './types/dashboard-ai.ts';
 
 dotenv.config({ path: '.env.local', override: true, quiet: true });
 dotenv.config({ path: '.env', override: false, quiet: true });
@@ -452,6 +465,8 @@ app.use((req, res, next) => {
     const noStore =
         req.path === '/' ||
         req.path === '/login' ||
+        req.path === '/dashboard' ||
+        req.path === '/dashboard/ai' ||
         req.path === '/app' ||
         req.path === '/app/provas' ||
         req.path === '/me' ||
@@ -1940,6 +1955,84 @@ async function generateText({
     }));
 }
 
+const DASHBOARD_AI_SYSTEM_INSTRUCTION =
+    'Voce e o assistente oficial do dashboard de estudos. ' +
+    'Responda sempre em portugues do Brasil, com blocos curtos, didaticos e objetivos. ' +
+    'Baseie a resposta na ultima pergunta do aluno e no historico da sessao. ' +
+    'Priorize explicacoes claras, exemplos curtos e proximos passos praticos. ' +
+    'Nao use texto prolixo nem respostas genericas. ' +
+    'Se faltar contexto essencial, faca no maximo uma pergunta de esclarecimento.';
+
+function normalizeDashboardAiErrorCode(error: unknown, route: string, requestId: string, modelKey: ModelKey): DashboardAiErrorCode {
+    const diagnostics = classifyAiError(error, route, requestId, MODEL_CANDIDATES[modelKey][0]);
+
+    switch (diagnostics.errorType) {
+        case 'quota_exceeded':
+            return 'RATE_LIMITED';
+        case 'network':
+            return 'NETWORK_ERROR';
+        case 'validation':
+            return 'UNKNOWN_ERROR';
+        case 'missing_key':
+        case 'provider':
+        case 'auth':
+        case 'parse_error':
+            return 'AI_REQUEST_FAILED';
+        default:
+            return 'UNKNOWN_ERROR';
+    }
+}
+
+function sendDashboardAiError(
+    res: express.Response,
+    {
+        sessionId,
+        code,
+        message,
+        status,
+    }: {
+        sessionId: string;
+        code: DashboardAiErrorCode;
+        message: string;
+        status: number;
+    },
+) {
+    res.status(status).json({
+        sessionId,
+        error: {
+            code,
+            message,
+        },
+    });
+}
+
+function buildDashboardAiProviderContents(messages: Array<{ role: string; content: string }>) {
+    return messages.map((message) => ({
+        role: message.role,
+        parts: [{ text: message.content }],
+    }));
+}
+
+async function generateDashboardAiAssistantReply({
+    contents,
+    route,
+    requestId,
+}: {
+    contents: Array<{ role: string; content: string }>;
+    route: string;
+    requestId: string;
+}) {
+    const response = await generateText({
+        modelKey: 'flash',
+        route,
+        requestId,
+        contents: buildDashboardAiProviderContents(contents),
+        systemInstruction: DASHBOARD_AI_SYSTEM_INSTRUCTION,
+    });
+
+    return formatTutorResponsePayload(response.text, contents.at(-1)?.content || '');
+}
+
 function parseBodyTopic(value: unknown): string {
     return requireNonEmptyString(value, 'topic');
 }
@@ -1958,7 +2051,7 @@ app.get('/', async (req, res, next) => {
         if (config.ready) {
             const user = await resolveRequestAuth(req);
             if (user) {
-                res.redirect('/app');
+                res.redirect('/dashboard');
                 return;
             }
         }
@@ -1975,7 +2068,7 @@ app.get('/login', async (req, res, next) => {
         if (config.ready) {
             const user = await resolveRequestAuth(req);
             if (user) {
-                res.redirect('/app');
+                res.redirect('/dashboard');
                 return;
             }
         }
@@ -2148,6 +2241,14 @@ app.post('/auth/refresh-session', requireAuth, async (req, res) => {
     }
 });
 
+app.get('/dashboard', requirePageAuth, (_req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/dashboard/ai', requirePageAuth, (_req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'dashboard-ai.html'));
+});
+
 app.get('/app', requirePageAuth, (_req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -2161,6 +2262,426 @@ app.get('/app/provas', requirePageAuth, (_req, res) => {
 });
 
 app.use('/api', requireAuth);
+
+app.get('/api/dashboard-ai/session', async (req, res) => {
+    const user = req.authUser;
+
+    if (!user) {
+        res.status(401).json({
+            error: {
+                code: 'UNKNOWN_ERROR',
+                message: 'Authentication required.',
+            },
+        });
+        return;
+    }
+
+    try {
+        const session = await getOrCreateDashboardAiSession(user.id);
+        res.json({ session });
+    } catch (error) {
+        console.error(`[${String(res.locals.requestId || 'unknown')}] [/api/dashboard-ai/session] failed`, error);
+        res.status(500).json({
+            error: {
+                code: 'UNKNOWN_ERROR',
+                message: 'Nao foi possivel carregar a sessao do assistente.',
+            },
+        });
+    }
+});
+
+app.get('/api/dashboard-ai/history', async (req, res) => {
+    const user = req.authUser;
+
+    if (!user) {
+        res.status(401).json({
+            error: {
+                code: 'UNKNOWN_ERROR',
+                message: 'Authentication required.',
+            },
+        });
+        return;
+    }
+
+    const sessionId = typeof req.query?.sessionId === 'string' ? req.query.sessionId.trim() : '';
+
+    if (!sessionId) {
+        sendDashboardAiError(res, {
+            sessionId: '',
+            code: 'SESSION_NOT_FOUND',
+            message: 'Nao foi possivel localizar a sessao solicitada.',
+            status: 404,
+        });
+        return;
+    }
+
+    try {
+        const session = await getDashboardAiSessionForUser(sessionId, user.id);
+        if (!session) {
+            sendDashboardAiError(res, {
+                sessionId,
+                code: 'SESSION_NOT_FOUND',
+                message: 'Nao foi possivel localizar a sessao solicitada.',
+                status: 404,
+            });
+            return;
+        }
+
+        const messages = await listDashboardAiMessages(sessionId, user.id);
+        res.json({
+            sessionId,
+            messages,
+        });
+    } catch (error) {
+        console.error(`[${String(res.locals.requestId || 'unknown')}] [/api/dashboard-ai/history] failed`, error);
+        sendDashboardAiError(res, {
+            sessionId,
+            code: 'UNKNOWN_ERROR',
+            message: 'Nao foi possivel carregar o historico da conversa.',
+            status: 500,
+        });
+    }
+});
+
+app.post('/api/dashboard-ai/message', async (req, res) => {
+    const route = '/api/dashboard-ai/message';
+    const requestId = String(res.locals.requestId || 'unknown');
+    const user = req.authUser;
+    const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId.trim() : '';
+    let messageContent = '';
+
+    if (!user) {
+        res.status(401).json({
+            error: {
+                code: 'UNKNOWN_ERROR',
+                message: 'Authentication required.',
+            },
+        });
+        return;
+    }
+
+    try {
+        messageContent = requireNonEmptyString(req.body?.message?.content, 'message.content');
+    } catch {
+        sendDashboardAiError(res, {
+            sessionId,
+            code: 'EMPTY_MESSAGE',
+            message: 'Digite uma mensagem antes de enviar.',
+            status: 400,
+        });
+        return;
+    }
+
+    try {
+        const session = await getDashboardAiSessionForUser(sessionId, user.id);
+        if (!session) {
+            sendDashboardAiError(res, {
+                sessionId,
+                code: 'SESSION_NOT_FOUND',
+                message: 'Nao foi possivel localizar a sessao atual.',
+                status: 404,
+            });
+            return;
+        }
+
+        const { promptRows, userMessage } = await withDashboardAiClient(async (client) => {
+            await client.query('BEGIN');
+
+            try {
+                const historyRows = await listDashboardAiMessagesForPrompt(client, sessionId, user.id);
+                const persistedUserMessage = await insertDashboardAiMessage({
+                    client,
+                    sessionId,
+                    userId: user.id,
+                    role: 'user',
+                    content: messageContent,
+                    status: 'complete',
+                });
+                await updateDashboardAiSessionStatus(client, sessionId, 'active', true);
+                await client.query('COMMIT');
+                return {
+                    promptRows: historyRows,
+                    userMessage: persistedUserMessage,
+                };
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            }
+        });
+
+        try {
+            const assistantContent = await generateDashboardAiAssistantReply({
+                route,
+                requestId,
+                contents: [
+                    ...promptRows.map((row) => ({
+                        role: mapDashboardAiMessageRoleForProvider(row.role),
+                        content: row.content,
+                    })),
+                    {
+                        role: 'user',
+                        content: userMessage.content,
+                    },
+                ],
+            });
+
+            const assistantMessage = await withDashboardAiClient(async (client) => {
+                await client.query('BEGIN');
+
+                try {
+                    const persistedAssistantMessage = await insertDashboardAiMessage({
+                        client,
+                        sessionId,
+                        userId: user.id,
+                        role: 'assistant',
+                        content: assistantContent,
+                        status: 'complete',
+                        replyToMessageId: userMessage.id,
+                    });
+                    await updateDashboardAiSessionStatus(client, sessionId, 'active', true);
+                    await client.query('COMMIT');
+                    return persistedAssistantMessage;
+                } catch (error) {
+                    await client.query('ROLLBACK');
+                    throw error;
+                }
+            });
+
+            res.json({
+                sessionId,
+                userMessage,
+                assistantMessage,
+            });
+        } catch (error) {
+            const diagnostics = classifyAiError(error, route, requestId, MODEL_CANDIDATES.flash[0]);
+            const code = normalizeDashboardAiErrorCode(error, route, requestId, 'flash');
+            const status = code === 'RATE_LIMITED' ? 429 : code === 'NETWORK_ERROR' ? 503 : code === 'AI_REQUEST_FAILED' ? 503 : 500;
+
+            if (diagnostics.errorType === 'missing_key') {
+                const fallbackAssistantMessage = await withDashboardAiClient(async (client) => {
+                    await client.query('BEGIN');
+
+                    try {
+                        const persistedAssistantMessage = await insertDashboardAiMessage({
+                            client,
+                            sessionId,
+                            userId: user.id,
+                            role: 'assistant',
+                            content: buildLocalTutorFallbackResponse(messageContent, diagnostics),
+                            status: 'complete',
+                            replyToMessageId: userMessage.id,
+                        });
+                        await updateDashboardAiSessionStatus(client, sessionId, 'active', true);
+                        await client.query('COMMIT');
+                        return persistedAssistantMessage;
+                    } catch (persistError) {
+                        await client.query('ROLLBACK');
+                        throw persistError;
+                    }
+                });
+
+                res.json({
+                    sessionId,
+                    userMessage,
+                    assistantMessage: fallbackAssistantMessage,
+                });
+                return;
+            }
+
+            try {
+                await withDashboardAiClient(async (client) => {
+                    await client.query('BEGIN');
+
+                    try {
+                        await insertDashboardAiMessage({
+                            client,
+                            sessionId,
+                            userId: user.id,
+                            role: 'assistant',
+                            content: 'Nao foi possivel gerar a resposta agora.',
+                            status: 'error',
+                            errorCode: code,
+                            replyToMessageId: userMessage.id,
+                        });
+                        await updateDashboardAiSessionStatus(client, sessionId, 'error', false);
+                        await client.query('COMMIT');
+                    } catch (persistError) {
+                        await client.query('ROLLBACK');
+                        throw persistError;
+                    }
+                });
+            } catch (persistError) {
+                console.error(`[${requestId}] [${route}] failed to persist assistant error`, persistError);
+            }
+
+            sendDashboardAiError(res, {
+                sessionId,
+                code,
+                message:
+                    code === 'RATE_LIMITED'
+                        ? 'O limite temporario de requisicoes foi atingido. Tente novamente em instantes.'
+                        : code === 'NETWORK_ERROR'
+                            ? 'A conexao com o provedor falhou agora. Tente novamente em instantes.'
+                            : 'Nao foi possivel gerar a resposta agora.',
+                status,
+            });
+        }
+    } catch (error) {
+        console.error(`[${requestId}] [${route}] failed`, error);
+        sendDashboardAiError(res, {
+            sessionId,
+            code: 'UNKNOWN_ERROR',
+            message: 'Nao foi possivel concluir o envio da mensagem.',
+            status: 500,
+        });
+    }
+});
+
+app.post('/api/dashboard-ai/retry', async (req, res) => {
+    const route = '/api/dashboard-ai/retry';
+    const requestId = String(res.locals.requestId || 'unknown');
+    const user = req.authUser;
+    const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId.trim() : '';
+
+    if (!user) {
+        res.status(401).json({
+            error: {
+                code: 'UNKNOWN_ERROR',
+                message: 'Authentication required.',
+            },
+        });
+        return;
+    }
+
+    try {
+        const session = await getDashboardAiSessionForUser(sessionId, user.id);
+        if (!session) {
+            sendDashboardAiError(res, {
+                sessionId,
+                code: 'SESSION_NOT_FOUND',
+                message: 'Nao foi possivel localizar a sessao atual.',
+                status: 404,
+            });
+            return;
+        }
+
+        const failedTurn = await withDashboardAiClient(async (client) => {
+            return findLastFailedDashboardAiTurn(client, sessionId, user.id);
+        });
+
+        if (!failedTurn) {
+            sendDashboardAiError(res, {
+                sessionId,
+                code: 'AI_REQUEST_FAILED',
+                message: 'Nao existe uma resposta falha para tentar novamente nesta sessao.',
+                status: 409,
+            });
+            return;
+        }
+
+        const promptRows = await withDashboardAiClient(async (client) => {
+            return listDashboardAiMessagesForPrompt(client, sessionId, user.id, failedTurn.userMessage.created_at);
+        });
+
+        try {
+            const assistantContent = await generateDashboardAiAssistantReply({
+                route,
+                requestId,
+                contents: promptRows.map((row) => ({
+                    role: mapDashboardAiMessageRoleForProvider(row.role),
+                    content: row.content,
+                })),
+            });
+
+            const assistantMessage = await withDashboardAiClient(async (client) => {
+                await client.query('BEGIN');
+
+                try {
+                    const persistedAssistantMessage = await insertDashboardAiMessage({
+                        client,
+                        sessionId,
+                        userId: user.id,
+                        role: 'assistant',
+                        content: assistantContent,
+                        status: 'complete',
+                        replyToMessageId: failedTurn.userMessage.id,
+                    });
+                    await deleteDashboardAiMessage(client, failedTurn.failedAssistantMessage.id, sessionId, user.id);
+                    await updateDashboardAiSessionStatus(client, sessionId, 'active', true);
+                    await client.query('COMMIT');
+                    return persistedAssistantMessage;
+                } catch (error) {
+                    await client.query('ROLLBACK');
+                    throw error;
+                }
+            });
+
+            res.json({
+                sessionId,
+                assistantMessage,
+            });
+        } catch (error) {
+            const diagnostics = classifyAiError(error, route, requestId, MODEL_CANDIDATES.flash[0]);
+            const code = normalizeDashboardAiErrorCode(error, route, requestId, 'flash');
+            const status = code === 'RATE_LIMITED' ? 429 : code === 'NETWORK_ERROR' ? 503 : code === 'AI_REQUEST_FAILED' ? 503 : 500;
+
+            if (diagnostics.errorType === 'missing_key') {
+                const assistantMessage = await withDashboardAiClient(async (client) => {
+                    await client.query('BEGIN');
+
+                    try {
+                        const persistedAssistantMessage = await insertDashboardAiMessage({
+                            client,
+                            sessionId,
+                            userId: user.id,
+                            role: 'assistant',
+                            content: buildLocalTutorFallbackResponse(failedTurn.userMessage.content, diagnostics),
+                            status: 'complete',
+                            replyToMessageId: failedTurn.userMessage.id,
+                        });
+                        await deleteDashboardAiMessage(client, failedTurn.failedAssistantMessage.id, sessionId, user.id);
+                        await updateDashboardAiSessionStatus(client, sessionId, 'active', true);
+                        await client.query('COMMIT');
+                        return persistedAssistantMessage;
+                    } catch (persistError) {
+                        await client.query('ROLLBACK');
+                        throw persistError;
+                    }
+                });
+
+                res.json({
+                    sessionId,
+                    assistantMessage,
+                });
+                return;
+            }
+
+            await withDashboardAiClient(async (client) => {
+                await updateDashboardAiSessionStatus(client, sessionId, 'error', false);
+            });
+
+            sendDashboardAiError(res, {
+                sessionId,
+                code,
+                message:
+                    code === 'RATE_LIMITED'
+                        ? 'O limite temporario de requisicoes foi atingido. Tente novamente em instantes.'
+                        : code === 'NETWORK_ERROR'
+                            ? 'A conexao com o provedor falhou agora. Tente novamente em instantes.'
+                            : 'Nao foi possivel gerar a resposta agora.',
+                status,
+            });
+        }
+    } catch (error) {
+        console.error(`[${requestId}] [${route}] failed`, error);
+        sendDashboardAiError(res, {
+            sessionId,
+            code: 'UNKNOWN_ERROR',
+            message: 'Nao foi possivel repetir a resposta agora.',
+            status: 500,
+        });
+    }
+});
 
 app.get('/api/state', async (req, res) => {
     const user = req.authUser;
@@ -2927,7 +3448,7 @@ app.get('*', async (req, res, next) => {
 
     try {
         const user = await resolveRequestAuth(req);
-        res.redirect(user ? '/app' : '/login');
+        res.redirect(user ? '/dashboard' : '/login');
     } catch (error) {
         next(error);
     }

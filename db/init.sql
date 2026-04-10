@@ -52,6 +52,34 @@ CREATE TABLE IF NOT EXISTS user_learning_state (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS dashboard_ai_sessions (
+    id TEXT PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT 'Dashboard AI',
+    status TEXT NOT NULL CHECK (status IN ('idle', 'active', 'error', 'archived')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_message_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_dashboard_ai_sessions_user_id ON dashboard_ai_sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_dashboard_ai_sessions_updated_at ON dashboard_ai_sessions (updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS dashboard_ai_messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES dashboard_ai_sessions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('system', 'user', 'assistant', 'tool')),
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status TEXT NOT NULL DEFAULT 'complete' CHECK (status IN ('pending', 'sent', 'complete', 'error')),
+    error_code TEXT,
+    reply_to_message_id TEXT REFERENCES dashboard_ai_messages(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_dashboard_ai_messages_session_id ON dashboard_ai_messages (session_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_dashboard_ai_messages_user_id ON dashboard_ai_messages (user_id);
+
 ALTER TABLE user_learning_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_learning_state FORCE ROW LEVEL SECURITY;
 

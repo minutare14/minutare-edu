@@ -1313,6 +1313,128 @@ function buildLocalTutorFallbackResponse(message: string, diagnostics: AiDiagnos
     ].join('\n');
 }
 
+function findDashboardAiRelevantModules(message: string) {
+    const normalizedMessage = normalizeLookupText(message);
+    const modules = getAllModules();
+    const directMatches = modules.filter((module) => {
+        const candidates = [module.title, module.slug, ...module.keyConcepts, ...module.learningGoals];
+        return candidates.some((candidate) => {
+            const normalizedCandidate = normalizeLookupText(candidate);
+            if (!normalizedCandidate) {
+                return false;
+            }
+
+            return normalizedMessage.includes(normalizedCandidate) || normalizedCandidate.includes(normalizedMessage);
+        });
+    });
+
+    if (directMatches.length) {
+        return directMatches.slice(0, 3);
+    }
+
+    if (normalizedMessage.includes('conjunto')) {
+        return modules.filter((module) => ['conjuntos', 'conjuntos-numericos'].includes(module.slug));
+    }
+
+    return [];
+}
+
+function buildDashboardAiLocalFallbackResponse(message: string, diagnostics: AiDiagnostics): string {
+    const studentRequest = extractTutorStudentRequest(message) || 'Preciso de ajuda para encontrar o proximo material.';
+    const normalizedMessage = normalizeLookupText(message);
+    const relevantModules = findDashboardAiRelevantModules(message);
+    const providerNote =
+        diagnostics.errorType === 'missing_key'
+            ? 'A IA externa nao esta configurada agora, entao respondo em modo local.'
+            : 'A IA externa ficou indisponivel agora, entao respondo em modo local sem travar o chat.';
+
+    if (normalizedMessage.includes('conjunto')) {
+        return [
+            '### Resumo rapido',
+            `O material de conjuntos esta no dashboard em dois blocos: **Conjuntos** e **Conjuntos Numericos**. ${providerNote}`,
+            '',
+            '### Explicacao',
+            formatTutorBulletItems([
+                'Abra o modulo **Conjuntos** para nocao de conjunto, pertinencia, inclusao, uniao, interseccao e diferenca.',
+                'Abra o modulo **Conjuntos Numericos** para N, Z, Q, I e R, com classificacao de numeros e hierarquia entre conjuntos.',
+                'Se quiser apoio visual, o curso tambem tem artefatos sobre conjuntos numericos, operacoes entre conjuntos e diagrama de Venn.',
+            ]),
+            '',
+            '### O que observar',
+            formatTutorBulletItems([
+                'Se sua duvida for sobre elemento, subconjunto, uniao ou interseccao, comece por **Conjuntos**.',
+                'Se a duvida for sobre classificar numeros ou a hierarquia N ⊂ Z ⊂ Q ⊂ R, va para **Conjuntos Numericos**.',
+                'Depois de abrir o modulo, use o Dashboard AI de novo com a pergunta mais especifica para continuar dali.',
+            ]),
+            '',
+            '### Erros comuns',
+            formatTutorBulletItems([
+                'Procurar conjuntos numericos dentro do modulo geral de conjuntos e misturar os dois assuntos.',
+                'Confundir pertinencia com inclusao logo no inicio da revisao.',
+                'Tentar revisar operacoes entre conjuntos e classificacao numerica como se fosse o mesmo bloco.',
+            ]),
+            '',
+            '### Exemplo',
+            `Se voce quer localizar **uniao/interseccao**, abra **Conjuntos**. Se quer localizar **N, Z, Q, I e R**, abra **Conjuntos Numericos**. Pedido atual: ${clipTutorText(studentRequest, 180)}.`,
+        ].join('\n');
+    }
+
+    if (relevantModules.length) {
+        return [
+            '### Resumo rapido',
+            `Encontrei material relacionado no proprio dashboard. ${providerNote}`,
+            '',
+            '### Explicacao',
+            formatTutorBulletItems(
+                relevantModules.map((module) => `${module.title}: ${module.learningGoals.slice(0, 2).join('; ')}.`),
+            ),
+            '',
+            '### O que observar',
+            formatTutorBulletItems([
+                'Abra primeiro o modulo cujo titulo bate mais diretamente com sua pergunta.',
+                'Se a duvida for de localizacao, procure esse modulo na grade principal do dashboard.',
+                'Depois volte ao chat com uma pergunta mais curta e objetiva sobre esse conteudo.',
+            ]),
+            '',
+            '### Erros comuns',
+            formatTutorBulletItems([
+                'Pedir revisao ampla demais sem dizer qual conceito ou modulo voce quer.',
+                'Misturar localizacao do material com resolucao detalhada da materia no mesmo pedido.',
+            ]),
+            '',
+            '### Exemplo',
+            `Pedido atual: ${clipTutorText(studentRequest, 180)}. O melhor proximo passo e abrir ${relevantModules[0]?.title || 'o modulo correspondente'} e continuar a conversa a partir desse ponto.`,
+        ].join('\n');
+    }
+
+    return [
+        '### Resumo rapido',
+        `O chat segue funcional em modo local enquanto a IA externa nao responde. ${providerNote}`,
+        '',
+        '### Explicacao',
+        formatTutorBulletItems([
+            'Descreva qual modulo, assunto ou exercicio voce quer localizar ou entender.',
+            'Se a pergunta for sobre localizacao, diga o nome do tema principal.',
+            'Se a pergunta for conceitual, diga qual definicao ou exemplo voce quer revisar.',
+        ]),
+        '',
+        '### O que observar',
+        formatTutorBulletItems([
+            'Pedidos curtos e especificos ajudam o fallback a apontar o modulo certo.',
+            'O dashboard separa o estudo por modulos, revisao e laboratorio.',
+        ]),
+        '',
+        '### Erros comuns',
+        formatTutorBulletItems([
+            'Perguntar de forma muito ampla e esperar que o sistema adivinhe o modulo.',
+            'Misturar navegacao e teoria em uma frase longa demais.',
+        ]),
+        '',
+        '### Exemplo',
+        `Voce pode perguntar: "Onde esta o modulo de conjuntos?" ou "Me explique conjuntos numericos com um exemplo curto". Pedido atual: ${clipTutorText(studentRequest, 180)}.`,
+    ].join('\n');
+}
+
 function formatTutorResponsePayload(rawText: string, userMessage: string): string {
     const normalizedRaw = rawText.replace(/^##\s+/gm, '### ').trim();
     if (/^###\s/m.test(normalizedRaw)) {
@@ -2013,6 +2135,10 @@ function buildDashboardAiProviderContents(messages: Array<{ role: string; conten
     }));
 }
 
+function shouldUseDashboardAiLocalFallback(diagnostics: AiDiagnostics) {
+    return ['missing_key', 'quota_exceeded', 'network', 'provider', 'auth', 'parse_error'].includes(diagnostics.errorType);
+}
+
 async function generateDashboardAiAssistantReply({
     contents,
     route,
@@ -2457,7 +2583,7 @@ app.post('/api/dashboard-ai/message', async (req, res) => {
             const code = normalizeDashboardAiErrorCode(error, route, requestId, 'flash');
             const status = code === 'RATE_LIMITED' ? 429 : code === 'NETWORK_ERROR' ? 503 : code === 'AI_REQUEST_FAILED' ? 503 : 500;
 
-            if (diagnostics.errorType === 'missing_key') {
+            if (shouldUseDashboardAiLocalFallback(diagnostics)) {
                 const fallbackAssistantMessage = await withDashboardAiClient(async (client) => {
                     await client.query('BEGIN');
 
@@ -2467,7 +2593,7 @@ app.post('/api/dashboard-ai/message', async (req, res) => {
                             sessionId,
                             userId: user.id,
                             role: 'assistant',
-                            content: buildLocalTutorFallbackResponse(messageContent, diagnostics),
+                            content: buildDashboardAiLocalFallbackResponse(messageContent, diagnostics),
                             status: 'complete',
                             replyToMessageId: userMessage.id,
                         });
@@ -2625,7 +2751,7 @@ app.post('/api/dashboard-ai/retry', async (req, res) => {
             const code = normalizeDashboardAiErrorCode(error, route, requestId, 'flash');
             const status = code === 'RATE_LIMITED' ? 429 : code === 'NETWORK_ERROR' ? 503 : code === 'AI_REQUEST_FAILED' ? 503 : 500;
 
-            if (diagnostics.errorType === 'missing_key') {
+            if (shouldUseDashboardAiLocalFallback(diagnostics)) {
                 const assistantMessage = await withDashboardAiClient(async (client) => {
                     await client.query('BEGIN');
 
@@ -2635,7 +2761,7 @@ app.post('/api/dashboard-ai/retry', async (req, res) => {
                             sessionId,
                             userId: user.id,
                             role: 'assistant',
-                            content: buildLocalTutorFallbackResponse(failedTurn.userMessage.content, diagnostics),
+                            content: buildDashboardAiLocalFallbackResponse(failedTurn.userMessage.content, diagnostics),
                             status: 'complete',
                             replyToMessageId: failedTurn.userMessage.id,
                         });

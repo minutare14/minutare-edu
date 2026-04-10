@@ -959,6 +959,70 @@ body.chat-open .chat-toggle {
   background: var(--primary-dim);
 }
 
+.dashboard-ai-entry-rail {
+  width: 100%;
+  padding: 104px 24px 72px 0;
+}
+
+.dashboard-ai-entry-card {
+  position: sticky;
+  top: 92px;
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(16, 32, 58, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.82));
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-ai-entry-card__eyebrow {
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.dashboard-ai-entry-card h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  line-height: 1.08;
+}
+
+.dashboard-ai-entry-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.dashboard-ai-entry-card__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-ai-entry-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-ai-entry-card__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  color: var(--text-main);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
 @media (max-width: 720px) {
   .card__split {
     flex-direction: column;
@@ -1065,6 +1129,16 @@ body.chat-open .chat-toggle {
 
   .checklist {
     padding-inline: 18px;
+  }
+
+  .dashboard-ai-entry-rail {
+    padding: 0 12px 32px;
+  }
+
+  .dashboard-ai-entry-card {
+    position: static;
+    padding: 22px;
+    border-radius: 24px;
   }
 }
 

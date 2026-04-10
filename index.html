@@ -200,57 +200,30 @@
     </section>
 </main>
 
-<div id="chat-backdrop" class="chat-backdrop hidden" aria-hidden="true"></div>
-<div id="chat-widget" class="chat-widget">
-    <button id="chat-toggle" class="chat-toggle" type="button" aria-controls="chat-window" aria-expanded="false">
-        <span class="chat-toggle__eyebrow">Tutor IA</span>
-        <span class="chat-toggle__label">Abrir tutor</span>
-    </button>
-    <div id="chat-window" class="chat-window hidden" role="dialog" aria-modal="true" aria-label="Tutor de Matematica">
-        <div class="chat-header">
-            <div class="chat-header__title">
-                <span class="chat-header__eyebrow">Tutor de Matematica</span>
-                <h3>Respostas curtas, guiadas e faceis de escanear</h3>
-                <p>Abra como painel dedicado para estudar sem cobrir os modulos ou perder o foco.</p>
-                <div id="chat-context-badge" class="chat-context-badge hidden" aria-live="polite">
-                    <span class="chat-context-badge__icon">&#9679;</span>
-                    <span id="chat-context-label" class="chat-context-badge__label"></span>
-                </div>
-            </div>
-            <div class="chat-header__actions">
-                <select id="chat-model" aria-label="Selecionar modelo do tutor">
-                    <option value="flash">Flash</option>
-                    <option value="pro">Pro</option>
-                    <option value="lite">Lite</option>
-                </select>
-                <button id="chat-close" type="button" aria-label="Fechar tutor">&times;</button>
-            </div>
+<aside class="dashboard-ai-entry-rail" aria-label="Assistente do dashboard">
+    <section class="dashboard-ai-entry-card">
+        <span class="dashboard-ai-entry-card__eyebrow">Dashboard AI</span>
+        <h2>Abra o chat novo em tela dedicada, com sessao persistida e input funcional.</h2>
+        <p>
+            O tutor legado do painel foi substituido pela rota dedicada do assistente. Entre por aqui para conversar sem travar o dashboard.
+        </p>
+        <div class="dashboard-ai-entry-card__actions">
+            <a class="btn btn--primary" href="/dashboard/ai">Abrir Dashboard AI</a>
+            <button
+                class="btn btn--secondary"
+                type="button"
+                data-chat-launcher="Explique o conteudo deste modulo de forma simples, com exemplos."
+            >
+                Abrir com contexto
+            </button>
         </div>
-        <div class="chat-body">
-            <div class="chat-intro">
-                <span class="chat-intro__eyebrow">Assistente guiado</span>
-                <h4>Peca uma resposta em blocos, nao um texto bruto.</h4>
-                <p>O tutor funciona melhor quando voce pede explicacao, pratica ou revisao com um objetivo claro. Assim a resposta vem mais legivel e util.</p>
-                <div class="chat-pattern" aria-label="Estrutura sugerida para respostas">
-                    <span class="chat-pattern__chip">Resumo rapido</span>
-                    <span class="chat-pattern__chip">Explicacao</span>
-                    <span class="chat-pattern__chip">Exemplo</span>
-                    <span class="chat-pattern__chip">Erros comuns</span>
-                </div>
-            </div>
-            <div class="chat-suggestions" aria-label="Sugestoes rapidas">
-                <button type="button" class="chat-suggestion chat-suggestion--primary" data-chat-prompt="Explique o conteudo deste modulo de forma simples, com exemplos.">Explicar</button>
-                <button type="button" class="chat-suggestion chat-suggestion--secondary" data-chat-prompt="Crie tres exercicios graduais sobre o topico atual, com gabarito comentado.">Gerar exercicios</button>
-                <button type="button" class="chat-suggestion chat-suggestion--ghost" data-chat-prompt="Quais sao os erros mais comuns neste assunto e como evita-los?">Erros comuns</button>
-            </div>
-            <div id="chat-messages" class="chat-messages"></div>
+        <div class="dashboard-ai-entry-card__chips" aria-label="Sugestoes de uso do assistente">
+            <span class="dashboard-ai-entry-card__chip">Resumo rapido</span>
+            <span class="dashboard-ai-entry-card__chip">Exemplo curto</span>
+            <span class="dashboard-ai-entry-card__chip">Erros comuns</span>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Pergunte sobre um modulo, exercicio ou artefato..." autocomplete="off" />
-            <button id="chat-send" type="button">Enviar</button>
-        </div>
-    </div>
-</div>
+    </section>
+</aside>
 </div>
 
 <div id="feynman-backdrop" class="feynman-backdrop hidden" aria-hidden="true"></div>

@@ -3553,6 +3553,7 @@ app.use('/api', (_req, res) => {
 
 [
     { route: '/assets', dir: path.join(__dirname, 'dist', 'assets') },
+    { route: '/exam-support', dir: path.join(__dirname, 'dist', 'exam-support') },
     { route: '/css', dir: path.join(__dirname, 'css') },
     { route: '/js', dir: path.join(__dirname, 'js') },
     { route: '/vendor', dir: path.join(__dirname, 'vendor') },

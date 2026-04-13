@@ -1,5 +1,7 @@
-﻿import { EXAM_QUESTIONS } from './data';
+import { EXAM_QUESTIONS } from './data';
 import type { ExamFeatureConfig } from './config';
+import { IMPORTED_EXAMS } from './imported/generated';
+import { registerImportedExam } from './imported/register';
 import type { ExamQuestion, TopicId } from './model';
 
 export interface ExamDefinition {
@@ -22,6 +24,10 @@ export interface ExamDefinition {
     topics: TopicId[];
     stateKey: string;
     storageKey: string;
+    gradingMode?: 'automatic' | 'manual';
+    supportImageSrc?: string;
+    supportImageAlt?: string;
+    sourceFolderName?: string;
     features?: Partial<ExamFeatureConfig>;
 }
 
@@ -48,6 +54,7 @@ export const LISTA1_EXAM: ExamDefinition = {
     topics: lista1Topics,
     stateKey: 'lista1InteractiveExam',
     storageKey: 'ctia03-lista1-interactive-exam-v1',
+    gradingMode: 'automatic',
     features: {
         allowHints: false,
         allowTutor: false,
@@ -59,6 +66,6 @@ export const LISTA1_EXAM: ExamDefinition = {
     },
 };
 
-export const EXAM_LIBRARY: ExamDefinition[] = [LISTA1_EXAM];
+const IMPORTED_EXAM_LIBRARY = IMPORTED_EXAMS.map((exam) => registerImportedExam(exam));
 
-
+export const EXAM_LIBRARY: ExamDefinition[] = [LISTA1_EXAM, ...IMPORTED_EXAM_LIBRARY];

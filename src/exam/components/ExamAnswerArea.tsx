@@ -10,6 +10,32 @@ interface ExamAnswerAreaProps {
 }
 
 export function ExamAnswerArea({ question, draft, onAnswerChange, onMatrixChange }: ExamAnswerAreaProps) {
+    if (question.answerSchema.kind === 'open') {
+        const { field } = question.answerSchema;
+        const value = draft.answers[field.key] || '';
+
+        return (
+            <div className="groups-grid">
+                <section className="answer-group">
+                    <div className="answer-group__title">
+                        <span>{field.label}</span>
+                        {question.answerSchema.instructions ? <small>{question.answerSchema.instructions}</small> : null}
+                    </div>
+
+                    <label className="field-card field-card--stacked">
+                        <span className="field-card__label">{field.label}</span>
+                        <textarea
+                            rows={field.rows || 8}
+                            value={value}
+                            placeholder={field.placeholder}
+                            onChange={(event) => onAnswerChange(field.key, event.target.value)}
+                        />
+                    </label>
+                </section>
+            </div>
+        );
+    }
+
     if (question.answerSchema.kind === 'matrix') {
         const schema = question.answerSchema;
 

@@ -14,7 +14,7 @@ import {
 } from './exam/grading';
 import { GraphFigure } from './exam/graphs';
 import { EXAM_LIBRARY, type ExamDefinition } from './exam/library';
-import { TOPIC_META, type GraphKey, type TopicId } from './exam/model';
+import { getTopicMeta, type GraphKey, type TopicId } from './exam/model';
 import { exportExamReportPdf } from './exam/pdf';
 import { buildExamReport, formatReportDateTime, type ExamReport } from './exam/report';
 import {
@@ -268,8 +268,11 @@ function buildAiRequestPayload(report: ExamReport) {
 export default function App() {
     const exams = useMemo(() => EXAM_LIBRARY.filter((exam) => exam.active), []);
     const topicLabels = useMemo(
-        () => Object.fromEntries(Object.entries(TOPIC_META).map(([key, value]) => [key, value.label])) as Record<TopicId, string>,
-        [],
+        () =>
+            Object.fromEntries(
+                (Array.from(new Set(exams.flatMap((exam) => exam.topics))) as TopicId[]).map((topic) => [topic, getTopicMeta(topic).label]),
+            ) as Record<TopicId, string>,
+        [exams],
     );
 
     const [screen, setScreen] = useState<AppScreen>('dashboard');
@@ -280,6 +283,7 @@ export default function App() {
     const [exportStatus, setExportStatus] = useState<ExportStatus>('idle');
     const [viewedAttemptId, setViewedAttemptId] = useState<string | null>(null);
     const [zoomedGraph, setZoomedGraph] = useState<GraphKey | null>(null);
+    const [previewedSupportImage, setPreviewedSupportImage] = useState<{ src: string; alt: string } | null>(null);
     const [serverState, setServerState] = useState<Record<string, unknown>>({});
     const [examStates, setExamStates] = useState<Record<string, PersistedExamState>>({});
 
@@ -603,7 +607,7 @@ export default function App() {
     );
 
     const fallbackFeedback = useMemo(() => {
-        if (!reportCore) return null;
+        if (!reportCore || reportCore.gradingMode === 'manual') return null;
         return buildLocalPedagogicalFeedback(reportCore);
     }, [reportCore]);
 
@@ -931,6 +935,7 @@ export default function App() {
     useEffect(() => {
         if (!activeExam || !reportAttempt || !reportCore || !fallbackFeedback) return;
         if (!reportAttempt.finished) return;
+        if (activeExam.gradingMode === 'manual') return;
 
         const analysis = reportAttempt.analysis;
         const attemptId = reportAttempt.id;
@@ -1136,9 +1141,9 @@ export default function App() {
                                                 <span className={`exam-status-pill exam-status-pill--${item.status}`}>{examStatusLabel(item.status)}</span>
                                             </div>
 
-                                            <div className="badge-row">
+                                                <div className="badge-row">
                                                 {item.exam.topics.slice(0, 6).map((topic) => (
-                                                    <span key={topic} className="tag">{TOPIC_META[topic].short}</span>
+                                                    <span key={topic} className="tag">{getTopicMeta(topic).short}</span>
                                                 ))}
                                             </div>
 
@@ -1241,7 +1246,7 @@ export default function App() {
                             <p>O relatorio combina desempenho, tempo, leitura pedagogica persistida e revisao por questao, com exportacao PDF sem depender do DOM de impressao.</p>
                         </div>
                         <div className="hero__stats">
-                            <div className="stat-card"><span>Aproveitamento</span><strong>{(report.summary.performanceRatio * 100).toFixed(0)}%</strong></div>
+                            <div className="stat-card"><span>{report.gradingMode === 'manual' ? 'Preenchimento' : 'Aproveitamento'}</span><strong>{(report.summary.performanceRatio * 100).toFixed(0)}%</strong></div>
                             <div className="stat-card"><span>Tempo total</span><strong>{formatDuration(report.summary.totalTimeMs)}</strong></div>
                             <div className="stat-card"><span>Tentativa</span><strong>{report.attemptNumber}</strong></div>
                         </div>
@@ -1324,6 +1329,14 @@ export default function App() {
                         onZoomGraph={(graphKey) => {
                             if (graphKey) setZoomedGraph(graphKey);
                         }}
+                        onOpenSupportImage={() => {
+                            if (activeExam.supportImageSrc) {
+                                setPreviewedSupportImage({
+                                    src: activeExam.supportImageSrc,
+                                    alt: activeExam.supportImageAlt || `${activeExam.title} - imagem original da prova`,
+                                });
+                            }
+                        }}
                     />
                 </>
             )}
@@ -1333,6 +1346,15 @@ export default function App() {
                     <div className="graph-modal__content" onClick={(event) => event.stopPropagation()}>
                         <button type="button" className="graph-modal__close" onClick={() => setZoomedGraph(null)}>Fechar</button>
                         <GraphFigure graphKey={zoomedGraph} />
+                    </div>
+                </div>
+            ) : null}
+
+            {previewedSupportImage ? (
+                <div className="graph-modal" role="dialog" aria-modal="true" onClick={() => setPreviewedSupportImage(null)}>
+                    <div className="graph-modal__content" onClick={(event) => event.stopPropagation()}>
+                        <button type="button" className="graph-modal__close" onClick={() => setPreviewedSupportImage(null)}>Fechar</button>
+                        <img className="support-image-preview" src={previewedSupportImage.src} alt={previewedSupportImage.alt} />
                     </div>
                 </div>
             ) : null}

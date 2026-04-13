@@ -1,4 +1,5 @@
 import type { AnswerSchema, Checker, ExamQuestion, TopicId } from './model';
+import { getTopicMeta } from './model';
 
 export type ToggleAnswer = 'sim' | 'nao' | 'v' | 'f';
 
@@ -23,11 +24,11 @@ export interface FieldEvaluation {
 
 export interface QuestionEvaluation {
     questionId: string;
-    questionNumber: number;
+    questionNumber: number | string;
     score: number;
     maxScore: number;
     ratio: number;
-    status: 'correct' | 'partial' | 'incorrect' | 'blank';
+    status: 'correct' | 'partial' | 'incorrect' | 'answered' | 'blank';
     answered: boolean;
     fields: FieldEvaluation[];
 }
@@ -61,15 +62,15 @@ export function normalizeText(value: string): string {
         .normalize('NFD')
         .replace(/\p{Diacritic}/gu, '')
         .toLowerCase()
-        .replace(/[−–—]/g, '-')
-        .replace(/π/g, 'pi')
-        .replace(/∞/g, 'inf')
-        .replace(/√/g, 'sqrt')
-        .replace(/ℝ/g, 'r')
-        .replace(/∪/g, 'u')
-        .replace(/∩/g, 'n')
-        .replace(/≤/g, '<=')
-        .replace(/≥/g, '>=')
+        .replace(/[âˆ’â€“â€”]/g, '-')
+        .replace(/Ï€/g, 'pi')
+        .replace(/âˆž/g, 'inf')
+        .replace(/âˆš/g, 'sqrt')
+        .replace(/â„/g, 'r')
+        .replace(/âˆª/g, 'u')
+        .replace(/âˆ©/g, 'n')
+        .replace(/â‰¤/g, '<=')
+        .replace(/â‰¥/g, '>=')
         .replace(/\s+/g, '')
         .replace(/,+/g, '.')
         .trim();
@@ -79,8 +80,8 @@ function sanitizeNumericExpression(value: string): string | null {
     const prepared = value
         .trim()
         .replace(/,/g, '.')
-        .replace(/π/gi, 'pi')
-        .replace(/√/g, 'sqrt')
+        .replace(/Ï€/gi, 'pi')
+        .replace(/âˆš/g, 'sqrt')
         .replace(/\^/g, '**')
         .replace(/abs/gi, 'Math.abs')
         .replace(/sqrt/gi, 'Math.sqrt')
@@ -193,7 +194,7 @@ function evaluateGroupSchema(question: ExamQuestion, draft: QuestionDraft): Ques
         }
     }
 
-    return summarizeQuestion(question, fields);
+    return summarizeQuestion(question, fields, false);
 }
 
 function evaluateMatrixSchema(question: ExamQuestion, draft: QuestionDraft): QuestionEvaluation {
@@ -218,19 +219,44 @@ function evaluateMatrixSchema(question: ExamQuestion, draft: QuestionDraft): Que
         }
     }
 
-    return summarizeQuestion(question, fields);
+    return summarizeQuestion(question, fields, false);
 }
 
-function summarizeQuestion(question: ExamQuestion, fields: FieldEvaluation[]): QuestionEvaluation {
+function evaluateOpenSchema(question: ExamQuestion, draft: QuestionDraft): QuestionEvaluation {
+    const schema = question.answerSchema as Extract<AnswerSchema, { kind: 'open' }>;
+    const studentAnswer = draft.answers[schema.field.key] || '';
+    const answered = Boolean(studentAnswer.trim());
+
+    const fields: FieldEvaluation[] = [
+        {
+            key: schema.field.key,
+            label: schema.field.label,
+            score: answered ? 1 : 0,
+            maxScore: 1,
+            studentAnswer,
+            expectedAnswer: 'Resposta discursiva sem gabarito automatizado.',
+        },
+    ];
+
+    return summarizeQuestion(question, fields, true);
+}
+
+function summarizeQuestion(question: ExamQuestion, fields: FieldEvaluation[], manual = false): QuestionEvaluation {
     const score = fields.reduce((total, field) => total + field.score, 0);
     const maxScore = fields.reduce((total, field) => total + field.maxScore, 0);
     const ratio = maxScore ? score / maxScore : 0;
     const answered = fields.some((field) => field.studentAnswer.trim().length > 0);
 
     let status: QuestionEvaluation['status'] = 'blank';
-    if (answered && ratio >= 0.999) status = 'correct';
-    else if (answered && ratio > 0) status = 'partial';
-    else if (answered) status = 'incorrect';
+    if (manual) {
+        status = answered ? 'answered' : 'blank';
+    } else if (answered && ratio >= 0.999) {
+        status = 'correct';
+    } else if (answered && ratio > 0) {
+        status = 'partial';
+    } else if (answered) {
+        status = 'incorrect';
+    }
 
     return {
         questionId: question.id,
@@ -246,9 +272,13 @@ function summarizeQuestion(question: ExamQuestion, fields: FieldEvaluation[]): Q
 
 export function evaluateQuestion(question: ExamQuestion, draft?: QuestionDraft): QuestionEvaluation {
     const safeDraft = ensureDraft(draft);
-    return question.answerSchema.kind === 'matrix'
-        ? evaluateMatrixSchema(question, safeDraft)
-        : evaluateGroupSchema(question, safeDraft);
+    if (question.answerSchema.kind === 'matrix') {
+        return evaluateMatrixSchema(question, safeDraft);
+    }
+    if (question.answerSchema.kind === 'open') {
+        return evaluateOpenSchema(question, safeDraft);
+    }
+    return evaluateGroupSchema(question, safeDraft);
 }
 
 export function getQuestionProgress(question: ExamQuestion, draft?: QuestionDraft): 'unanswered' | 'in-progress' | 'answered' | 'review' {
@@ -259,9 +289,12 @@ export function getQuestionProgress(question: ExamQuestion, draft?: QuestionDraf
     const hasOfficialAnswer =
         answerSchema.kind === 'matrix'
             ? Object.values(safeDraft.matrixAnswers).some((row) => Object.values(row).some((value) => Boolean(value)))
-            : Object.keys(safeDraft.answers).some((key) => Boolean(safeDraft.answers[key]?.trim()));
+            : answerSchema.kind === 'open'
+              ? Boolean(safeDraft.answers[answerSchema.field.key]?.trim())
+              : Object.keys(safeDraft.answers).some((key) => Boolean(safeDraft.answers[key]?.trim()));
 
-    if (!hasOfficialAnswer && !safeDraft.scratch.trim()) return 'unanswered';
+    const hasScratchpad = question.answerSchema.kind === 'open' ? question.answerSchema.hasScratchpad : true;
+    if (!hasOfficialAnswer && (!hasScratchpad || !safeDraft.scratch.trim())) return 'unanswered';
 
     const evaluation = evaluateQuestion(question, safeDraft);
     return evaluation.answered ? 'answered' : 'in-progress';
@@ -290,7 +323,7 @@ export function buildTopicPerformance(
     return [...bucket.entries()]
         .map(([topic, values]) => ({
             topic,
-            label: labels[topic],
+            label: labels[topic] || getTopicMeta(topic).label,
             score: values.score,
             maxScore: values.maxScore,
             ratio: values.maxScore ? values.score / values.maxScore : 0,

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { IMPORTED_GRAPH_ASSETS } from './imported/generated';
 import type { GraphKey } from './model';
 
 type Point = [number, number];
@@ -128,6 +129,74 @@ function pointMarkup(x: number, y: number, className = 'graph-point', radius = 4
     return `<circle cx="${x}" cy="${y}" r="${radius}" class="${className}" />`;
 }
 
+const IMPORTED_GRAPH_ASSET_MAP = new Map(IMPORTED_GRAPH_ASSETS.map((asset) => [asset.id, asset]));
+
+function uniqueSorted(values: number[]) {
+    return Array.from(new Set(values)).sort((left, right) => left - right);
+}
+
+function buildImportedLineGraphAsset(graphKey: GraphKey) {
+    const asset = IMPORTED_GRAPH_ASSET_MAP.get(graphKey);
+    if (!asset || asset.graphType !== 'line') return null;
+
+    const payload = asset.payload as {
+        type?: string;
+        xLabel?: string;
+        yLabel?: string;
+        points?: Array<[number, number]>;
+        guides?: {
+            vertical?: number[];
+            horizontal?: number[];
+        };
+    };
+
+    const points = Array.isArray(payload.points) ? payload.points.filter((point) => Array.isArray(point) && point.length === 2) : [];
+    if (!points.length) return null;
+
+    const xValues = uniqueSorted([0, ...points.map((point) => point[0]), ...(payload.guides?.vertical || [])]);
+    const yValues = uniqueSorted([0, ...points.map((point) => point[1]), ...(payload.guides?.horizontal || [])]);
+    const xMin = Math.min(...xValues);
+    const xMax = Math.max(...xValues);
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
+    const xPadding = Math.max(1, (xMax - xMin) * 0.15 || 1);
+    const yPadding = Math.max(40, (yMax - yMin) * 0.14 || 40);
+    const width = 420;
+    const height = 300;
+    const xDomain: [number, number] = [Math.min(0, Math.floor(xMin - xPadding)), Math.ceil(xMax + xPadding)];
+    const yDomain: [number, number] = [Math.min(0, Math.floor(yMin - yPadding)), Math.ceil(yMax + yPadding)];
+    const guideSegments: string[] = [];
+
+    for (const guideX of payload.guides?.vertical || []) {
+        const point = points.find((entry) => entry[0] === guideX);
+        if (!point) continue;
+        const pointCoords = chartPoint(point[0], point[1], xDomain, yDomain, width, height);
+        guideSegments.push(guidelineMarkup(pointCoords.x, pointCoords.y, pointCoords.x, height - 54));
+    }
+
+    for (const guideY of payload.guides?.horizontal || []) {
+        const point = points.find((entry) => entry[1] === guideY) || points.find((entry) => entry[1] >= guideY);
+        const y = scaleLinear(guideY, yDomain, [height - 54, 28]);
+        const x = point ? chartPoint(point[0], point[1], xDomain, yDomain, width, height).x : width - 28;
+        guideSegments.push(guidelineMarkup(64, y, x, y));
+    }
+
+    return {
+        title: `Grafico reconstruido de ${asset.questionId}`,
+        width,
+        height,
+        xDomain,
+        yDomain,
+        xLabel: payload.xLabel || 'x',
+        yLabel: payload.yLabel || 'y',
+        xTicks: xValues,
+        yTicks: yValues.filter((value) => value >= yDomain[0] && value <= yDomain[1]),
+        points,
+        extra: guideSegments.join(''),
+        pointEntries: points.map((point) => ({ point })),
+    };
+}
+
 function chartSvgMarkup({
     title,
     width,
@@ -233,6 +302,16 @@ function intervalRowMarkup({
 }
 
 export function getGraphExportMarkup(graphKey: GraphKey): { svgMarkup: string; width: number; height: number; title: string } | null {
+    const importedLineGraph = buildImportedLineGraphAsset(graphKey);
+    if (importedLineGraph) {
+        return {
+            width: importedLineGraph.width,
+            height: importedLineGraph.height,
+            title: importedLineGraph.title,
+            svgMarkup: chartSvgMarkup(importedLineGraph),
+        };
+    }
+
     switch (graphKey) {
         case 'interval-examples': {
             const width = 420;
@@ -668,7 +747,30 @@ function QuadraticRootsGraph() {
     );
 }
 
+function ImportedGraphFigure({ graphKey }: { graphKey: GraphKey }) {
+    const graphAsset = getGraphExportMarkup(graphKey);
+    if (!graphAsset) return null;
+
+    return (
+        <div
+            className="graph-shell"
+            dangerouslySetInnerHTML={{
+                __html: graphAsset.svgMarkup,
+            }}
+        />
+    );
+}
+
 export function GraphFigure({ graphKey }: { graphKey: GraphKey }) {
+    const importedAsset = IMPORTED_GRAPH_ASSET_MAP.get(graphKey);
+    if (importedAsset) {
+        return (
+            <div className="graph-figure" data-graph-key={graphKey}>
+                <ImportedGraphFigure graphKey={graphKey} />
+            </div>
+        );
+    }
+
     let content: ReactNode = null;
 
     switch (graphKey) {

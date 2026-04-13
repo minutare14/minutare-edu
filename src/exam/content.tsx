@@ -12,7 +12,7 @@ function renderKatex(expression: string, displayMode = false) {
 
 export function MathText({ text }: { text: string }) {
     const parts: ReactNode[] = [];
-    const pattern = /\$(.+?)\$/g;
+    const pattern = /\$(.+?)\$|\\\((.+?)\\\)/g;
     let cursor = 0;
     let match: RegExpExecArray | null;
 
@@ -21,11 +21,12 @@ export function MathText({ text }: { text: string }) {
             parts.push(text.slice(cursor, match.index));
         }
 
+        const expression = match[1] || match[2] || '';
         parts.push(
             <span
-                key={`${match.index}-${match[1]}`}
+                key={`${match.index}-${expression}`}
                 className="math-inline"
-                dangerouslySetInnerHTML={{ __html: renderKatex(match[1]) }}
+                dangerouslySetInnerHTML={{ __html: renderKatex(expression) }}
             />,
         );
 

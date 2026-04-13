@@ -32,6 +32,7 @@ interface ExamModuleProps {
     onSave: () => void;
     onFinish: () => void;
     onZoomGraph: (graphKey: ExamQuestion['graphKey']) => void;
+    onOpenSupportImage: () => void;
 }
 
 export function ExamModule({
@@ -57,6 +58,7 @@ export function ExamModule({
     onSave,
     onFinish,
     onZoomGraph,
+    onOpenSupportImage,
 }: ExamModuleProps) {
     const activeIndex = questions.findIndex((question) => question.id === activeQuestionId);
     const safeIndex = activeIndex >= 0 ? activeIndex : 0;
@@ -112,6 +114,9 @@ export function ExamModule({
                         onScratchChange={onScratchChange}
                         onToggleReview={onToggleReview}
                         onZoomGraph={onZoomGraph}
+                        examSupportImageSrc={exam.supportImageSrc}
+                        examSupportImageAlt={exam.supportImageAlt}
+                        onOpenSupportImage={onOpenSupportImage}
                     />
 
                     <section className="floating-actions">

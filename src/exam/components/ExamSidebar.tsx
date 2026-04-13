@@ -5,7 +5,7 @@ type QuestionProgress = 'unanswered' | 'in-progress' | 'answered' | 'review';
 
 interface SidebarQuestionItem {
     id: string;
-    number: number;
+    number: number | string;
     title: string;
     progress: QuestionProgress;
     timeMs: number;

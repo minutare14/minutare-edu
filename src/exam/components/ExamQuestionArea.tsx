@@ -15,11 +15,14 @@ interface ExamQuestionAreaProps {
     progress: QuestionProgress;
     questionTimeMs: number;
     totalQuestions: number;
+    examSupportImageSrc?: string;
+    examSupportImageAlt?: string;
     onAnswerChange: (fieldKey: string, value: string) => void;
     onMatrixChange: (rowKey: string, columnKey: string, value: ToggleAnswer) => void;
     onScratchChange: (value: string) => void;
     onToggleReview: () => void;
     onZoomGraph: (graphKey: ExamQuestion['graphKey']) => void;
+    onOpenSupportImage: () => void;
 }
 
 function progressLabel(progress: QuestionProgress) {
@@ -48,11 +51,14 @@ export function ExamQuestionArea({
     progress,
     questionTimeMs,
     totalQuestions,
+    examSupportImageSrc,
+    examSupportImageAlt,
     onAnswerChange,
     onMatrixChange,
     onScratchChange,
     onToggleReview,
     onZoomGraph,
+    onOpenSupportImage,
 }: ExamQuestionAreaProps) {
     return (
         <section className="question-card">
@@ -92,7 +98,7 @@ export function ExamQuestionArea({
             </div>
 
             <div className="question-card__body">
-                <div className={`question-card__context ${question.graphKey ? 'question-card__context--with-graph' : ''}`}>
+                <div className={`question-card__context ${question.graphKey || examSupportImageSrc ? 'question-card__context--with-graph' : ''}`}>
                     <article className="statement-panel">
                         <div className="graph-panel__header">
                             <div>
@@ -105,19 +111,36 @@ export function ExamQuestionArea({
                         </div>
                     </article>
 
-                    {question.graphKey ? (
+                    {question.graphKey || examSupportImageSrc ? (
                         <article className="graph-panel">
                             <div className="graph-panel__header">
                                 <div>
                                     <h3>Apoio visual</h3>
-                                    <p>{question.graphCaption || 'Grafico de apoio para interpretar a questao.'}</p>
+                                    <p>
+                                        {question.graphKey
+                                            ? question.graphCaption || 'Grafico de apoio para interpretar a questao.'
+                                            : 'Imagem original da prova para referencia visual e conferencia do material importado.'}
+                                    </p>
                                 </div>
-                                <button type="button" className="icon-button" onClick={() => onZoomGraph(question.graphKey)}>
-                                    <Expand size={16} />
-                                    Ampliar
-                                </button>
+                                {question.graphKey ? (
+                                    <button type="button" className="icon-button" onClick={() => onZoomGraph(question.graphKey)}>
+                                        <Expand size={16} />
+                                        Ampliar
+                                    </button>
+                                ) : null}
                             </div>
-                            <GraphFigure graphKey={question.graphKey} />
+                            {question.graphKey ? <GraphFigure graphKey={question.graphKey} /> : null}
+                            {examSupportImageSrc ? (
+                                <div className="support-image-card">
+                                    {!question.graphKey ? (
+                                        <img className="support-image-card__thumb" src={examSupportImageSrc} alt={examSupportImageAlt || 'Imagem original da prova'} />
+                                    ) : null}
+                                    <button type="button" className="ghost-button" onClick={onOpenSupportImage}>
+                                        <Expand size={16} />
+                                        Ver prova original
+                                    </button>
+                                </div>
+                            ) : null}
                         </article>
                     ) : null}
                 </div>

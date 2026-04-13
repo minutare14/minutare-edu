@@ -83,6 +83,7 @@ export async function exportExamReportPdf(report: ExamReport) {
     const contentWidth = doc.internal.pageSize.getWidth() - margin * 2;
     let cursorY = margin;
     const timeHighlights = buildTimeHighlights(report);
+    const manualGrading = report.gradingMode === 'manual';
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
@@ -128,7 +129,7 @@ export async function exportExamReportPdf(report: ExamReport) {
         body: [
             ['Tentativa', String(report.attemptNumber), 'Data/hora', formatReportDateTime(report.summary.completedAt || report.summary.generatedAt)],
             ['Tempo total', timeHighlights.totalTimeLabel, 'Tempo medio', timeHighlights.averageTimeLabel],
-            ['Aproveitamento', `${(report.summary.performanceRatio * 100).toFixed(1)}%`, 'Questao mais lenta', timeHighlights.slowestQuestionLabel],
+            [manualGrading ? 'Preenchimento' : 'Aproveitamento', `${(report.summary.performanceRatio * 100).toFixed(1)}%`, 'Questao mais lenta', timeHighlights.slowestQuestionLabel],
             ['Assunto mais lento', timeHighlights.slowestTopicLabel, 'Respondidas', String(report.summary.answeredCount)],
         ],
     });
@@ -149,9 +150,9 @@ export async function exportExamReportPdf(report: ExamReport) {
         body: [
             ['Questoes totais', String(report.summary.totalQuestions)],
             ['Respondidas', String(report.summary.answeredCount)],
-            ['Acertos', String(report.summary.correctCount)],
-            ['Parciais', String(report.summary.partialCount)],
-            ['Erros', String(report.summary.incorrectCount)],
+            [manualGrading ? 'Com resposta final' : 'Acertos', String(report.summary.correctCount)],
+            [manualGrading ? 'Sem resposta final' : 'Parciais', String(manualGrading ? report.summary.blankCount : report.summary.partialCount)],
+            [manualGrading ? 'Gabarito automatico' : 'Erros', String(manualGrading ? 0 : report.summary.incorrectCount)],
             ['Em branco', String(report.summary.blankCount)],
         ],
     });
@@ -175,25 +176,33 @@ export async function exportExamReportPdf(report: ExamReport) {
             textColor: [255, 255, 255],
             fontStyle: 'bold',
         },
-        head: [['Assunto', 'Aproveitamento', 'Tempo total', 'Acertos', 'Parciais', 'Erros', 'Em branco']],
+        head: [[
+            'Assunto',
+            manualGrading ? 'Preenchimento' : 'Aproveitamento',
+            'Tempo total',
+            manualGrading ? 'Respondidas' : 'Acertos',
+            manualGrading ? 'Sem resposta' : 'Parciais',
+            manualGrading ? 'Gabarito auto.' : 'Erros',
+            'Em branco',
+        ]],
         body: report.topics.map((topic) => [
             sanitizeText(topic.label),
             `${(topic.performanceRatio * 100).toFixed(1)}%`,
             formatDurationLong(topic.totalTimeMs),
             String(topic.correctCount),
-            String(topic.partialCount),
-            String(topic.incorrectCount),
+            String(manualGrading ? topic.blankCount : topic.partialCount),
+            String(manualGrading ? 0 : topic.incorrectCount),
             String(topic.blankCount),
         ]),
     });
     cursorY = (doc as any).lastAutoTable.finalY + 20;
 
-    cursorY = drawSectionTitle(doc, 'Analise da IA', cursorY, margin);
+    cursorY = drawSectionTitle(doc, manualGrading ? 'Observacao Pedagogica' : 'Analise da IA', cursorY, margin);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(31, 37, 48);
 
-    if (report.aiFeedback) {
+    if (!manualGrading && report.aiFeedback) {
         cursorY = writeWrappedText(doc, report.aiFeedback.overview, margin, cursorY, contentWidth, 16) + 12;
 
         const sections: Array<[string, string[]]> = [
@@ -225,7 +234,16 @@ export async function exportExamReportPdf(report: ExamReport) {
         doc.setFontSize(11);
         cursorY = writeWrappedText(doc, report.aiFeedback.encouragement, margin, cursorY, contentWidth, 16) + 6;
     } else {
-        cursorY = writeWrappedText(doc, 'A analise da IA ainda nao estava disponivel para esta tentativa.', margin, cursorY, contentWidth, 16) + 8;
+        cursorY = writeWrappedText(
+            doc,
+            manualGrading
+                ? 'Esta prova discursiva foi importada sem gabarito estruturado, entao a leitura pedagogica automatica nao foi gerada para esta tentativa.'
+                : 'A analise da IA ainda nao estava disponivel para esta tentativa.',
+            margin,
+            cursorY,
+            contentWidth,
+            16,
+        ) + 8;
     }
 
     cursorY = drawSectionTitle(doc, 'Analise por Questao', cursorY + 10, margin);
@@ -254,7 +272,7 @@ export async function exportExamReportPdf(report: ExamReport) {
             `Tempo: ${question.timeLabel}`,
             `Assuntos: ${question.topics.join(', ') || 'Nao informado'}`,
             `Sua resposta: ${question.studentAnswer}`,
-            `Resposta correta: ${question.correctAnswer}`,
+            `${manualGrading ? 'Gabarito' : 'Resposta correta'}: ${question.correctAnswer}`,
         ];
 
         doc.setTextColor(31, 37, 48);
@@ -292,11 +310,13 @@ export async function exportExamReportPdf(report: ExamReport) {
         if (question.fields.length) {
             cursorY = ensureSpace(doc, cursorY, 40, margin);
             doc.setFont('helvetica', 'bold');
-            doc.text('Campos avaliados', margin, cursorY);
+            doc.text(manualGrading ? 'Campos registrados' : 'Campos avaliados', margin, cursorY);
             cursorY += 14;
             doc.setFont('helvetica', 'normal');
             question.fields.forEach((field) => {
-                const fieldRow = `${field.label}: aluno ${field.studentAnswer} | esperado ${field.expectedAnswer} | nota ${field.score}/${field.maxScore}`;
+                const fieldRow = manualGrading
+                    ? `${field.label}: aluno ${field.studentAnswer} | referencia ${field.expectedAnswer}`
+                    : `${field.label}: aluno ${field.studentAnswer} | esperado ${field.expectedAnswer} | nota ${field.score}/${field.maxScore}`;
                 cursorY = ensureSpace(doc, cursorY, 24, margin);
                 cursorY = writeWrappedText(doc, fieldRow, margin, cursorY, contentWidth, 14) + 2;
             });

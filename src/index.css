@@ -660,6 +660,11 @@ button {
     background: var(--surface);
 }
 
+.graph-panel {
+    display: grid;
+    gap: 18px;
+}
+
 .statement-panel {
     background: rgba(255, 255, 255, 0.88);
 }
@@ -751,6 +756,10 @@ button {
 .field-card {
     display: grid;
     gap: 8px;
+}
+
+.field-card--stacked {
+    gap: 10px;
 }
 
 .field-card__label {
@@ -860,6 +869,19 @@ textarea:focus {
 .interval-mini {
     width: 100%;
     height: auto;
+}
+
+.support-image-card {
+    display: grid;
+    gap: 12px;
+}
+
+.support-image-card__thumb {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(34, 58, 90, 0.12);
+    background: rgba(255, 255, 255, 0.86);
+    object-fit: contain;
 }
 
 .interval-gallery {
@@ -1593,6 +1615,15 @@ textarea:focus {
     padding: 22px;
     border-radius: 28px;
     background: #fffdf8;
+}
+
+.support-image-preview {
+    display: block;
+    width: min(100%, 760px);
+    max-height: calc(100vh - 180px);
+    margin: 0 auto;
+    border-radius: 22px;
+    object-fit: contain;
 }
 
 .graph-modal__close {

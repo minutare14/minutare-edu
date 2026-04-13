@@ -22,7 +22,7 @@ export interface ExamReportSummary {
 
 export interface ExamReportQuestionEntry {
     questionId: string;
-    questionNumber: number;
+    questionNumber: number | string;
     title: string;
     shortPrompt: string;
     difficultyLabel: string;
@@ -64,7 +64,7 @@ export interface ExamReportTopicEntry {
 }
 
 export interface ExamReportSlowQuestionEntry {
-    questionNumber: number;
+    questionNumber: number | string;
     title: string;
     timeMs: number;
     timeLabel: string;
@@ -81,6 +81,7 @@ export interface ExamReport {
     moduleLabel: string;
     semester: string;
     typeLabel: string;
+    gradingMode: 'automatic' | 'manual';
     summary: ExamReportSummary;
     questions: ExamReportQuestionEntry[];
     topics: ExamReportTopicEntry[];
@@ -97,6 +98,7 @@ function difficultyLabel(difficulty: Difficulty) {
 }
 
 export function statusLabel(status: QuestionEvaluation['status']) {
+    if (status === 'answered') return 'Respondida';
     if (status === 'correct') return 'Acertou';
     if (status === 'partial') return 'Parcial';
     if (status === 'incorrect') return 'Errou';
@@ -156,10 +158,11 @@ export function buildExamReport({
     generatedAt?: string;
 }): ExamReport {
     const questionMap = buildTopicQuestionBuckets(questions);
+    const manualGrading = exam.gradingMode === 'manual';
     const answeredCount = evaluations.filter((evaluation) => evaluation.answered).length;
-    const correctCount = evaluations.filter((evaluation) => evaluation.status === 'correct').length;
-    const partialCount = evaluations.filter((evaluation) => evaluation.status === 'partial').length;
-    const incorrectCount = evaluations.filter((evaluation) => evaluation.status === 'incorrect').length;
+    const correctCount = evaluations.filter((evaluation) => (manualGrading ? evaluation.status === 'answered' : evaluation.status === 'correct')).length;
+    const partialCount = manualGrading ? 0 : evaluations.filter((evaluation) => evaluation.status === 'partial').length;
+    const incorrectCount = manualGrading ? 0 : evaluations.filter((evaluation) => evaluation.status === 'incorrect').length;
     const blankCount = evaluations.filter((evaluation) => evaluation.status === 'blank').length;
     const totalScore = evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0);
     const totalMax = evaluations.reduce((sum, evaluation) => sum + evaluation.maxScore, 0);
@@ -186,7 +189,7 @@ export function buildExamReport({
             correctAnswer: question.solution.answerSummary,
             timeMs,
             timeLabel: formatDuration(timeMs),
-            topics: question.topics.map((topic) => topicLabels[topic]),
+            topics: question.topics.map((topic) => topicLabels[topic] || topic),
             explanationSteps: question.solution.steps,
             graphKey: question.graphKey,
             graphComment: question.solution.graphComment,
@@ -213,9 +216,9 @@ export function buildExamReport({
         return {
             topic: topic.topic,
             label: topic.label,
-            correctCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'correct').length,
-            partialCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'partial').length,
-            incorrectCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'incorrect').length,
+            correctCount: relatedEvaluations.filter((evaluation) => (manualGrading ? evaluation.status === 'answered' : evaluation.status === 'correct')).length,
+            partialCount: manualGrading ? 0 : relatedEvaluations.filter((evaluation) => evaluation.status === 'partial').length,
+            incorrectCount: manualGrading ? 0 : relatedEvaluations.filter((evaluation) => evaluation.status === 'incorrect').length,
             blankCount: relatedEvaluations.filter((evaluation) => evaluation.status === 'blank').length,
             totalQuestions: relatedQuestions.length,
             performanceRatio: topic.ratio,
@@ -255,6 +258,7 @@ export function buildExamReport({
         moduleLabel: exam.moduleLabel,
         semester: exam.semester,
         typeLabel: exam.typeLabel,
+        gradingMode: manualGrading ? 'manual' : 'automatic',
         summary: {
             totalQuestions: questions.length,
             answeredCount,

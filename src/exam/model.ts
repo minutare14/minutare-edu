@@ -1,16 +1,4 @@
-export type TopicId =
-    | 'conjuntos'
-    | 'intervalos'
-    | 'dominio-imagem'
-    | 'funcoes'
-    | 'funcao-afim'
-    | 'funcao-quadratica'
-    | 'graficos'
-    | 'composicao'
-    | 'interpretacao-algebrica'
-    | 'interpretacao-geometrica'
-    | 'algebra'
-    | 'conceitos';
+export type TopicId = string;
 
 export type Difficulty = 'base' | 'intermediario' | 'desafio';
 
@@ -92,9 +80,22 @@ export interface GroupSchema {
     groups: AnswerGroup[];
 }
 
-export type AnswerSchema = GroupSchema | MatrixSchema;
+export interface OpenAnswerSchema {
+    kind: 'open';
+    instructions?: string;
+    field: {
+        key: string;
+        label: string;
+        placeholder?: string;
+        rows?: number;
+    };
+    hasScratchpad: boolean;
+    hasOfficialAnswerField: boolean;
+}
 
-export type GraphKey = 'interval-examples' | 'cost-line' | 'coffee-demand' | 'vehicle-depreciation' | 'quadratic-roots';
+export type AnswerSchema = GroupSchema | MatrixSchema | OpenAnswerSchema;
+
+export type GraphKey = string;
 
 export interface SolutionDetail {
     answerSummary: string;
@@ -105,7 +106,7 @@ export interface SolutionDetail {
 
 export interface ExamQuestion {
     id: string;
-    number: number;
+    number: number | string;
     title: string;
     topics: TopicId[];
     difficulty: Difficulty;
@@ -124,7 +125,41 @@ export interface TopicMeta {
     studyTips: string[];
 }
 
-export const TOPIC_META: Record<TopicId, TopicMeta> = {
+function humanizeTopic(topic: string) {
+    const normalized = topic
+        .replace(/[_-]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+
+    if (!normalized) return 'Topico';
+
+    return normalized
+        .split(' ')
+        .map((part) => {
+            const upper = part.toUpperCase();
+            if (upper === 'PH') return upper;
+            if (part.length <= 3 && part === upper) return upper;
+            return part.charAt(0).toUpperCase() + part.slice(1);
+        })
+        .join(' ');
+}
+
+function fallbackTopicMeta(topic: string): TopicMeta {
+    const label = humanizeTopic(topic);
+    const short = label.length > 18 ? `${label.slice(0, 15).trimEnd()}...` : label;
+
+    return {
+        label,
+        short,
+        summary: `Topico importado automaticamente da prova local: ${label}.`,
+        studyTips: [
+            'Revise o enunciado original da prova e reorganize a resolucao em passos curtos.',
+            'Use o rascunho salvo para identificar definicoes, formulas e transicoes que precisam ficar mais claras.',
+        ],
+    };
+}
+
+export const TOPIC_META: Record<string, TopicMeta> = {
     conjuntos: {
         label: 'Conjuntos',
         short: 'Conjuntos',
@@ -234,3 +269,7 @@ export const TOPIC_META: Record<TopicId, TopicMeta> = {
         ],
     },
 };
+
+export function getTopicMeta(topic: TopicId) {
+    return TOPIC_META[topic] || fallbackTopicMeta(topic);
+}

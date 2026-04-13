@@ -36,6 +36,7 @@ function gradeTone(ratio: number) {
 
 function ResultStatus({ evaluation }: { evaluation: QuestionEvaluation }) {
     if (evaluation.status === 'blank') return <span className="result-pill result-pill--blank"><CircleDashed size={16} />Em branco</span>;
+    if (evaluation.status === 'answered') return <span className="result-pill result-pill--correct"><CheckCircle2 size={16} />Respondida</span>;
     if (evaluation.status === 'correct') return <span className="result-pill result-pill--correct"><CheckCircle2 size={16} />Acertou</span>;
     if (evaluation.status === 'partial') return <span className="result-pill result-pill--partial"><Target size={16} />Parcial</span>;
     return <span className="result-pill result-pill--incorrect"><XCircle size={16} />Errou</span>;
@@ -55,6 +56,7 @@ export function ExamReportView({
     onRetry,
 }: ExamReportViewProps) {
     const timeHighlights = buildTimeHighlights(report);
+    const manualGrading = report.gradingMode === 'manual';
 
     return (
         <main className="results-shell">
@@ -63,7 +65,11 @@ export function ExamReportView({
                     <div>
                         <span className="hero__eyebrow hero__eyebrow--dark">Relatorio final</span>
                         <h2>Painel completo de desempenho da tentativa {report.attemptNumber}</h2>
-                        <p>{report.summary.correctCount} corretas, {report.summary.partialCount} parciais, {report.summary.incorrectCount} incorretas e {(report.summary.performanceRatio * 100).toFixed(0)}% de aproveitamento.</p>
+                        <p>
+                            {manualGrading
+                                ? `${report.summary.answeredCount} respondidas, ${report.summary.blankCount} em branco e ${(report.summary.performanceRatio * 100).toFixed(0)}% de preenchimento consolidado.`
+                                : `${report.summary.correctCount} corretas, ${report.summary.partialCount} parciais, ${report.summary.incorrectCount} incorretas e ${(report.summary.performanceRatio * 100).toFixed(0)}% de aproveitamento.`}
+                        </p>
                     </div>
                     <div className="results-actions">
                         <button type="button" className="ghost-button" onClick={onBackDashboard}><House size={16} />Voltar para a lista</button>
@@ -149,14 +155,22 @@ export function ExamReportView({
                 <div className="section-heading">
                     <div>
                         <h3>Analise por assunto</h3>
-                        <p>O desempenho combina acerto, erro e tempo gasto para mostrar quais temas parecem dominados e quais pedem reforco.</p>
+                        <p>
+                            {manualGrading
+                                ? 'Para provas discursivas importadas sem gabarito estruturado, o painel abaixo acompanha preenchimento por assunto e o tempo dedicado a cada bloco.'
+                                : 'O desempenho combina acerto, erro e tempo gasto para mostrar quais temas parecem dominados e quais pedem reforco.'}
+                        </p>
                     </div>
                 </div>
                 <div className="topic-grid">
                     {report.topics.map((topic) => (
                         <article key={topic.topic} className={`topic-card topic-card--${gradeTone(topic.performanceRatio)}`}>
                             <header><span>{topic.label}</span><strong>{(topic.performanceRatio * 100).toFixed(0)}%</strong></header>
-                            <p>{topic.correctCount} acertos, {topic.partialCount} parciais, {topic.incorrectCount} erros e {formatDurationLong(topic.totalTimeMs)} dedicados a este bloco.</p>
+                            <p>
+                                {manualGrading
+                                    ? `${topic.correctCount} respondidas, ${topic.blankCount} em branco e ${formatDurationLong(topic.totalTimeMs)} dedicados a este bloco.`
+                                    : `${topic.correctCount} acertos, ${topic.partialCount} parciais, ${topic.incorrectCount} erros e ${formatDurationLong(topic.totalTimeMs)} dedicados a este bloco.`}
+                            </p>
                             <div className="topic-bar"><span style={{ width: `${Math.max(8, topic.performanceRatio * 100)}%` }} /></div>
                             <small>{topic.blankCount} em branco | {topic.totalQuestions} questoes</small>
                         </article>
@@ -169,7 +183,9 @@ export function ExamReportView({
                     <div>
                         <h3>Leitura pedagogica</h3>
                         <p>
-                            {aiStatus === 'ready'
+                            {manualGrading
+                                ? 'A leitura pedagogica com IA fica desativada nestas provas discursivas importadas porque o arquivo-fonte nao traz gabarito estruturado para correcao automatizada.'
+                                : aiStatus === 'ready'
                                 ? 'A analise da IA desta tentativa foi reutilizada do cache salvo.'
                                 : aiStatus === 'loading'
                                   ? 'Gerando a leitura pedagogica desta tentativa uma unica vez.'
@@ -179,7 +195,9 @@ export function ExamReportView({
                         </p>
                     </div>
                 </div>
-                {report.aiFeedback ? (
+                {manualGrading ? (
+                    <div className="coach-loading"><CircleDashed className="spin" size={18} />Analise automatica indisponivel para prova discursiva sem gabarito estruturado.</div>
+                ) : report.aiFeedback ? (
                     <article className="coach-card">
                         <div className="coach-card__top"><Sparkles size={18} /><p>{report.aiFeedback.overview}</p></div>
                         <div className="coach-grid">
@@ -202,7 +220,11 @@ export function ExamReportView({
                 <div className="section-heading">
                     <div>
                         <h3>Analise por questao</h3>
-                        <p>Cada bloco combina tempo gasto, resposta do aluno, gabarito, resolucao e rascunho salvo.</p>
+                        <p>
+                            {manualGrading
+                                ? 'Cada bloco combina tempo gasto, resposta final registrada, observacoes da importacao e rascunho salvo.'
+                                : 'Cada bloco combina tempo gasto, resposta do aluno, gabarito, resolucao e rascunho salvo.'}
+                        </p>
                     </div>
                 </div>
                 <div className="results-list__stack">
@@ -226,16 +248,16 @@ export function ExamReportView({
 
                                 <div className="review-card__meta">
                                     <div><span>Resposta do aluno</span><strong>{question.studentAnswer}</strong></div>
-                                    <div><span>Resposta correta</span><strong>{question.correctAnswer}</strong></div>
+                                    <div><span>{manualGrading ? 'Gabarito' : 'Resposta correta'}</span><strong>{question.correctAnswer}</strong></div>
                                 </div>
 
                                 {graphKey ? <div className="review-card__graph"><GraphFigure graphKey={graphKey} /></div> : null}
 
                                 <details className="review-card__details">
-                                    <summary>Ver resolucao e observacoes</summary>
+                                    <summary>{manualGrading ? 'Ver observacoes da questao' : 'Ver resolucao e observacoes'}</summary>
                                     <div className="review-card__body">
                                         <div className="review-card__solution">
-                                            <h5>Passo a passo</h5>
+                                            <h5>{manualGrading ? 'Observacoes da importacao' : 'Passo a passo'}</h5>
                                             <ul>{question.explanationSteps.map((step) => <li key={step}>{step}</li>)}</ul>
                                             {question.graphComment ? <p>{question.graphComment}</p> : null}
                                             <p className="review-card__tip"><strong>O que revisar:</strong> {question.studyTip}</p>
